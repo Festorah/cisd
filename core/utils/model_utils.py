@@ -151,6 +151,7 @@ def optimize_database_queries():
             return (
                 Article.objects.filter(status="published", is_featured=True)
                 .select_related("category", "author", "featured_image")
+                .prefetch_related("tags")
                 .order_by("-published_date")[:limit]
             )
 
