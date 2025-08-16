@@ -1,0 +1,3348 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centre for Inclusive Social Development</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.0/cdn.min.js" defer></script>
+    <style>
+        :root {
+            --cisd-red: #dc2626;
+            --cisd-deep-red: #b91c1c;
+            --cisd-blue: #1e3a8a;
+            --cisd-deep-blue: #1e40af;
+            --cisd-yellow: #fbbf24;
+            --cisd-gray: #f3f4f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: white;
+        }
+
+        /* body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        } */
+
+        /* Navigation */
+        .navbar {
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand img {
+            height: 45px;
+        }
+
+        .nav-link {
+            color: #333 !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+        }
+
+        .search-container {
+            position: relative;
+            width: 200px;
+        }
+
+        .search-input {
+            border: 1px solid #ddd;
+            padding: 8px 35px 8px 12px;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .btn-donate-nav {
+            background-color: var(--cisd-red);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 8px 20px;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .newsletter-link {
+            color: var(--cisd-red);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Hero Section Container */
+        .hero-wrapper {
+            position: relative;
+            background-color: white;
+            padding-top: 50px;
+        }
+
+        /* Main Hero Section */
+        .hero-section {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            position: relative;
+            overflow: visible;
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-container {
+            width: 100%;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Image Side - Breaking out above */
+        .hero-image-container {
+            position: absolute;
+            left: 50px;
+            top: -40px;
+            width: 45%;
+            height: 400px;
+            z-index: 3;
+        }
+
+        .hero-image-placeholder {
+            width: 100%;
+            height: 100%;
+            background-color: #fff;
+            /* border-radius: 8px; */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            /* box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); */
+            /* border: 3px solid white; */
+        }
+
+        /* Content Side */
+        .hero-content {
+            margin-left: 50%;
+            padding: 20px 250px 80px 30px;
+            color: white;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Badge */
+        .hero-badge {
+            background-color: var(--cisd-red);
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+            margin-bottom: 1rem;
+            border-radius: 0;
+        }
+
+        /* Main Title */
+        .hero-title {
+            font-size: 3.0rem;
+            font-weight: 700;
+            line-height: 1.1;
+            margin: 0 0 1.5rem 0;
+            color: white;
+        }
+
+        /* Subtitle */
+        .hero-subtitle {
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 2rem;
+            color: rgba(255, 255, 255, 0.95);
+            font-weight: 400;
+        }
+
+        /* CTA Button */
+        .btn-hero {
+            background: transparent;
+            border: 2px solid var(--cisd-red);
+            color: var(--cisd-red);
+            padding: 12px 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-hero::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--cisd-red);
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .btn-hero:hover::after {
+            left: 0;
+        }
+
+        .btn-hero:hover {
+            color: white;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .hero-title {
+                font-size: 3rem;
+            }
+
+            .hero-content {
+                padding: 60px 40px 60px 80px;
+            }
+
+            .hero-image-container {
+                width: 50%;
+                left: 30px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .hero-wrapper {
+                padding-top: 0;
+            }
+
+            .hero-section {
+                flex-direction: column;
+                min-height: auto;
+                padding: 0;
+            }
+
+            .hero-image-container {
+                position: relative;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 300px;
+                margin-bottom: -50px;
+                z-index: 3;
+                padding: 0 20px;
+            }
+
+            .hero-content {
+                margin-left: 0;
+                padding: 50px 30px 60px 30px;
+                text-align: center;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+
+            .hero-content {
+                padding: 40px 20px 50px 20px;
+            }
+
+            .hero-image-container {
+                height: 250px;
+                margin-bottom: -30px;
+            }
+
+            .hero-image-placeholder {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .hero-title {
+                font-size: 1.8rem;
+            }
+
+            .hero-badge {
+                font-size: 11px;
+                padding: 6px 12px;
+            }
+
+            .btn-hero {
+                padding: 10px 20px;
+                font-size: 12px;
+            }
+
+            .hero-content {
+                padding: 30px 15px 40px 15px;
+            }
+        }
+
+        /* Mission Section */
+        .mission-section {
+            padding: 80px 0;
+            background-color: #f9fafb;
+        }
+
+        .mission-box {
+            background-color: var(--cisd-gray);
+            padding: 2rem;
+            position: relative;
+        }
+
+        .mission-header {
+            background-color: var(--cisd-red);
+            color: white;
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+
+        .mission-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+
+        .mission-text {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: #555;
+            margin-bottom: 2rem;
+        }
+
+        .mission-link {
+            color: var(--cisd-red);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            padding-top: 15px;
+        }
+
+        .mission-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50px;
+            height: 4px;
+            background-color: var(--cisd-red);
+        }
+
+        /* Featured Updates */
+        .featured-section {
+            padding: 80px 0;
+            background-color: white;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .section-divider {
+            width: 50px;
+            height: 3px;
+            background-color: var(--cisd-blue);
+            margin: 0 auto 1rem;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: #333;
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+            font-weight: 600;
+        }
+
+        .update-card {
+            background: white;
+            border-radius: 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            height: 100%;
+            transition: transform 0.3s ease;
+        }
+
+        .update-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .update-image {
+            height: 240px;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .update-content {
+            padding: 1.5rem;
+        }
+
+        .update-tag {
+            background-color: var(--cisd-red);
+            color: white;
+            padding: 4px 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .update-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 1rem;
+            line-height: 1.3;
+        }
+
+        .update-excerpt {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .update-author {
+            color: var(--cisd-blue);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .update-date {
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        /* Video Spotlight */
+        .video-section {
+            padding: 80px 0;
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .video-section::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 40px solid transparent;
+            border-right: 40px solid transparent;
+            border-bottom: 40px solid var(--cisd-deep-blue);
+            z-index: 1;
+        }
+
+        .video-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--cisd-yellow);
+            margin-bottom: 1rem;
+        }
+
+        .video-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .video-text {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+        }
+
+        .btn-video {
+            background-color: var(--cisd-yellow);
+            border: none;
+            color: #333;
+            padding: 12px 24px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-right: 1rem;
+        }
+
+        .btn-explore {
+            /* border: 2px solid white; */
+            background: transparent;
+            color: white;
+            padding: 12px 24px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .video-container {
+            position: relative;
+            height: 350px;
+        }
+
+        .video-placeholder {
+            position: absolute;
+            top: -30px;
+            left: 0;
+            right: 0;
+            height: 300px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+
+        .play-icon {
+            width: 80px;
+            height: 80px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid white;
+        }
+
+        .play-icon::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 20px solid white;
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+            margin-left: 4px;
+        }
+
+        /* Core Issues */
+        .core-issues-section {
+            padding: 80px 0;
+            background-color: white;
+        }
+
+        .issue-grid {
+            margin-top: 3rem;
+        }
+
+        .issue-item {
+            text-align: left;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .issue-item:hover {
+            background-color: #f8f9fa;
+            padding-left: 1rem;
+        }
+
+        .issue-icon {
+            width: 48px;
+            height: 48px;
+            margin-right: 1rem;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .issue-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .issue-arrow {
+            margin-left: auto;
+            color: #333;
+            font-size: 1.2rem;
+            font-weight: 900;
+        }
+
+        .core-description {
+            text-align: center;
+            margin: 3rem 0;
+            color: #333;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .btn-core-issues {
+            background: transparent;
+            border: 2px solid var(--cisd-blue);
+            color: var(--cisd-blue);
+            padding: 12px 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 0;
+        }
+
+        /* Our Work */
+        .work-section {
+            padding: 80px 0;
+            background-color: #f9fafb;
+        }
+
+        .work-container {
+            border: 3px solid var(--cisd-blue);
+            padding: 2rem;
+            background: white;
+        }
+
+        .work-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+
+        .work-item {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .work-image {
+            height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .work-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 1rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .btn-work {
+            background: transparent;
+            border: 2px solid var(--cisd-blue);
+            color: var(--cisd-blue);
+            padding: 12px 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 0;
+        }
+
+
+
+        .work-grid-container {
+            border: 2px solid var(--cisd-blue);
+            overflow: hidden;
+            margin: 20px 200px;
+        }
+
+        .work-item {
+            position: relative;
+            height: 250px;
+            overflow: hidden;
+        }
+
+        .work-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .work-label {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+            z-index: 10;
+        }
+
+        .work-label::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 0;
+            width: 30px;
+            height: 3px;
+            background-color: var(--cisd-blue);
+        }
+
+        .work-label-bg {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        .btn-work {
+            background: transparent;
+            border: 2px solid var(--cisd-blue);
+            color: var(--cisd-blue);
+            padding: 12px 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 0;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-work:hover {
+            background-color: var(--cisd-blue);
+            color: white;
+        }
+
+        /* Responsive Design */
+
+        /* Small mobile devices (up to 576px) */
+        @media (max-width: 575px) {
+            .section-title {
+                font-size: 1.8rem;
+                margin-bottom: 0.1rem;
+            }
+
+            .section-subtitle {
+                font-size: 1rem;
+                margin-bottom: 2rem;
+                padding: 0 0.1rem;
+            }
+
+            .work-grid-container {
+                border-width: 2px !important;
+                padding: 0.1rem !important;
+                margin: 0 0.5rem;
+            }
+
+            .work-item {
+                height: auto;
+                padding: 0.5rem 0.5rem 0.2rem 0.5rem !important;
+                margin-left: 0;
+                margin-bottom: 0.5rem;
+            }
+
+            .work-label-container h5 {
+                font-size: 0.95rem;
+                margin-bottom: 0.1rem;
+            }
+
+            .work-accent-line {
+                width: 25px;
+                height: 2px;
+                margin-bottom: 0.1rem;
+            }
+
+            .work-image-container {
+                margin-right: 0 !important;
+                margin-top: 0.1rem;
+            }
+
+            .work-image-container img {
+                max-height: 120px;
+                height: auto;
+                object-fit: contain;
+            }
+        }
+
+        /* Medium mobile devices (576px to 767px) */
+        @media (min-width: 576px) and (max-width: 767px) {
+            .section-title {
+                font-size: 2rem;
+                margin-bottom: 1rem;
+            }
+
+            .section-subtitle {
+                font-size: 1.05rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .work-grid-container {
+                border-width: 3px !important;
+                padding: 0.5rem !important;
+                margin: 0 1rem;
+            }
+
+            .work-item {
+                height: auto;
+                padding: 0.2rem 1rem 0.5rem 1rem !important;
+                margin-left: 0;
+                margin-bottom: 2rem;
+            }
+
+            .work-label-container h5 {
+                font-size: 1rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .work-image-container {
+                margin-right: 0 !important;
+                margin-top: 0.1rem;
+            }
+
+            .work-image-container img {
+                max-height: 140px;
+                height: auto;
+                object-fit: contain;
+            }
+        }
+
+        /* Tablet devices (768px to 991px) - Enhanced from existing */
+        @media (min-width: 768px) and (max-width: 991px) {
+            .section-title {
+                font-size: 2.2rem;
+            }
+
+            .work-grid-container {
+                padding: 0.2rem 1.5rem 0.2rem 1.5rem !important;
+                margin: 0 1rem;
+            }
+
+            .work-item {
+                height: auto;
+                padding: 0.5rem 1rem !important;
+                margin-left: 0.5rem;
+                margin-bottom: 0.2rem;
+            }
+
+            .work-label-container h5 {
+                font-size: 1.05rem;
+                margin-bottom: 1px;
+            }
+
+            .work-image-container {
+                margin-right: 1rem !important;
+                margin-top: 1rem;
+            }
+
+            .work-image-container img {
+                max-height: 160px;
+            }
+        }
+
+        /* General mobile improvements for all mobile sizes */
+        @media (max-width: 991px) {
+
+            /* Ensure proper stacking on mobile */
+            .work-section .row.g-0>[class*="col-"] {
+                padding-bottom: 0 !important;
+                margin-bottom: 0 !important;
+            }
+
+            /* Button responsiveness */
+            .work-section .btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+                margin-top: 1rem;
+            }
+
+            /* Better spacing for mobile */
+            .work-section {
+                padding: 60px 0;
+            }
+
+            /* Ensure images don't overflow */
+            .work-image-container img {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            /* Better text spacing on mobile */
+            .work-label-container {
+                margin-bottom: 0.5rem !important;
+            }
+        }
+
+        /* Landscape phone orientation */
+        @media (max-width: 767px) and (orientation: landscape) {
+            .work-item {
+                padding: 1.5rem 1rem !important;
+            }
+
+            .work-image-container img {
+                max-height: 100px;
+            }
+
+            .section-title {
+                font-size: 1.8rem;
+            }
+        }
+
+        /* Extra small devices - specific fixes */
+        @media (max-width: 320px) {
+            .work-grid-container {
+                padding: 0.8rem !important;
+                margin: 0 0.2rem;
+            }
+
+            .work-item {
+                padding: 1rem 0.3rem 1.5rem 0.3rem !important;
+            }
+
+            .work-label-container h5 {
+                font-size: 0.9rem;
+            }
+
+            .work-image-container img {
+                max-height: 100px;
+            }
+        }
+
+        /* Event Section */
+        .event-section {
+            padding: 80px 0;
+            background-color: white;
+            position: relative;
+        }
+
+        .event-section::before {
+            content: '';
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 2px;
+            background-color: var(--cisd-blue);
+        }
+
+        .event-card {
+            background: white;
+            border-radius: 0;
+            /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
+            overflow: hidden;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .event-image {
+            height: 200px;
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            padding-top: 1rem;
+            border-radius: 0;
+        }
+
+        .event-badge {
+            background-color: var(--cisd-blue);
+            color: white;
+            padding: 4px 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+        }
+
+        .event-content {
+            padding: 1.5rem;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .event-date {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .event-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .event-speakers {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* Get Involved */
+        .get-involved-section {
+            padding: 80px 0;
+            /* background-color: #f9fafb; */
+            background-color: #E7E7E7;
+        }
+
+        .donation-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--cisd-red);
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            font-family: Georgia, serif;
+            text-align: left;
+        }
+
+        .donation-text {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .donation-form {
+            background: transparent;
+            padding: 0;
+        }
+
+        .donation-amounts {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .amount-btn {
+            border: 2px solid #ddd !important;
+            background: white !important;
+            padding: 12px 20px;
+            color: #333 !important;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 0;
+            outline: none;
+        }
+
+        .amount-btn:hover {
+            border-color: var(--cisd-blue) !important;
+            background-color: #f8f9fa !important;
+        }
+
+        .amount-btn.selected {
+            border-color: var(--cisd-blue) !important;
+            background-color: white !important;
+            color: var(--cisd-blue) !important;
+        }
+
+        .frequency-options {
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .frequency-options label {
+            cursor: pointer;
+            user-select: none;
+            margin-left: 0.5rem;
+        }
+
+        .custom-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #666;
+            background: white;
+            margin-right: 8px;
+            position: relative;
+            cursor: pointer;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .custom-checkbox.checked {
+            background-color: white;
+            border-color: var(--cisd-blue);
+        }
+
+        .custom-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--cisd-blue);
+            font-weight: 700;
+            font-size: 12px;
+            line-height: 1;
+        }
+
+        .btn-donate-main {
+            background-color: var(--cisd-red);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 2rem;
+            font-size: 14px;
+        }
+
+        /* Take Action */
+        .movement-section {
+            padding: 30px 0;
+            /* background-color: var(--cisd-deep-red); */
+            background-color: #880808;
+            color: white;
+            margin: 20px 0px;
+        }
+
+
+        .movement-content {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+        }
+
+        .movement-label {
+            background-color: white;
+            color: var(--cisd-red);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+            padding: 4px 8px;
+            display: inline-block;
+        }
+
+        .movement-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .movement-text {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+            text-align: left;
+            max-width: 400px;
+        }
+
+        .btn-movement {
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            padding: 12px 24px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            align-self: flex-start;
+        }
+
+        .btn-movement::after {
+            content: " ▶";
+            margin-left: 8px;
+        }
+
+        .movement-image {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .movement-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .movement-content {
+                margin-bottom: 2rem;
+            }
+
+            .movement-title {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .movement-title {
+                font-size: 1.8rem;
+            }
+
+            .movement-content,
+            .movement-image {
+                padding: 1rem;
+            }
+        }
+
+
+        /* .movement-image {
+            height: 300px;
+            /* background-color: rgba(0, 0, 0, 0.3); */
+        /* border-radius: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        } */
+
+        */
+
+        /* Newsletter */
+        .newsletter-section {
+            padding: 80px 0;
+            background-color: white;
+        }
+
+        .newsletter-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            margin-bottom: 1rem;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .newsletter-label::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background-color: var(--cisd-red);
+        }
+
+        .newsletter-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--cisd-red);
+            line-height: 1.2;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .form-control-custom {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: white;
+            font-size: 14px;
+        }
+
+        .btn-newsletter {
+            background-color: var(--cisd-red);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .privacy-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 1rem;
+        }
+
+        .privacy-link {
+            color: var(--cisd-blue);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #1a1a1a;
+            color: white;
+            padding: 60px 0 40px;
+        }
+
+        .footer h6 {
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        .footer a {
+            color: #ccc;
+            text-decoration: none;
+            font-size: 0.9rem;
+            line-height: 2;
+        }
+
+        .footer a:hover {
+            color: white;
+        }
+
+        .social-links a {
+            color: white;
+            font-size: 1.2rem;
+            margin-right: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .mission-title,
+            .section-title,
+            .donation-title,
+            .movement-title,
+            .newsletter-title,
+            .video-title {
+                font-size: 2rem;
+            }
+
+            .donation-amounts {
+                justify-content: center;
+            }
+
+            .work-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+
+        /* Social Issues Spotlight Section */
+        .social-issues-spotlight {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            position: relative;
+            overflow: visible;
+            padding: 10px 0;
+            color: white;
+        }
+
+        /* V-shape above the label */
+        .social-issues-spotlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 220px;
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 15px solid white;
+        }
+
+        .spotlight-container {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Content Layout */
+        .spotlight-content {
+            padding-right: 2rem;
+            padding-left: 10rem;
+        }
+
+        /* Label with V-shape above */
+        .spotlight-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--cisd-yellow);
+            margin-bottom: 1rem;
+            position: relative;
+            padding-top: 20px;
+        }
+
+        /* V-shape above the label */
+        /* .spotlight-label::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 15px solid white;
+        } */
+
+        /* Title */
+        .spotlight-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        /* Description */
+        .spotlight-description {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            color: rgba(255, 255, 255, 0.95);
+            opacity: 0.95;
+        }
+
+        /* Buttons Container */
+        .spotlight-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* Watch Video Button */
+        .btn-video {
+            background-color: transparent;
+            border: 2px solid var(--cisd-yellow);
+            /* border: none; */
+            color: var(--cisd-yellow);
+            padding: 12px 24px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-right: 1rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-video:hover {
+            background-color: #f59e0b;
+            color: #333;
+        }
+
+        /* Explore Issues Button */
+        .btn-explore {
+            /* border: 2px solid white; */
+            background-color: transparent;
+            background: transparent;
+            color: var(--cisd-yellow);
+            padding: 12px 24px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-explore:hover {
+            background-color: white;
+            color: var(--cisd-blue);
+        }
+
+        /* Image Side - Like Hero Section */
+        .spotlight-image-container {
+            position: relative;
+            height: 350px;
+        }
+
+        /* Image breaking out above like hero */
+        .spotlight-image {
+            position: absolute;
+            top: 0px;
+            left: 0;
+            right: 0;
+            height: 300px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Play Icon */
+        .play-icon {
+            width: 80px;
+            height: 80px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .play-icon:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .play-icon::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 20px solid white;
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+            margin-left: 4px;
+        }
+
+        /* Image placeholder text */
+        .image-placeholder-text {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .spotlight-title {
+                font-size: 2.2rem;
+            }
+
+            .spotlight-content {
+                padding-right: 1rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .social-issues-spotlight {
+                padding: 50px 0;
+            }
+
+            .spotlight-content {
+                padding-right: 0;
+                margin-bottom: 2rem;
+                text-align: center;
+            }
+
+            .spotlight-title {
+                font-size: 2rem;
+            }
+
+            .spotlight-image-container {
+                height: 300px;
+            }
+
+            .spotlight-image {
+                top: -20px;
+                height: 250px;
+            }
+
+            .spotlight-buttons {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .social-issues-spotlight {
+                padding: 40px 0;
+            }
+
+            .spotlight-title {
+                font-size: 1.8rem;
+            }
+
+            .spotlight-description {
+                font-size: 1rem;
+            }
+
+            .spotlight-buttons {
+                flex-direction: column;
+                align-items: center;
+                gap: 0.8rem;
+            }
+
+            .btn-video,
+            .btn-explore {
+                width: 200px;
+                text-align: center;
+                margin-right: 0;
+            }
+
+            .spotlight-image-container {
+                height: 250px;
+            }
+
+            .spotlight-image {
+                height: 200px;
+            }
+
+            .play-icon {
+                width: 60px;
+                height: 60px;
+            }
+
+            .play-icon::after {
+                border-left: 15px solid white;
+                border-top: 9px solid transparent;
+                border-bottom: 9px solid transparent;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .spotlight-title {
+                font-size: 1.6rem;
+            }
+
+            .spotlight-label {
+                font-size: 11px;
+            }
+
+            .btn-video,
+            .btn-explore {
+                padding: 10px 20px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white">
+        <!-- First Layer: Logo, Search, Donate, Newsletter, Social -->
+        <div class="container">
+            <a class="navbar-brand logo-spanning" href="#">
+                <!-- <img src="/Users/user/Downloads/CISDL1_CLogo-1-2048x1467 1.png" alt="CISD"> -->
+                <img src="{% static 'images/CISDL1_CLogo-1-2048x1467 1.png' %}" alt="CISD">
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="search-container-wrapper">
+                    <div class="search-container">
+                        <input type="text" class="search-input" placeholder="Search">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                </div>
+
+                <div class="ms-auto d-flex align-items-center">
+                    <button class="btn btn-donate-nav me-3">
+                        <i class="fas fa-play me-2"></i>DONATE
+                    </button>
+                    <a href="#" class="newsletter-link me-3">
+                        <span class="newsletter-line-1">SUBSCRIBE TO OUR</span>
+                        <span class="newsletter-line-2">NEWSLETTER</span>
+                    </a>
+                    <div class="social-icons">
+                        <a href="#" class="social-icon me-2"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="social-icon me-2"><i class="fab fa-youtube"></i></a>
+                        <a href="#" class="social-icon me-2"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+
+                <!-- Mobile Navigation (only visible on mobile) -->
+                <div class="d-lg-none mt-3 pt-3 border-top">
+                    <ul class="navbar-nav">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Issues <i class="fas fa-chevron-down ms-2"></i>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Human Capital Development</a></li>
+                                <li><a class="dropdown-item" href="#">Livelihood & Economic Justice</a></li>
+                                <li><a class="dropdown-item" href="#">Governance & Civil Participation</a></li>
+                                <li><a class="dropdown-item" href="#">Tax Justice & Fiscal Accountability</a></li>
+                                <li><a class="dropdown-item" href="#">Natural Resources Governance</a></li>
+                                <li><a class="dropdown-item" href="#">Gender & Social Inclusion</a></li>
+                                <li><a class="dropdown-item" href="#">Electoral Reforms</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Our Work <i class="fas fa-chevron-down ms-2"></i>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">News & Analysis</a></li>
+                                <li><a class="dropdown-item" href="#">Research & Reports</a></li>
+                                <li><a class="dropdown-item" href="#">Policy Solutions</a></li>
+                                <li><a class="dropdown-item" href="#">Campaigns</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Expert</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Get Involved <i class="fas fa-chevron-down ms-2"></i>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Support Our Work</a></li>
+                                <li><a class="dropdown-item" href="#">Get Involved</a></li>
+                                <li><a class="dropdown-item" href="#">Attend an Event</a></li>
+                                <li><a class="dropdown-item" href="#">Partner With Us</a></li>
+                                <li><a class="dropdown-item" href="#">Take Action</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                About <i class="fas fa-chevron-down ms-2"></i>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Mission & Impact</a></li>
+                                <li><a class="dropdown-item" href="#">History</a></li>
+                                <li><a class="dropdown-item" href="#">Press</a></li>
+                                <li><a class="dropdown-item" href="#">Programs</a></li>
+                                <li><a class="dropdown-item" href="#">Careers</a></li>
+                                <li><a class="dropdown-item" href="#">Staff & Board of Directors</a></li>
+                                <li><a class="dropdown-item" href="#">Leadership</a></li>
+                                <li><a class="dropdown-item" href="#">Contact Us</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Second Layer: Main Navigation Bar (Desktop Only) -->
+    <div class="navbar-secondary d-none d-lg-block">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <ul class="main-nav-list">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Issues <i class="fas fa-chevron-down ms-2"></i>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Human Capital Development</a></li>
+                                <li><a class="dropdown-item" href="#">Livelihood & Economic Justice</a></li>
+                                <li><a class="dropdown-item" href="#">Governance & Civil Participation</a></li>
+                                <li><a class="dropdown-item" href="#">Tax Justice & Fiscal Accountability</a></li>
+                                <li><a class="dropdown-item" href="#">Natural Resources Governance</a></li>
+                                <li><a class="dropdown-item" href="#">Gender & Social Inclusion</a></li>
+                                <li><a class="dropdown-item" href="#">Electoral Reforms</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Our Work <i class="fas fa-chevron-down ms-2"></i>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">News & Analysis</a></li>
+                                <li><a class="dropdown-item" href="#">Research & Reports</a></li>
+                                <li><a class="dropdown-item" href="#">Policy Solutions</a></li>
+                                <li><a class="dropdown-item" href="#">Campaigns</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Experts</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Get Involved <i class="fas fa-chevron-down ms-2"></i>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Support Our Work</a></li>
+                                <li><a class="dropdown-item" href="#">Get Involved</a></li>
+                                <li><a class="dropdown-item" href="#">Attend an Event</a></li>
+                                <li><a class="dropdown-item" href="#">Partner With Us</a></li>
+                                <li><a class="dropdown-item" href="#">Take Action</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                About <i class="fas fa-chevron-down ms-2"></i>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Mission & Impact</a></li>
+                                <li><a class="dropdown-item" href="#">History</a></li>
+                                <li><a class="dropdown-item" href="#">Press</a></li>
+                                <li><a class="dropdown-item" href="#">Programs</a></li>
+                                <li><a class="dropdown-item" href="#">Careers</a></li>
+                                <li><a class="dropdown-item" href="#">Staff & Board of Directors</a></li>
+                                <li><a class="dropdown-item" href="#">Leadership</a></li>
+                                <li><a class="dropdown-item" href="#">Contact Us</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Container for spanning logo */
+        .navbar {
+            padding: 1rem 0;
+            box-shadow: none;
+            border-bottom: none;
+            position: relative;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Logo spanning both layers */
+        .logo-spanning {
+            position: absolute;
+            left: 50px;
+            top: 1.5rem;
+            z-index: 1001;
+            height: 140px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .logo-spanning img {
+            height: 80px;
+            width: auto;
+        }
+
+        /* Search container positioned close to logo */
+        .search-container-wrapper {
+            margin-left: 100px;
+            flex-grow: 0;
+        }
+
+        .search-container {
+            position: relative;
+            width: 250px;
+        }
+
+        .search-input {
+            border: none;
+            border-bottom: 2px solid #333;
+            border-radius: 0;
+            padding: 12px 40px 12px 15px;
+            width: 100%;
+            font-size: 14px;
+            font-weight: 700;
+            background-color: white;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border: none;
+            border-bottom: 2px solid #333;
+            outline: none;
+            box-shadow: none;
+        }
+
+        .search-input::placeholder {
+            font-weight: 700;
+            color: #666;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-weight: bold;
+        }
+
+        /* Donate button with play icon and no rounded corners */
+        .btn-donate-nav {
+            background-color: var(--cisd-red);
+            border: none;
+            border-radius: 0;
+            color: white;
+            font-weight: 700;
+            padding: 12px 20px;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-donate-nav .fas.fa-play {
+            font-size: 12px;
+        }
+
+        /* Bold newsletter link - two lines, centered */
+        .newsletter-link {
+            color: var(--cisd-red);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .newsletter-line-1,
+        .newsletter-line-2 {
+            display: block;
+        }
+
+        .newsletter-line-2 {
+            margin-top: 2px;
+        }
+
+        /* Gray social media icons */
+        .social-icons .social-icon {
+            color: #666;
+            font-size: 16px;
+            transition: color 0.3s ease;
+        }
+
+        .social-icons .social-icon:hover {
+            color: var(--cisd-red);
+        }
+
+        /* Second layer navbar positioned under search */
+        .navbar-secondary {
+            background-color: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            margin-top: 0;
+        }
+
+        .main-nav-list {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            list-style: none;
+            margin: 0;
+            margin-left: 100px;
+            padding: 0;
+            gap: 2.5rem;
+        }
+
+        .main-nav-list .nav-item {
+            position: relative;
+        }
+
+        .main-nav-list .nav-link {
+            color: #333 !important;
+            font-weight: 700;
+            font-size: 1rem;
+            text-decoration: none;
+            padding: 0.25rem 0 !important;
+            display: flex;
+            align-items: center;
+            transition: color 0.3s ease;
+            border: none;
+            background: none;
+            text-transform: none;
+        }
+
+        .main-nav-list .nav-link .fas.fa-chevron-down {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .main-nav-list .nav-link:hover {
+            color: var(--cisd-red) !important;
+        }
+
+        .main-nav-list .nav-link:hover .fas.fa-chevron-down {
+            color: var(--cisd-red);
+        }
+
+        .main-nav-list .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background-color: var(--cisd-red);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .main-nav-list .nav-link:hover::after {
+            transform: scaleX(1);
+        }
+
+        /* Dropdown menus */
+        .navbar-secondary .dropdown-menu {
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            border-radius: 0;
+            margin-top: 0;
+            min-width: 280px;
+            padding: 0.5rem 0;
+        }
+
+        .navbar-secondary .dropdown-item {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.9rem;
+            color: #555;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .navbar-secondary .dropdown-item:hover {
+            background-color: #f8f9fa;
+            color: var(--cisd-red);
+            padding-left: 2rem;
+        }
+
+        /* Mobile styles */
+        @media (max-width: 991px) {
+            .navbar-secondary {
+                display: none !important;
+            }
+
+            .navbar-secondary .nav-link .fas.fa-chevron-down {
+                display: none !important;
+            }
+
+            .main-nav-list .nav-link .fas.fa-chevron-down {
+                display: none !important;
+            }
+
+            .navbar .nav-link .fas.fa-chevron-down {
+                display: inline-block !important;
+                font-size: 12px;
+                color: #666;
+                margin-left: 8px;
+            }
+
+            /* Style mobile dropdown toggles */
+            .navbar .dropdown-toggle::after {
+                display: none;
+                /* Hide Bootstrap's default dropdown arrow */
+            }
+
+            /* Ensure only mobile nav icons are visible */
+            .d-lg-none .nav-link .fas.fa-chevron-down {
+                display: inline-block !important;
+            }
+
+            .navbar-secondary,
+            .navbar-secondary *,
+            .main-nav-list,
+            .main-nav-list * {
+                display: none !important;
+                visibility: hidden !important;
+            }
+
+            /* Ensure mobile navigation is visible and properly styled */
+            .navbar .d-lg-none {
+                display: block !important;
+                visibility: visible !important;
+            }
+
+            .navbar .d-lg-none .nav-link {
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+            }
+
+            .navbar .d-lg-none .fas.fa-chevron-down {
+                display: inline-block !important;
+                margin-left: auto !important;
+            }
+
+            .logo-spanning {
+                position: relative;
+                left: auto;
+                top: auto;
+                height: auto;
+            }
+
+            .logo-spanning img {
+                height: 45px;
+            }
+
+            .search-container-wrapper {
+                margin-left: 0;
+                margin-top: 1rem;
+            }
+
+            .search-container {
+                width: 100%;
+            }
+
+            .search-input {
+                border-radius: 0;
+                border: none;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .search-input:focus {
+                border: none;
+                border-bottom: 1px solid #ddd;
+                outline: none;
+                box-shadow: none;
+            }
+
+            .newsletter-link {
+                font-size: 10px;
+                line-height: 1.1;
+            }
+
+            .navbar .nav-item {
+                margin-bottom: 0.5rem;
+            }
+
+            .navbar .nav-link {
+                padding: 0.5rem 0 !important;
+                color: #333 !important;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .navbar .nav-link .fas.fa-chevron-down {
+                font-size: 12px;
+                color: #666;
+            }
+        }
+
+        /* Ensure proper display on desktop */
+        @media (min-width: 992px) {
+            .navbar-secondary {
+                display: block !important;
+            }
+        }
+    </style>
+
+    <!-- Hero Section -->
+    <!-- <section class="hero-section">
+        <div class="container hero-content">
+            <div class="row align-items-center">
+                <div class="col-lg-5">
+                    <div class="hero-image-container">
+                        <div class="hero-image">
+                            <img src="/Users/user/Downloads/hero 1.png" alt="Hero Image" class="img-fluid">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    <span class="hero-badge">DEMOCRACY</span>
+                    <h1 class="hero-title">Reimagining Systems, Empowering People</h1>
+                    <p class="hero-subtitle">Bridging the gap between policy and people through behavioral science,
+                        human-centered design, and participatory development.</p>
+                    <button class="btn btn-hero">READ MORE</button>
+                </div>
+            </div>
+        </div>
+    </section> -->
+    <div class="hero-wrapper">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-container">
+                <!-- Image Container - Breaking out above -->
+                <div class="hero-image-container">
+                    <div class="hero-image-placeholder">
+                        <img src="{% static 'images/hero 1.png' %}" alt="Hero Image" class="img-fluid">
+                        <div>
+                            <!-- <i class="fas fa-image fa-3x mb-3"></i>
+                            <div>
+                                <img src="/Users/user/Downloads/hero 1.png" alt="Hero Image" class="img-fluid">
+                            </div>
+                            <div style="font-size: 14px; margin-top: 10px; color: #999;">
+                                <img src="/Users/user/Downloads/hero 1.png" alt="Hero Image" class="img-fluid">
+                            </div> -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Side -->
+                <div class="hero-content">
+                    <div class="hero-badge">DEMOCRACY</div>
+
+                    <h1 class="hero-title">
+                        Reimagining Systems, Empowering People
+                    </h1>
+
+                    <p class="hero-subtitle">
+                        Bridging the gap between policy and people through behavioral science, human-centered design,
+                        and participatory development.
+                    </p>
+
+                    <a href="#" class="btn-hero">READ MORE</a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Mission Section -->
+    <section class="mission-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="mission-box">
+                        <div class="mission-header">OUR CORE MISSION</div>
+                        <h2 class="mission-title">Bridging the Gap</h2>
+                        <p class="mission-text">CISD exists because development and policy don't always speak the same
+                            language. We bridge the gap between community realities and institutional
+                            frameworks—transforming reforms into people-owned change. Whether through grassroots
+                            engagement, policy advocacy, or human-centered design (HCD), we tackle systemic challenges
+                            where they start—on the ground, with the people.</p>
+                        <a href="#" class="mission-link">LEARN MORE ABOUT OUR APPROACH</a>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="mission-box">
+                        <div class="mission-header">STRATEGIC GOALS</div>
+                        <h2 class="mission-title">2024 - 2028 Goals</h2>
+                        <ul class="list-unstyled mission-text">
+                            <li class="mb-2">• Strengthen policy frameworks for inclusive governance and human capital
+                                development.</li>
+                            <li class="mb-2">• Deepen accountability and budget efficiency in education, health, and
+                                livelihood sectors.</li>
+                            <li class="mb-2">• Mainstream intersectionality in advocacy and programming.</li>
+                            <li class="mb-2">• Shift development approaches from top-down implementation to
+                                locally-driven reform.</li>
+                            <li class="mb-2">• Build long-term, multi-sectoral partnerships and resilient internal
+                                systems.</li>
+                        </ul>
+                        <a href="#" class="mission-link">EXPLORE 2025 REFORMS</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Updates -->
+    <section class="featured-section">
+        <div class="container">
+            <h2 class="section-title">Featured Updates</h2>
+            <div class="section-divider"></div>
+            <p class="section-subtitle">Impactful work at Centre for Inclusive Social Development</p>
+
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <div class="update-card">
+                        <div class="update-image">
+                            <img src="{% static 'images/featured_update_1.png' %}" alt="Featured Update 1"
+                                class="img-fluid">
+                        </div>
+                        <div class="update-content">
+                            <span class="update-tag">ANALYSIS</span>
+                            <h3 class="update-title">Prototyping Water Access in Karamajiji Using HCD</h3>
+                            <p class="update-excerpt">Using human-centered design, CISD worked alongside the Karamajiji
+                                community to co-create and test water solutions that are affordable, sustainable, and
+                                truly meet local needs — turning residents from passive recipients into active
+                                problem-solvers.</p>
+                            <div>
+                                <span class="update-author">Kendall Verhovek</span>
+                                <span class="update-date">// August 5, 2025</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 mb-4">
+                    <div class="update-card">
+                        <div class="update-image">
+                            <img src="{% static 'images/featured_update_2.png' %}" alt="Featured Update 1"
+                                class="img-fluid">
+                        </div>
+                        <div class="update-content">
+                            <span class="update-tag">CAMPAIGN</span>
+                            <h3 class="update-title">Youth Engagement Beyond the Ballot Box Campaign</h3>
+                            <p class="update-excerpt">This campaign equips young Nigerians with the tools, platforms,
+                                and confidence to shape policies, hold leaders accountable, and drive change long after
+                                election day.</p>
+                            <div>
+                                <span class="update-author">Kendall Verhovek</span>
+                                <span class="update-date">// August 5, 2025</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 mb-4">
+                    <div class="update-card">
+                        <div class="update-image">
+                            <img src="{% static 'images/featured_update_3.png' %}" alt="Featured Update 1"
+                                class="img-fluid">
+                        </div>
+                        <div class="update-content">
+                            <span class="update-tag">ANALYSIS</span>
+                            <h3 class="update-title">Gendered Civic Tech Innovations</h3>
+                            <p class="update-excerpt">Designing civic technology platforms that put women's voices and
+                                needs at the center of governance and policy engagement.</p>
+                            <div>
+                                <span class="update-author">Kendall Verhovek</span>
+                                <span class="update-date">// August 5, 2025</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Video Section Wrapper -->
+    <section class="social-issues-spotlight">
+        <div class="container spotlight-container">
+            <div class="row align-items-center">
+                <!-- Content Side -->
+                <div class="col-lg-6">
+                    <div class="spotlight-content">
+                        <div class="spotlight-label">SOCIAL ISSUES SPOTLIGHT</div>
+
+                        <h2 class="spotlight-title">
+                            Advance Inclusive Governance
+                        </h2>
+
+                        <p class="spotlight-description">
+                            Advance Inclusive Governance, Strengthen Transparency & Accountability, Reform Natural
+                            Resource
+                        </p>
+
+                        <div class="spotlight-buttons">
+                            <a href="#" class="btn-video">WATCH VIDEO ▶</a>
+                            <a href="#" class="btn-explore">EXPLORE ISSUES</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Side -->
+                <div class="col-lg-6">
+                    <div class="spotlight-image-container">
+                        <div class="spotlight-image">
+                            <!-- <div class="play-icon"></div> -->
+                            <div class="video-placeholder">
+
+                                <img src="{% static 'images/thumbnail_1.png' %}" alt="Video thumbnail"
+                                    class="img-fluid">
+                                <div class="video-placeholder">
+                                    <div class="play-icon"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Video Section -->
+    <!-- <section class="video-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="video-label">SOCIAL ISSUES SPOTLIGHT</div>
+                    <h2 class="video-title">Advance Inclusive Governance</h2>
+                    <p class="video-text">Advance Inclusive Governance, Strengthen Transparency & Accountability, Reform
+                        Natural Resource</p>
+                    <div>
+                        <button class="btn btn-video">WATCH VIDEO</button>
+                        <button class="btn btn-explore">EXPLORE ISSUES</button>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="video-container">
+                        <img src="{% static 'images/thumbnail_1.png' %}" alt="Featured Update 1" class="img-fluid">
+                        <div class="video-placeholder">
+                            <div class="play-icon"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section> -->
+
+    <!-- Core Issues -->
+    <section class="core-issues-section">
+        <div class="container">
+            <h2 class="section-title">Core Issues</h2>
+            <div class="section-divider"></div>
+
+            <div class="row issue-grid">
+                <div class="col-lg-4">
+                    <div class="issue-item">
+                        <div class="issue-icon">
+                            <img src="{% static 'images/icons/inclusive.png' %}" alt="Core issues icon"
+                                class="img-fluid">
+                        </div>
+                        <h6 class="issue-title">Advance Inclusive Governance</h6>
+                        <span class="issue-arrow">▶</span>
+                    </div>
+
+                    <div class="issue-item">
+                        <div class="issue-icon">
+                            <img src="{% static 'images/icons/inclusive.png' %}" alt="Core issues icon"
+                                class="img-fluid">
+                        </div>
+                        <h6 class="issue-title">Promote Health Equity & Access</h6>
+                        <span class="issue-arrow">▶</span>
+                    </div>
+
+                    <div class="issue-item">
+                        <div class="issue-icon">
+                            <img src="{% static 'images/icons/gender.png' %}" alt="Core issues icon" class="img-fluid">
+                        </div>
+                        <h6 class="issue-title">Champion Gender and Social Inclusion</h6>
+                        <span class="issue-arrow">▶</span>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="issue-item">
+                        <div class="issue-icon">
+                            <img src="{% static 'images/icons/strengthen.png' %}" alt="Core issues icon"
+                                class="img-fluid">
+                        </div>
+                        <h6 class="issue-title">Strengthen Transparency & Accountability</h6>
+                        <span class="issue-arrow">▶</span>
+                    </div>
+
+                    <div class="issue-item">
+                        <div class="issue-icon">
+                            <img src="{% static 'images/icons/empower.png' %}" alt="Core issues icon" class="img-fluid">
+                        </div>
+                        <h6 class="issue-title">Empower Livelihood & Economic Inclusion</h6>
+                        <span class="issue-arrow">▶</span>
+                    </div>
+
+                    <div class="issue-item">
+                        <div class="issue-icon">
+                            <img src="{% static 'images/icons/tech.png' %}" alt="Core issues icon" class="img-fluid">
+                        </div>
+                        <h6 class="issue-title">Gendered Tech Design</h6>
+                        <span class="issue-arrow">▶</span>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="issue-item">
+                        <div class="issue-icon">
+                            <img src="{% static 'images/icons/reform.png' %}" alt="Core issues icon" class="img-fluid">
+                        </div>
+                        <h6 class="issue-title">Reform Natural Resource & Tax Governance</h6>
+                        <span class="issue-arrow">▶</span>
+                    </div>
+
+                    <div class="issue-item">
+                        <div class="issue-icon">
+                            <img src="{% static 'images/icons/civic_tech.png' %}" alt="Core issues icon"
+                                class="img-fluid">
+                        </div>
+                        <h6 class="issue-title">Strengthen Civic Tech & Inclusion</h6>
+                        <span class="issue-arrow">▶</span>
+                    </div>
+
+                    <div class="issue-item">
+                        <div class="issue-icon">
+                            <img src="{% static 'images/icons/Constitution.svg.png' %}" alt="Core issues icon"
+                                class="img-fluid">
+                        </div>
+                        <h6 class="issue-title">AI and Ethics for Governance</h6>
+                        <span class="issue-arrow">▶</span>
+                    </div>
+                </div>
+            </div>
+
+            <p class="core-description">The Centre for Inclusive Social Development works to build a Nigeria that is
+                democratic, just, and free.</p>
+            <div class="text-center">
+                <button class="btn btn-core-issues">EXPLORE CORE ISSUES ▶</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Our Work -->
+    <!-- <section class="work-section">
+        <div class="container">
+            <h2 class="section-title">Our Work</h2>
+            <div class="section-divider"></div>
+            <p class="section-subtitle">Innovative reforms to protect our democracy.</p>
+
+            <div class="work-container">
+                <div class="work-grid">
+                    <div class="work-item">
+                        <div class="work-image" style="background: white;">
+
+                            <img src="{% static 'images/analysis.png' %}" alt="Hero Image" class="img-fluid">
+                          
+                        </div>
+                        <div class="work-label">News & Analysis</div>
+                    </div>
+
+                    <div class="work-item">
+                        <div class="work-image" style="background: white;">
+
+                            <img src="{% static 'images/research.png' %}" alt="Hero Image" class="img-fluid">
+                        </div>
+                        <div class="work-label">Research & Reports</div>
+                    </div>
+
+                    <div class="work-item">
+                        <div class="work-image" style="background: white;">
+
+                            <img src="{% static 'images/policy.png' %}" alt="Hero Image" class="img-fluid">
+                        </div>
+                        <div class="work-label">Policy Solutions</div>
+                    </div>
+
+                    <div class="work-item">
+                        <div class="work-image" style="background: white;">
+
+                            <img src="{% static 'images/experts.png' %}" alt="Hero Image" class="img-fluid">
+                        </div>
+                        <div class="work-label">Experts</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <button class="btn btn-work">VIEW OUR SOLUTIONS ▶</button>
+            </div>
+        </div>
+    </section> --><!-- Our Work Section - Exact Replica --><!-- Our Work Section - Exact Replica -->
+    <!-- Our Work Section - Exact Replica -->
+    <!-- Our Work Section - Exact Replica --><!-- Our Work Section - Exact Replica -->
+    <section class="work-section py-5 bg-white">
+        <div class="container">
+            <h2 class="section-title text-center mb-2">Our Work</h2>
+            <div class="section-divider mx-auto mb-3"></div>
+            <p class="section-subtitle text-center mb-5">Innovative reforms to protect our democracy.</p>
+
+            <div class="work-grid-container border border-primary border-5 px-5 pb-4">
+                <div class="row g-0">
+                    <!-- News & Analysis -->
+                    <div class="col-md-6 pb-0 mb-0">
+                        <div class="work-item pt-5">
+                            <div class="work-label-container mb-0">
+                                <div class="work-accent-line bg-primary mb-2"></div>
+                                <h5 class="fw-bold text-dark mb-0" style="margin-bottom: 2px;">News & Analysis</h5>
+                            </div>
+                            <div class="work-image-container" style="margin-right: 50px;">
+                                <img src="{% static 'images/analysis.png' %}" class="w-100" alt="News & Analysis">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Research & Reports -->
+                    <div class="col-md-6">
+                        <div class="work-item pt-5">
+                            <div class="work-label-container mb-0">
+                                <div class="work-accent-line bg-primary mb-2"></div>
+                                <h5 class="mb-0 fw-bold text-dark">Research & Reports</h5>
+                            </div>
+                            <div class="work-image-container" style="margin-right: 50px;">
+                                <img src="{% static 'images/research.png' %}" class="w-100" alt="Research & Reports">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Policy Solutions -->
+                    <div class="col-md-6">
+                        <div class="work-item">
+                            <div class="work-label-container mb-0">
+                                <div class="work-accent-line bg-primary mb-2"></div>
+                                <h5 class="mb-0 fw-bold text-dark">Policy Solutions</h5>
+                            </div>
+                            <div class="work-image-container" style="margin-right: 50px;">
+                                <img src="{% static 'images/policy.png' %}" class="w-100" alt="Policy Solutions">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Experts -->
+                    <div class="col-md-6">
+                        <div class="work-item">
+                            <div class="work-label-container mb-0">
+                                <div class="work-accent-line bg-primary mb-2"></div>
+                                <h5 class="mb-0 fw-bold text-dark">Experts</h5>
+                            </div>
+                            <div class="work-image-container" style="margin-right: 50px;">
+                                <img src="{% static 'images/experts.png' %}" class="w-100" alt="Experts">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="#" class="btn btn-outline-primary border-2 fw-bold text-uppercase px-4 py-2"
+                    style="border-radius: 0; letter-spacing: 0.5px;">VIEW OUR SOLUTIONS ►</a>
+            </div>
+        </div>
+    </section>
+
+    <style>
+        :root {
+            --cisd-blue: #1e3a8a;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .section-divider {
+            width: 50px;
+            height: 3px;
+            background-color: var(--cisd-blue);
+        }
+
+        .section-subtitle {
+            color: #333;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .work-item {
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .work-label-container {
+            flex-shrink: 0;
+        }
+
+        .work-image-container {
+            flex-grow: 1;
+            display: block;
+            /* No flexbox, so no vertical centering gap */
+            margin-top: 2px;
+            margin-bottom: 0;
+            /* This is now the ONLY space between label and image */
+            padding: 0;
+            /* Remove any internal padding */
+        }
+
+        .work-image-container img {
+            display: block;
+            /* Removes bottom inline gap from images */
+            width: 100%;
+            height: auto;
+            /* Keeps original aspect ratio */
+            max-height: none;
+            /* Remove height restriction */
+            object-fit: contain;
+            margin-bottom: 0;
+            /* Prevent distortion */
+            /* margin: 0; */
+            /* No extra margins */
+        }
+
+        .work-accent-line {
+            width: 30px;
+            height: 3px;
+            margin-bottom: 2px;
+        }
+
+        .work-label-container h5 {
+            font-size: 1.1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .work-grid-container {
+                padding-left: 2rem !important;
+                padding-right: 2rem !important;
+                padding-bottom: 2rem !important;
+            }
+
+            .work-item {
+                height: 350px;
+                padding: 2rem !important;
+            }
+
+            .work-label-container h5 {
+                font-size: 1rem;
+                margin-bottom: 1px;
+            }
+
+            .work-image-container img {
+                max-height: 150px;
+            }
+        }
+    </style>
+
+    <!-- Event Section -->
+    <section class="attend-event-section">
+        <div class="container">
+            <h2 class="section-title">Attend an Event</h2>
+
+            <div class="event-card">
+                <div class="row g-0">
+                    <div class="col-md-5">
+                        <div class="event-image-container">
+                            <img src="{% static 'images/event.png' %}" alt="Virtual Event" class="img-fluid">
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="event-content">
+                            <span class="virtual-event-badge">VIRTUAL EVENT</span>
+                            <div class="event-date">Tuesday, August 19, 2025</div>
+                            <h3 class="event-title">Monthly Learning Jams and Community Dialogues</h3>
+                            <p class="event-speakers">
+                                <strong>Speakers:</strong> Folahan Johnson, George Kacuna, Chinoso Asuma, Nkenna
+                                Williams, Natalie Tennant
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <style>
+        .attend-event-section {
+            padding: 80px 0;
+            background-color: white;
+        }
+
+        .attend-event-section .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+
+        .attend-event-section .event-card {
+            background: white;
+            border-radius: 0;
+            /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
+            overflow: hidden;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .attend-event-section .event-image-container {
+            height: 280px;
+            overflow: hidden;
+        }
+
+        .attend-event-section .event-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .attend-event-section .event-content {
+            padding: 0;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding-top: 0;
+            padding-left: 30px;
+            /* Remove top padding to align with image top */
+        }
+
+        /* NEW CLASS NAME - NO CONFLICTS */
+        .virtual-event-badge {
+            background-color: var(--cisd-blue) !important;
+            color: white !important;
+            padding: 6px 16px !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            border-radius: 0 !important;
+            display: inline-block !important;
+            margin-bottom: 0.1rem !important;
+            /* Reduced from 1.5rem to bring date closer */
+            margin-top: 0rem !important;
+            /* Add top margin to align with image top */
+            position: relative !important;
+            /* Override any absolute positioning */
+            top: auto !important;
+            left: auto !important;
+            width: auto !important;
+            max-width: fit-content !important;
+            /* Only wrap around text content */
+        }
+
+        .attend-event-section .event-date {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .attend-event-section .event-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 1.5rem;
+            line-height: 1.3;
+        }
+
+        .attend-event-section .event-speakers {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .attend-event-section .event-speakers strong {
+            color: #333;
+            font-weight: 600;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .attend-event-section .section-title {
+                font-size: 2rem;
+                margin-bottom: 2rem;
+            }
+
+            .attend-event-section .event-content {
+                height: auto;
+                padding: 1.5rem;
+            }
+
+            .attend-event-section .event-title {
+                font-size: 1.5rem;
+            }
+
+            .attend-event-section .event-image-container {
+                height: 220px;
+            }
+        }
+    </style>
+
+    <!-- Get Involved -->
+    <section class="get-involved-section" x-data="donationForm()">
+        <div class="container">
+            <div class="row align-items-start justify-content-center">
+                <div class="col-lg-5">
+                    <div class="get-involved-content">
+                        <h2 class="donation-title">Get Involved<br>Support Our Work</h2>
+                        <p class="donation-text">Join us in creating sustainable, scalable change by placing communities
+                            at
+                            the centre of reform.</p>
+                        <a href="#" class="mission-link">MORE WAYS TO GIVE</a>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="donation-form">
+                        <div class="donation-amounts">
+                            <button class="amount-btn" :class="{ 'selected': selectedAmount === '5000' }"
+                                @click="selectAmount('5000')">₦5,000</button>
+                            <button class="amount-btn" :class="{ 'selected': selectedAmount === '10000' }"
+                                @click="selectAmount('10000')">₦10,000</button>
+                            <button class="amount-btn" :class="{ 'selected': selectedAmount === '25000' }"
+                                @click="selectAmount('25000')">₦25,000</button>
+                            <button class="amount-btn" :class="{ 'selected': selectedAmount === 'other' }"
+                                @click="selectAmount('other')">Other</button>
+                        </div>
+
+                        <div class="frequency-options">
+                            <div class="checkbox-container">
+                                <div class="custom-checkbox" :class="{ 'checked': frequency === 'one-time' }"
+                                    @click="frequency = 'one-time'"></div>
+                                <label @click="frequency = 'one-time'">One Time</label>
+                            </div>
+                            <div class="checkbox-container">
+                                <div class="custom-checkbox" :class="{ 'checked': frequency === 'monthly' }"
+                                    @click="frequency = 'monthly'"></div>
+                                <label @click="frequency = 'monthly'">Monthly</label>
+                            </div>
+                            <button class="btn btn-donate-nav">
+                                <i class="fas fa-play me-2"></i>DONATE
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Take Action -->
+    <!-- <section class="movement-section">
+        <div class="container">
+            <div class="row align-items-center justify-content-center">
+                <div class="col-lg-6">
+                    <div class="movement-label">TAKE ACTION</div>
+                    <h2 class="movement-title">Join a Movement</h2>
+                    <p class="movement-text">Host a Public Square Dialogue in your LGA</p>
+                    <button class="btn btn-movement">EXPLORE COLLECTION</button>
+                </div>
+                <div class="col-lg-6">
+                    <div class="movement-image">
+                        <img src="{% static 'images/dialogue.png' %}" alt="Core issues icon" class="img-fluid">
+                        [Community Dialogue Image: People in discussion]
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section> -->
+
+    <section class="movement-section">
+        <div class="container">
+            <div class="row align-items-center justify-content-center">
+                <div class="col-lg-5 text-center">
+                    <div class="movement-content">
+                        <div class="movement-label">TAKE ACTION</div>
+                        <h2 class="movement-title">Join a Movement</h2>
+                        <p class="movement-text">Host a Public Square Dialogue in your LGA</p>
+                        <button class="btn btn-movement">EXPLORE COLLECTION</button>
+                    </div>
+                </div>
+                <div class="col-lg-5 text-center">
+                    <div class="movement-image">
+                        <img src="{% static 'images/dialogue.png' %}" alt="Community Dialogue" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter -->
+    <!-- <section class="newsletter-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="newsletter-label">Stay up to date</div>
+                    <h2 class="newsletter-title">Sign up for our Reform Dispatch Newsletter</h2>
+                </div>
+                <div class="col-lg-6">
+                    <form x-data="newsletterForm()">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" class="form-control-custom" x-model="firstName">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" class="form-control-custom" x-model="lastName">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Email Address *</label>
+                                    <input type="email" class="form-control-custom" x-model="email" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Zip Code *</label>
+                                    <input type="text" class="form-control-custom" x-model="zipCode" required>
+                                    <button type="submit" class="btn btn-newsletter mt-2">SIGN ME UP</button>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="privacy-text">We respect <a href="#" class="privacy-link">your privacy</a>.
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section> -->
+
+    <!-- Newsletter - Centered -->
+    <!-- Updated Newsletter Section - Button Fix -->
+    <section class="newsletter-section">
+        <div class="container">
+            <div class="row align-items-start justify-content-center">
+                <div class="col-lg-5">
+                    <div class="newsletter-content">
+                        <div class="newsletter-label">Stay up to date</div>
+                        <h2 class="newsletter-title">Sign up for our Reform Dispatch Newsletter</h2>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <form x-data="newsletterForm()">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" class="form-control-custom" x-model="firstName">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" class="form-control-custom" x-model="lastName">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Email Address *</label>
+                                    <input type="email" class="form-control-custom" x-model="email" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Zip Code *</label>
+                                    <input type="text" class="form-control-custom" x-model="zipCode" required>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="button-container">
+                                    <button type="submit" class="btn btn-newsletter">SIGN ME UP</button>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="privacy-text">We respect <a href="#" class="privacy-link">your privacy</a>.
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <style>
+        /* Newsletter - Centered Styling */
+        .newsletter-section {
+            padding: 80px 0;
+            background-color: #f5f5f5;
+            margin: 25px 0px;
+        }
+
+        .newsletter-content {
+            padding-top: 0;
+            padding-bottom: 2rem;
+            padding-left: 2rem;
+            padding-right: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+        }
+
+        .newsletter-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #666;
+            margin-bottom: 1rem;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .newsletter-label::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background-color: var(--cisd-red);
+        }
+
+        .newsletter-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--cisd-red);
+            line-height: 1.2;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 0rem;
+        }
+
+        .form-label {
+            display: block;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 0.1rem;
+            font-size: 0.9rem;
+        }
+
+        .form-control-custom {
+            width: 100%;
+            padding: 10px;
+            /* border: 1px solid #ddd; */
+            border: none !important;
+            border-bottom: 2px solid #333 !important;
+            background-color: white;
+            font-size: 14px;
+            border-radius: 0;
+        }
+
+        /* Button Container - Forces Left Alignment */
+        .button-container {
+            display: flex;
+            justify-content: flex-end !important;
+            align-items: flex-end !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .btn-newsletter {
+            background-color: var(--cisd-red) !important;
+            border: none !important;
+            color: white !important;
+            padding: 10px 20px !important;
+            font-weight: 600 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            font-size: 14px !important;
+            border-radius: 0 !important;
+            width: auto !important;
+            margin: 0 !important;
+            display: inline-block !important;
+            text-align: center !important;
+        }
+
+        .privacy-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 0.3rem;
+        }
+
+        .privacy-link {
+            color: var(--cisd-blue);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .newsletter-content {
+                margin-bottom: 2rem;
+                text-align: center;
+                align-items: center;
+            }
+
+            .newsletter-title {
+                text-align: center;
+                font-size: 1.8rem;
+            }
+
+            .newsletter-label::after {
+                left: 50%;
+                transform: translateX(-50%);
+            }
+
+            .button-container {
+                justify-content: center !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .newsletter-title {
+                font-size: 1.6rem;
+            }
+
+            .newsletter-content {
+                padding: 1rem;
+            }
+        }
+    </style>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6>Issues</h6>
+                    <div>
+                        <a href="#" class="d-block">Human Capital Development</a>
+                        <a href="#" class="d-block">Livelihood & Economic Just</a>
+                        <a href="#" class="d-block">Governance & Civil Participation</a>
+                        <a href="#" class="d-block">Tax Justice & Fiscal Accountability</a>
+                        <a href="#" class="d-block">Natural Resources Governance</a>
+                        <a href="#" class="d-block">Gender & Social Inclusion</a>
+                        <a href="#" class="d-block">Electoral Reforms</a>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6>Our Work</h6>
+                    <div>
+                        <a href="#" class="d-block">News & Analysis</a>
+                        <a href="#" class="d-block">Research & Reports</a>
+                        <a href="#" class="d-block">Policy Solutions</a>
+                        <a href="#" class="d-block">Campaigns</a>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6>Experts</h6>
+                </div>
+
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6>Get Involved</h6>
+                    <div>
+                        <a href="#" class="d-block">Support Our Work</a>
+                        <a href="#" class="d-block">Get Involved</a>
+                        <a href="#" class="d-block">Attend an Event</a>
+                        <a href="#" class="d-block">Partner With Us</a>
+                        <a href="#" class="d-block">Take Action</a>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <h6>About</h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <a href="#" class="d-block">Mission & Impact</a>
+                            <a href="#" class="d-block">History</a>
+                            <a href="#" class="d-block">Press</a>
+                            <a href="#" class="d-block">Programs</a>
+                            <a href="#" class="d-block">Careers</a>
+                            <a href="#" class="d-block">Staff & Board of Directors</a>
+                            <a href="#" class="d-block">Leadership</a>
+                            <a href="#" class="d-block">Contact Us</a>
+                        </div>
+                        <div class="col-6">
+                            <div class="social-links mt-4">
+                                <a href="#"><i class="fab fa-facebook"></i></a>
+                                <a href="#"><i class="fab fa-twitter"></i></a>
+                                <a href="#"><i class="fab fa-youtube"></i></a>
+                                <a href="#"><i class="fab fa-instagram"></i></a>
+                                <a href="#"><i class="fab fa-tiktok"></i></a>
+                                <a href="#"><i class="fab fa-linkedin"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="d-flex align-items-center">
+                        <img src="{% static 'images/logo_2.png' %}" alt="CISD" class="me-3" style="height: 40px;">
+                        <!-- <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'><rect fill='%23ffffff' width='30' height='30' rx='3'/><text x='35' y='15' font-size='10' font-weight='bold' fill='%23000'>CiSD</text></svg>"
+                            alt="CISD" class="me-3" style="height: 40px;"> -->
+                        <div>
+                            <div style="font-weight: 600;">Abuja Office</div>
+                            <div style="font-size: 0.85rem; color: #ccc;">3rd Floor Donatella Media</div>
+                            <div style="font-size: 0.85rem; color: #ccc;">Plot 398 Constitution Ave</div>
+                            <div style="font-size: 0.85rem; color: #ccc;">Central Business District</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 text-lg-end">
+                    <div style="font-size: 0.85rem; color: #ccc;">
+                        <span>© 2025 Centre for Inclusive Social Development</span>
+                        <a href="#" class="text-decoration-none ms-3" style="color: #ccc;">Privacy Policy</a>
+                        <a href="#" class="text-decoration-none ms-3" style="color: #ccc;">Accessibility</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function donationForm() {
+            return {
+                selectedAmount: '10000',
+                frequency: 'one-time',
+                selectAmount(amount) {
+                    this.selectedAmount = amount;
+                }
+            }
+        }
+
+        function newsletterForm() {
+            return {
+                firstName: '',
+                lastName: '',
+                email: '',
+                zipCode: ''
+            }
+        }
+    </script>
+</body>
+
+</html>

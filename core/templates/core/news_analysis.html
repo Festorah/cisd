@@ -1,0 +1,263 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Articles{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb Section -->
+<section class="breadcrumb-section">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="#">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">News & Analysis</li>
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<!-- Page Header Section -->
+<section class="page-header-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="page-title">News & Analysis</h1>
+                <p class="page-subtitle">Impactful work at Centre for Inclusive Social Development</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Article Hero Section -->
+
+<!-- Hero Section -->
+<div class="hero-wrapper">
+    <section class="hero-section">
+        <div class="hero-container">
+            <!-- Image Container -->
+            <div class="hero-image-container">
+                <div class="hero-image-placeholder">
+                    <img src="{% static 'images/hero 1.png' %}" alt="Hero Image" class="img-fluid">
+                </div>
+            </div>
+
+            <!-- Content Side -->
+            <div class="hero-content">
+                <div class="hero-badge">DEMOCRACY</div>
+                <h1 class="hero-title">Reimagining Systems, Empowering People</h1>
+                <p class="hero-subtitle">
+                    Bridging the gap between policy and people through behavioral science, human-centered design,
+                    and participatory development.
+                </p>
+                <a href="#" class="btn-hero">READ MORE</a>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Featured Articles Section -->
+<section class="featured-articles-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4 mb-4">
+                <div class="article-card">
+                    <div class="article-image">
+                        <img src="{% static 'images/featured_update_2.png' %}" alt="Youth Engagement" class="img-fluid">
+                    </div>
+                    <div class="article-content">
+                        <span class="article-tag campaign">CAMPAIGN</span>
+                        <h3 class="article-title">Youth Engagement Beyond the Ballot Box Campaign</h3>
+                        <p class="article-excerpt">This campaign equips young Nigerians with the tools, platforms,
+                            and confidence to shape policies.</p>
+                        <div class="article-meta">
+                            <span class="article-author">Michael Daramola</span>
+                            <span class="article-date">August 5, 2025</span>
+                        </div>
+                        <a href="#" class="article-read-more">READ MORE</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 mb-4">
+                <div class="article-card">
+                    <div class="article-image">
+                        <img src="{% static 'images/featured_update_3.png' %}" alt="Gender Civic Tech"
+                            class="img-fluid">
+                    </div>
+                    <div class="article-content">
+                        <span class="article-tag analysis">ANALYSIS</span>
+                        <h3 class="article-title">Gender Civic Tech Innovation</h3>
+                        <p class="article-excerpt">Designing civic technology platforms that put women's voices and
+                            needs at the center of governance and policy engagement.</p>
+                        <div class="article-meta">
+                            <span class="article-author">Folahan Johnson</span>
+                            <span class="article-date">August 5, 2025</span>
+                        </div>
+                        <a href="#" class="article-read-more">READ MORE</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 mb-4">
+                <div class="article-card">
+                    <div class="article-image">
+                        <img src="{% static 'images/tax_evasion.png' %}" alt="Tax Evasion" class="img-fluid">
+                    </div>
+                    <div class="article-content">
+                        <span class="article-tag tax-justice">TAX JUSTICE</span>
+                        <h3 class="article-title">Tackling Tax Evasion in Nigeria</h3>
+                        <p class="article-excerpt">New strategies for combating illicit financial flows and
+                            strengthening domestic resource mobilization</p>
+                        <div class="article-meta">
+                            <span class="article-author">Adebayo Toyosi</span>
+                            <span class="article-date">August 5, 2025</span>
+                        </div>
+                        <a href="#" class="article-read-more">READ MORE</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Search Section -->
+<section class="search-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="search-form-container">
+                    <form class="search-form">
+                        <div class="search-input-group">
+                            <input type="text" class="search-field" placeholder="Search">
+                            <button type="submit" class="search-btn">SEARCH</button>
+                            <span class="filter-label">Filter:</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Search Results Section -->
+<section class="search-results-section">
+    <div class="container">
+        <div class="search-results-header">
+            <p class="results-count">Displaying 1 to 10 of 2692 results</p>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="result-card">
+                    <div class="result-image">
+                        <img src="{% static 'images/education_reform.jpg' %}" alt="Education Reform" class="img-fluid">
+                    </div>
+                    <div class="result-content">
+                        <span class="result-tag analysis">ANALYSIS</span>
+                        <h4 class="result-title">Education Reform Strategies</h4>
+                        <p class="result-excerpt">Behavioural insights for improving learning outcomes and
+                            educational access</p>
+                        <div class="result-meta">
+                            <span class="result-date">August 12, 2025</span>
+                            <span class="result-author">Michael Daramola</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="result-card">
+                    <div class="result-image">
+                        <img src="{% static 'images/empathy_government.jpg' %}" alt="Empathy in Government"
+                            class="img-fluid">
+                    </div>
+                    <div class="result-content">
+                        <span class="result-tag explainer">EXPLAINER</span>
+                        <h4 class="result-title">Where is the Empathy in Government</h4>
+                        <p class="result-excerpt">Nigeria, home to over 210 million people, continues to grapple
+                            with deep-rooted poverty. According to the National Bureau of Statistics, over 40% of
+                            the population lives in extreme poverty</p>
+                        <div class="result-meta">
+                            <span class="result-date">March 28, 2025</span>
+                            <span class="result-author">Michael Daramola</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="result-card">
+                    <div class="result-image">
+                        <img src="{% static 'images/civic_empowerment.jpg' %}" alt="Civic Empowerment"
+                            class="img-fluid">
+                    </div>
+                    <div class="result-content">
+                        <span class="result-tag qna">Q&A</span>
+                        <h4 class="result-title">Governance & Civic Empowerment</h4>
+                        <p class="result-excerpt">Promoting citizen engagement in governance processes, advocating
+                            for transparency, accountability, and inclusion in decision-making.</p>
+                        <div class="result-meta">
+                            <span class="result-date">August 5, 2025</span>
+                            <span class="result-author">Folahan Johnson</span>
+                        </div>
+                        <div class="result-tags">
+                            <a href="#" class="tag-link">Civic Participation</a>
+                            <a href="#" class="tag-link">Electoral Reform</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="result-card">
+                    <div class="result-image">
+                        <img src="{% static 'images/systems_change.jpg' %}" alt="Systems Change" class="img-fluid">
+                    </div>
+                    <div class="result-content">
+                        <span class="result-tag analysis">ANALYSIS</span>
+                        <h4 class="result-title">Advancing Equity: CISD at the Forefront of Systems Change Training
+                            with IBP</h4>
+                        <p class="result-excerpt">Seattle voters will decide on Tuesday whether to renew funding for
+                            a voucher program that has made running for office more accessible there.</p>
+                        <div class="result-meta">
+                            <span class="result-date">August 4, 2025</span>
+                            <span class="result-author">Elisha Ekong, Michael Daramola</span>
+                        </div>
+                        <div class="result-tags">
+                            <a href="#" class="tag-link">CISD</a>
+                            <a href="#" class="tag-link">System Change</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-section">
+            <nav aria-label="Search results pagination">
+                <ul class="pagination">
+                    <li class="page-item active">
+                        <a class="page-link" href="#" aria-current="page">1</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">4</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">NEXT</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">LAST</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</section>
+
+{% endblock content %}
