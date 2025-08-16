@@ -1,0 +1,242 @@
+
+<div class="social-share">
+    <h6 class="social-share-title">Share this article</h6>
+    <div class="social-share-buttons">
+        <!-- Twitter -->
+        <a href="https://twitter.com/intent/tweet?text={{ twitter_text|urlencode }}&url={{ article_url|urlencode }}"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="social-btn social-btn-twitter"
+           title="Share on Twitter">
+            <i class="fab fa-twitter"></i>
+            <span>Twitter</span>
+        </a>
+
+        <!-- Facebook -->
+        <a href="https://www.facebook.com/sharer/sharer.php?u={{ article_url|urlencode }}"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="social-btn social-btn-facebook"
+           title="Share on Facebook">
+            <i class="fab fa-facebook-f"></i>
+            <span>Facebook</span>
+        </a>
+
+        <!-- LinkedIn -->
+        <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ article_url|urlencode }}"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="social-btn social-btn-linkedin"
+           title="Share on LinkedIn">
+            <i class="fab fa-linkedin-in"></i>
+            <span>LinkedIn</span>
+        </a>
+
+        <!-- WhatsApp -->
+        <a href="https://wa.me/?text={{ article.title|urlencode }}%20{{ article_url|urlencode }}"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="social-btn social-btn-whatsapp"
+           title="Share on WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+            <span>WhatsApp</span>
+        </a>
+
+        <!-- Email -->
+        <a href="mailto:?subject={{ article.title|urlencode }}&body=I thought you might be interested in this article: {{ article_url|urlencode }}"
+           class="social-btn social-btn-email"
+           title="Share via Email">
+            <i class="fas fa-envelope"></i>
+            <span>Email</span>
+        </a>
+
+        <!-- Copy Link -->
+        <button onclick="copyToClipboard('{{ article_url }}')"
+                class="social-btn social-btn-copy"
+                title="Copy link to clipboard">
+            <i class="fas fa-link"></i>
+            <span>Copy Link</span>
+        </button>
+    </div>
+</div>
+
+<style>
+.social-share {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin: 2rem 0;
+}
+
+.social-share-title {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.social-share-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.social-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    background: white;
+    color: #333;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.social-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    color: white;
+}
+
+.social-btn-twitter:hover {
+    background: #1da1f2;
+}
+
+.social-btn-facebook:hover {
+    background: #4267b2;
+}
+
+.social-btn-linkedin:hover {
+    background: #0077b5;
+}
+
+.social-btn-whatsapp:hover {
+    background: #25d366;
+}
+
+.social-btn-email:hover {
+    background: #6b7280;
+}
+
+.social-btn-copy:hover {
+    background: #059669;
+}
+
+.social-btn i {
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .social-share-buttons {
+        justify-content: center;
+    }
+
+    .social-btn {
+        flex: 1;
+        min-width: 120px;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .social-btn span {
+        display: none;
+    }
+
+    .social-btn {
+        min-width: auto;
+        width: 50px;
+        height: 50px;
+        justify-content: center;
+        border-radius: 50%;
+    }
+}
+</style>
+
+<script>
+function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        // Use modern clipboard API
+        navigator.clipboard.writeText(text).then(function() {
+            showCopyNotification('Link copied to clipboard!');
+        }, function(err) {
+            fallbackCopyTextToClipboard(text);
+        });
+    } else {
+        // Fallback for older browsers
+        fallbackCopyTextToClipboard(text);
+    }
+}
+
+function fallbackCopyTextToClipboard(text) {
+    var textArea = document.createElement("textarea");
+    textArea.value = text;
+
+    // Avoid scrolling to bottom
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+        var successful = document.execCommand('copy');
+        if (successful) {
+            showCopyNotification('Link copied to clipboard!');
+        } else {
+            showCopyNotification('Failed to copy link', 'error');
+        }
+    } catch (err) {
+        showCopyNotification('Failed to copy link', 'error');
+    }
+
+    document.body.removeChild(textArea);
+}
+
+function showCopyNotification(message, type = 'success') {
+    // Create notification element
+    var notification = document.createElement('div');
+    notification.textContent = message;
+    notification.className = 'copy-notification copy-notification-' + type;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#059669' : '#dc2626'};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 9999;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    `;
+
+    document.body.appendChild(notification);
+
+    // Animate in
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+</script>

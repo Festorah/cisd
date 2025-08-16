@@ -11,6 +11,8 @@
     <link href="{% static 'css/latest.css' %}" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.0/cdn.min.js" defer></script>
 
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
     {% block extra_css %}{% endblock %}
 </head>
 
@@ -197,7 +199,16 @@
                     </div>
                 </div>
                 <div class="col-lg-5">
-                    <form x-data="newsletterForm()">
+                    <form x-data="newsletterForm()" @submit.prevent="submitForm()">
+                        {% csrf_token %}
+
+                        <!-- Success/Error Message -->
+                        <div x-show="message" class="alert"
+                            :class="messageType === 'success' ? 'alert-success' : 'alert-danger'"
+                            style="margin-bottom: 1rem;">
+                            <span x-text="message"></span>
+                        </div>
+
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -219,13 +230,16 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="form-label">Zip Code *</label>
-                                    <input type="text" class="form-control-custom" x-model="zipCode" required>
+                                    <label class="form-label">Zip Code</label>
+                                    <input type="text" class="form-control-custom" x-model="zipCode">
                                 </div>
                             </div>
                             <div class="col-12">
                                 <div class="button-container">
-                                    <button type="submit" class="btn btn-newsletter">SIGN ME UP</button>
+                                    <button type="submit" class="btn btn-newsletter" :disabled="isSubmitting">
+                                        <span x-show="!isSubmitting">SIGN ME UP</span>
+                                        <span x-show="isSubmitting">SUBMITTING...</span>
+                                    </button>
                                 </div>
                             </div>
                             <div class="col-12">
@@ -238,6 +252,32 @@
             </div>
         </div>
     </section>
+
+    <style>
+        /* Add these simple styles for the alert messages */
+        .alert {
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .alert-success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+
+        .alert-danger {
+            background-color: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #f87171;
+        }
+
+        .btn-newsletter:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+    </style>
 
     <!-- Footer -->
     <footer class="footer">
@@ -351,9 +391,80 @@
                 firstName: '',
                 lastName: '',
                 email: '',
-                zipCode: ''
+                zipCode: '',
+                isSubmitting: false,
+                message: '',
+                messageType: '',
+
+                async submitForm() {
+                    // Reset messages
+                    this.message = '';
+                    this.messageType = '';
+
+                    // Basic validation
+                    if (!this.email.trim()) {
+                        this.message = 'Email is required';
+                        this.messageType = 'error';
+                        return;
+                    }
+
+                    this.isSubmitting = true;
+
+                    try {
+                        // Get CSRF token from the form
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                        console.log('Submitting form with data:', {
+                            first_name: this.firstName,
+                            last_name: this.lastName,
+                            email: this.email,
+                            zip_code: this.zipCode
+                        });
+
+                        // Submit to API
+                        const response = await fetch('/api/subscribe/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken,
+                            },
+                            body: JSON.stringify({
+                                first_name: this.firstName.trim(),
+                                last_name: this.lastName.trim(),
+                                email: this.email.trim(),
+                                zip_code: this.zipCode.trim(),
+                                frequency: 'weekly'
+                            })
+                        });
+
+                        console.log('Response status:', response.status);
+                        const data = await response.json();
+                        console.log('Response data:', data);
+
+                        if (response.ok && data.success) {
+                            this.message = data.message || 'Successfully subscribed!';
+                            this.messageType = 'success';
+                            // Reset form
+                            this.firstName = '';
+                            this.lastName = '';
+                            this.email = '';
+                            this.zipCode = '';
+                        } else {
+                            this.message = data.error || 'Something went wrong. Please try again.';
+                            this.messageType = 'error';
+                        }
+
+                    } catch (error) {
+                        console.error('Error:', error);
+                        this.message = 'Network error. Please try again.';
+                        this.messageType = 'error';
+                    } finally {
+                        this.isSubmitting = false;
+                    }
+                }
             }
         }
+
     </script>
 </body>
 

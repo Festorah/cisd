@@ -1,0 +1,411 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}News & Analysis - Centre for Inclusive Social Development{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Filter dropdowns in search section */
+    .filter-dropdown {
+        margin-left: 1rem;
+        padding: 0.5rem;
+        border: 2px solid #e9ecef;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        background: white;
+        min-width: 150px;
+    }
+
+    .filter-dropdown:focus {
+        border-color: #0EA5E9;
+        outline: none;
+    }
+
+    .clear-filters-btn {
+        margin-left: 1rem;
+        background: #6c757d;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: background-color 0.3s ease;
+    }
+
+    .clear-filters-btn:hover {
+        background: #5a6268;
+        color: white;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 3rem 0;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin: 2rem 0;
+    }
+
+    .no-results h3 {
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .results-count {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .sort-options {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .sort-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .sort-select {
+        padding: 0.5rem;
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+
+    /* Responsive adjustments for search filters */
+    @media (max-width: 768px) {
+        .search-input-group {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+        }
+
+        .filter-dropdown,
+        .clear-filters-btn {
+            margin-left: 0;
+            margin-top: 0.5rem;
+        }
+
+        .results-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<!-- Breadcrumb Section -->
+<section class="breadcrumb-section">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">News & Analysis</li>
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<!-- Page Header Section -->
+<section class="page-header-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="page-title">News & Analysis</h1>
+                <p class="page-subtitle">Impactful work at Centre for Inclusive Social Development</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Articles Hero Section -->
+{% if articles %}
+    {% with featured_articles=articles|slice:":3" %}
+        {% if featured_articles %}
+        <div class="hero-wrapper">
+            <section class="hero-section">
+                <div class="hero-container">
+                    <!-- Featured Article Image -->
+                    <div class="hero-image-container">
+                        <div class="hero-image-placeholder">
+                            {% with first_article=featured_articles.0 %}
+                                {% if first_article.featured_image %}
+                                    <img src="{{ first_article.featured_image.cloudinary_url }}" alt="{{ first_article.title }}" class="img-fluid">
+                                {% else %}
+                                    <img src="{% static 'images/hero 1.png' %}" alt="Hero Image" class="img-fluid">
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+
+                    <!-- Featured Article Content -->
+                    <div class="hero-content">
+                        {% with first_article=featured_articles.0 %}
+                            <div class="hero-badge">{{ first_article.category.display_name|upper }}</div>
+                            <h1 class="hero-title">{{ first_article.title }}</h1>
+                            <p class="hero-subtitle">{{ first_article.excerpt }}</p>
+                            <a href="{% url 'article_detail' slug=first_article.slug %}" class="btn-hero">READ MORE</a>
+                        {% endwith %}
+                    </div>
+                </div>
+            </section>
+        </div>
+        {% endif %}
+    {% endwith %}
+{% endif %}
+
+<!-- Featured Articles Section -->
+<section class="featured-articles-section">
+    <div class="container">
+        <div class="row">
+            {% for article in featured_articles|slice:":3" %}
+            <div class="col-lg-4 mb-4">
+                <div class="article-card">
+                    <div class="article-image">
+                        {% if article.featured_image %}
+                            <img src="{{ article.featured_image.cloudinary_url }}" alt="{{ article.title }}" class="img-fluid">
+                        {% else %}
+                            <img src="{% static 'images/hero 1.png' %}" alt="{{ article.title }}" class="img-fluid">
+                        {% endif %}
+                    </div>
+                    <div class="article-content">
+                        <span class="article-tag {{ article.category.name }}">{{ article.category.display_name|upper }}</span>
+                        <h3 class="article-title">{{ article.title }}</h3>
+                        <p class="article-excerpt">{{ article.excerpt|truncatewords:20 }}</p>
+                        <div class="article-meta">
+                            <span class="article-author">{{ article.author.name }}</span>
+                            <span class="article-date">{{ article.published_date|date:"F j, Y" }}</span>
+                        </div>
+                        <a href="{% url 'article_detail' slug=article.slug %}" class="article-read-more">READ MORE</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Search Section -->
+<section class="search-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="search-form-container">
+                    <form method="GET" action="{% url 'articles' %}" class="search-form">
+                        <div class="search-input-group">
+                            <input
+                                type="text"
+                                name="search"
+                                class="search-field"
+                                placeholder="Search"
+                                value="{{ search_query }}"
+                            >
+                            <button type="submit" class="search-btn">SEARCH</button>
+                            <span class="filter-label">Filter:</span>
+
+                            <!-- Category Filter -->
+                            <select name="category" class="filter-dropdown" onchange="this.form.submit()">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.name }}"
+                                        {% if selected_category == category.name %}selected{% endif %}>
+                                        {{ category.display_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+
+                            <!-- Tag Filter -->
+                            <select name="tag" class="filter-dropdown" onchange="this.form.submit()">
+                                <option value="">All Topics</option>
+                                {% for tag in popular_tags %}
+                                    <option value="{{ tag.slug }}"
+                                        {% if selected_tag == tag.slug %}selected{% endif %}>
+                                        {{ tag.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+
+                            <!-- Clear Filters -->
+                            {% if search_query or selected_category or selected_tag %}
+                            <a href="{% url 'articles' %}" class="clear-filters-btn">Clear</a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Search Results Section -->
+<section class="search-results-section">
+    <div class="container">
+        <!-- Results Header -->
+        <div class="results-header">
+            <div>
+                <p class="results-count">
+                    {% if search_query %}
+                        Showing {{ articles|length }} of {{ total_results }} results for "<strong>{{ search_query }}</strong>"
+                    {% elif selected_category or selected_tag %}
+                        Showing {{ articles|length }} of {{ total_results }} filtered results
+                    {% else %}
+                        Showing {{ articles|length }} of {{ total_results }} articles
+                    {% endif %}
+                </p>
+                {% if search_query or selected_category or selected_tag %}
+                <p class="text-muted small">
+                    Active filters:
+                    {% if search_query %}<span class="badge bg-primary">Search: "{{ search_query }}"</span>{% endif %}
+                    {% if selected_category %}<span class="badge bg-secondary">Category: {{ selected_category }}</span>{% endif %}
+                    {% if selected_tag %}<span class="badge bg-info">Tag: {{ selected_tag }}</span>{% endif %}
+                </p>
+                {% endif %}
+            </div>
+
+            <div class="sort-options">
+                <span class="sort-label">Sort by:</span>
+                <select class="sort-select" onchange="updateSort(this.value)">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="popular">Most Popular</option>
+                    <option value="title">Title A-Z</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Articles Grid -->
+        {% if articles %}
+        <div class="row">
+            {% for article in articles %}
+            <div class="col-lg-6 mb-4">
+                <div class="result-card">
+                    <div class="result-image">
+                        {% if article.featured_image %}
+                            <img src="{{ article.featured_image.cloudinary_url }}" alt="{{ article.title }}" class="img-fluid">
+                        {% else %}
+                            <img src="{% static 'images/hero 1.png' %}" alt="{{ article.title }}" class="img-fluid">
+                        {% endif %}
+                    </div>
+                    <div class="result-content">
+                        <span class="result-tag analysis">{{ article.category.display_name|upper }}</span>
+                        <h4 class="result-title">{{ article.title }}</h4>
+                        <p class="result-excerpt">{{ article.excerpt|truncatewords:25 }}</p>
+                        <div class="result-meta">
+                            <span class="result-date">{{ article.published_date|date:"M j, Y" }}</span>
+                            <span class="result-author">{{ article.author.name }}</span>
+                        </div>
+                        {% if article.tags.all %}
+                        <div class="result-tags">
+                            {% for tag in article.tags.all|slice:":3" %}
+                            <a href="?tag={{ tag.slug }}" class="tag-link">{{ tag.name }}</a>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="pagination-section">
+            <nav aria-label="Search results pagination">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}page={{ page_obj.previous_page_number }}">PREV</a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <a class="page-link" href="#" aria-current="page">{{ num }}</a>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}page={{ page_obj.next_page_number }}">NEXT</a>
+                        </li>
+                        {% if page_obj.number < page_obj.paginator.num_pages|add:'-1' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}page={{ page_obj.paginator.num_pages }}">LAST</a>
+                        </li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- No Results -->
+        <div class="no-results">
+            <h3>No articles found</h3>
+            {% if search_query %}
+                <p>Sorry, we couldn't find any articles matching "<strong>{{ search_query }}</strong>".</p>
+                <p>Try adjusting your search terms or browse our categories below.</p>
+            {% elif selected_category or selected_tag %}
+                <p>No articles found with the current filters.</p>
+                <p><a href="{% url 'articles' %}">View all articles</a> or try different filter options.</p>
+            {% else %}
+                <p>No articles have been published yet.</p>
+            {% endif %}
+
+            {% if categories %}
+            <div class="mt-4">
+                <h5>Browse by Category:</h5>
+                <div class="d-flex flex-wrap gap-2 justify-content-center">
+                    {% for category in categories %}
+                    <a href="?category={{ category.name }}" class="btn btn-outline-primary btn-sm">
+                        {{ category.display_name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+// Sort functionality
+function updateSort(sortValue) {
+    const url = new URL(window.location);
+    url.searchParams.set('sort', sortValue);
+    window.location.href = url.toString();
+}
+
+// Preserve sort parameter
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sortValue = urlParams.get('sort');
+    if (sortValue) {
+        const sortSelect = document.querySelector('.sort-select');
+        if (sortSelect) {
+            sortSelect.value = sortValue;
+        }
+    }
+});
+</script>
+
+{% endblock content %}
