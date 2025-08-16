@@ -1,0 +1,246 @@
+{% load static %}
+{% load article_tags %}
+
+<div class="article-card">
+    <div class="article-image">
+        {% if article.featured_image %}
+            <img src="{{ article.featured_image.cloudinary_url }}" alt="{{ article.title }}" class="img-fluid">
+        {% else %}
+            <img src="{% static 'images/hero 1.png' %}" alt="{{ article.title }}" class="img-fluid">
+        {% endif %}
+
+        <!-- Overlay badges -->
+        <div class="article-badges">
+            {% if article.is_breaking %}
+                <span class="badge badge-breaking">BREAKING</span>
+            {% elif article.is_featured %}
+                <span class="badge badge-featured">FEATURED</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="article-content">
+        <span class="article-tag {{ article.category.name }}"
+              style="background-color: {{ article.category.color_code }};">
+            {{ article.category.display_name|upper }}
+        </span>
+
+        <h3 class="article-title">
+            <a href="{% url 'article_detail' slug=article.slug %}" class="article-link">
+                {{ article.title }}
+            </a>
+        </h3>
+
+        {% if show_excerpt %}
+        <p class="article-excerpt">{{ article.excerpt|truncate_smart:120 }}</p>
+        {% endif %}
+
+        <div class="article-meta">
+            <div class="meta-left">
+                <span class="article-author">{{ article.author.name }}</span>
+                <span class="article-date">{{ article.published_date|date:"M j, Y" }}</span>
+            </div>
+
+            {% if show_stats %}
+            <div class="meta-right">
+                <span class="article-stat">
+                    <i class="fas fa-eye"></i> {{ article.view_count|format_number }}
+                </span>
+                <span class="article-stat">
+                    <i class="fas fa-clock"></i> {{ article.reading_time }} min
+                </span>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if article.tags.exists %}
+        <div class="article-tags">
+            {% for tag in article.tags.all|slice:":3" %}
+            <a href="?tag={{ tag.slug }}" class="tag-link">{{ tag.name }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <a href="{% url 'article_detail' slug=article.slug %}" class="article-read-more">
+            READ MORE <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+</div>
+
+<style>
+.article-card {
+    position: relative;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.article-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.article-image {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.article-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.article-card:hover .article-image img {
+    transform: scale(1.05);
+}
+
+.article-badges {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 2;
+}
+
+.badge-breaking {
+    background: #dc2626;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    animation: pulse 2s infinite;
+}
+
+.badge-featured {
+    background: #059669;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.article-content {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.article-tag {
+    display: inline-block;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+}
+
+.article-title {
+    margin: 0 0 1rem 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.4;
+    flex: 0 0 auto;
+}
+
+.article-link {
+    color: #333;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.article-link:hover {
+    color: #0EA5E9;
+}
+
+.article-excerpt {
+    color: #6b7280;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+    flex: 1;
+}
+
+.article-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.meta-left {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.meta-right {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.article-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.article-tags {
+    margin-bottom: 1rem;
+}
+
+.tag-link {
+    display: inline-block;
+    background: #f3f4f6;
+    color: #6b7280;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    text-decoration: none;
+    margin-right: 0.5rem;
+    margin-bottom: 0.25rem;
+    transition: all 0.3s ease;
+}
+
+.tag-link:hover {
+    background: #0EA5E9;
+    color: white;
+}
+
+.article-read-more {
+    color: #0EA5E9;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: color 0.3s ease;
+    margin-top: auto;
+}
+
+.article-read-more:hover {
+    color: #0284c7;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+</style>

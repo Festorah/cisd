@@ -1,23 +1,27 @@
 import json
 import logging
+import re
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
+from django.core.validators import validate_email
 from django.db import models, transaction
 from django.db.models import F, Prefetch, Q
 from django.http import HttpResponseRedirect, JsonResponse
+from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
 from .forms import ArticleForm, ContentSectionFormSet
@@ -105,10 +109,10 @@ class HomePageView(ListView):
 
 
 class ArticleListView(ListView):
-    """News & Analysis listing page"""
+    """Enhanced News & Analysis listing page with search, filtering, and sorting"""
 
     model = Article
-    template_name = "core/news_analysis.html"
+    template_name = "core/list_articles.html"
     context_object_name = "articles"
     paginate_by = 10
 
@@ -123,6 +127,7 @@ class ArticleListView(ListView):
                 | Q(excerpt__icontains=search_query)
                 | Q(content_sections__content__icontains=search_query)
                 | Q(tags__name__icontains=search_query)
+                | Q(author__name__icontains=search_query)
             ).distinct()
 
         # Category filter
@@ -139,11 +144,38 @@ class ArticleListView(ListView):
         if is_admin_user(self.request.user):
             status_filter = self.request.GET.get("status")
             if status_filter:
-                queryset = Article.objects.filter(status=status_filter).select_related(
-                    "category", "author", "featured_image"
+                queryset = (
+                    Article.objects.filter(status=status_filter)
+                    .select_related("category", "author", "featured_image")
+                    .prefetch_related("tags")
                 )
 
-        return queryset.order_by("-published_date")
+        # If no filters are applied, exclude the featured articles that will be shown in the hero/featured section
+        if not any([search_query, category, tag]):
+            # Get featured article IDs to exclude from main results
+            featured_ids = Article.objects.filter(
+                status="published", is_featured=True
+            ).values_list("id", flat=True)[:4]
+
+            if featured_ids:
+                queryset = queryset.exclude(id__in=featured_ids)
+
+        # Sorting functionality
+        sort_by = self.request.GET.get("sort", "newest")
+        if sort_by == "newest":
+            queryset = queryset.order_by("-published_date", "-created_at")
+        elif sort_by == "oldest":
+            queryset = queryset.order_by("published_date", "created_at")
+        elif sort_by == "popular":
+            queryset = queryset.order_by("-view_count", "-published_date")
+        elif sort_by == "title":
+            queryset = queryset.order_by("title")
+        elif sort_by == "updated":
+            queryset = queryset.order_by("-updated_at")
+        else:
+            queryset = queryset.order_by("-published_date", "-created_at")
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -152,18 +184,139 @@ class ArticleListView(ListView):
         context.update(
             {
                 "categories": Category.objects.filter(is_active=True).order_by(
-                    "sort_order"
+                    "sort_order", "display_name"
                 ),
                 "popular_tags": Tag.objects.filter(is_featured=True).order_by(
-                    "-usage_count"
-                )[:10],
+                    "-usage_count", "name"
+                )[
+                    :15
+                ],  # Limit to top 15 tags for UI
                 "search_query": self.request.GET.get("search", ""),
                 "selected_category": self.request.GET.get("category", ""),
                 "selected_tag": self.request.GET.get("tag", ""),
-                "total_results": self.get_queryset().count(),
+                "selected_status": self.request.GET.get("status", ""),
+                "selected_sort": self.request.GET.get("sort", "newest"),
                 "is_admin": is_admin_user(self.request.user),
             }
         )
+
+        # Get total results count for display
+        total_queryset = optimize_database_queries().get_published_articles()
+
+        # Apply the same filters to get accurate count
+        if context["search_query"]:
+            total_queryset = total_queryset.filter(
+                Q(title__icontains=context["search_query"])
+                | Q(excerpt__icontains=context["search_query"])
+                | Q(content_sections__content__icontains=context["search_query"])
+                | Q(tags__name__icontains=context["search_query"])
+                | Q(author__name__icontains=context["search_query"])
+            ).distinct()
+
+        if context["selected_category"]:
+            total_queryset = total_queryset.filter(
+                category__name=context["selected_category"]
+            )
+
+        if context["selected_tag"]:
+            total_queryset = total_queryset.filter(tags__slug=context["selected_tag"])
+
+        # Exclude featured articles if no filters
+        if not any(
+            [
+                context["search_query"],
+                context["selected_category"],
+                context["selected_tag"],
+            ]
+        ):
+            featured_ids = Article.objects.filter(
+                status="published", is_featured=True
+            ).values_list("id", flat=True)[:4]
+
+            if featured_ids:
+                total_queryset = total_queryset.exclude(id__in=featured_ids)
+
+        context["total_results"] = total_queryset.count()
+
+        # Get featured articles for hero and featured sections
+        if not any(
+            [
+                context["search_query"],
+                context["selected_category"],
+                context["selected_tag"],
+            ]
+        ):
+            # Get featured articles for the hero section and featured section
+            featured_articles = (
+                Article.objects.filter(status="published", is_featured=True)
+                .select_related("category", "author", "featured_image")
+                .order_by("-published_date")[:4]
+            )
+
+            # If we don't have enough featured articles, get recent ones
+            if featured_articles.count() < 4:
+                recent_articles = (
+                    Article.objects.filter(status="published")
+                    .exclude(id__in=featured_articles.values_list("id", flat=True))
+                    .select_related("category", "author", "featured_image")
+                    .order_by("-published_date")[: 4 - featured_articles.count()]
+                )
+
+                context["featured_articles"] = list(featured_articles) + list(
+                    recent_articles
+                )
+            else:
+                context["featured_articles"] = featured_articles
+        else:
+            # When filtering, don't show featured articles section
+            context["featured_articles"] = []
+
+        # Add active filters summary for display
+        active_filters = []
+        if context["search_query"]:
+            active_filters.append(f'Search: "{context["search_query"]}"')
+        if context["selected_category"]:
+            category_obj = Category.objects.filter(
+                name=context["selected_category"]
+            ).first()
+            if category_obj:
+                active_filters.append(f"Category: {category_obj.display_name}")
+        if context["selected_tag"]:
+            tag_obj = Tag.objects.filter(slug=context["selected_tag"]).first()
+            if tag_obj:
+                active_filters.append(f"Topic: {tag_obj.name}")
+
+        context["active_filters"] = active_filters
+        context["has_filters"] = len(active_filters) > 0
+
+        # Add sorting options for the template
+        context["sort_options"] = [
+            ("newest", "Newest First"),
+            ("oldest", "Oldest First"),
+            ("popular", "Most Popular"),
+            ("title", "Title A-Z"),
+            ("updated", "Recently Updated"),
+        ]
+
+        # Add pagination info
+        if context.get("is_paginated"):
+            page_obj = context["page_obj"]
+            # Calculate showing range
+            start_index = (page_obj.number - 1) * self.paginate_by + 1
+            end_index = min(
+                page_obj.number * self.paginate_by, page_obj.paginator.count
+            )
+            context["showing_start"] = start_index
+            context["showing_end"] = end_index
+            context["total_count"] = page_obj.paginator.count
+
+        # Add reading time calculation for all articles
+        for article in context["articles"]:
+            if not hasattr(article, "_reading_time_calculated"):
+                # This will trigger the property calculation
+                _ = article.reading_time
+                article._reading_time_calculated = True
+
         return context
 
 
@@ -732,61 +885,48 @@ def bulk_article_action(request):
 
 
 @api_view(["POST"])
+@permission_classes([AllowAny])  # This is the key fix!
+@csrf_exempt
 def subscribe_newsletter(request):
     """Handle newsletter subscriptions"""
     try:
-        serializer = SubscriberSerializer(data=request.data)
+        email = request.data.get("email", "").strip().lower()
 
-        if serializer.is_valid():
-            email = serializer.validated_data["email"]
-
-            subscriber, created = Subscriber.objects.get_or_create(
-                email=email,
-                defaults={
-                    **serializer.validated_data,
-                    "confirmed_at": timezone.now(),
-                    "source": request.META.get("HTTP_REFERER", "website"),
-                },
-            )
-
-            if not created and subscriber.unsubscribed_at:
-                # Reactivate subscriber
-                subscriber.unsubscribed_at = None
-                subscriber.is_active = True
-                for attr, value in serializer.validated_data.items():
-                    setattr(subscriber, attr, value)
-                subscriber.save()
-                message = "Welcome back! Your subscription has been reactivated."
-            elif created:
-                message = "Successfully subscribed to newsletter!"
-            else:
-                message = "You are already subscribed to our newsletter."
-
+        if not email:
             return Response(
-                {
-                    "success": True,
-                    "message": message,
-                    "subscriber_id": str(subscriber.id),
-                }
+                {"success": False, "error": "Email is required"}, status=400
             )
 
-        return Response(
-            {"success": False, "errors": serializer.errors},
-            status=status.HTTP_400_BAD_REQUEST,
+        # Simple validation
+        from django.core.exceptions import ValidationError
+        from django.core.validators import validate_email
+
+        try:
+            validate_email(email)
+        except ValidationError:
+            return Response({"success": False, "error": "Invalid email"}, status=400)
+
+        # Create subscriber
+        subscriber, created = Subscriber.objects.get_or_create(
+            email=email,
+            defaults={
+                "first_name": request.data.get("first_name", "")[:100],
+                "last_name": request.data.get("last_name", "")[:100],
+                "zip_code": request.data.get("zip_code", "")[:20],
+                "frequency": "weekly",
+                "is_active": True,
+                "confirmed_at": timezone.now(),
+                "source": "website",
+            },
         )
+
+        message = "Successfully subscribed!" if created else "Already subscribed!"
+        return Response({"success": True, "message": message})
 
     except Exception as e:
-        logger.error(f"Newsletter subscription error: {str(e)}")
-        return Response(
-            {
-                "success": False,
-                "error": "An error occurred while processing your subscription",
-            },
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+        return Response({"success": False, "error": "Something went wrong"}, status=500)
 
 
-# Form-based views for traditional admin interface
 @login_required
 @user_passes_test(is_admin_user)
 def article_create_view(request):
