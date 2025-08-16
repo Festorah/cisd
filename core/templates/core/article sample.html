@@ -1,0 +1,507 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}{{ article.title }} - Centre for Inclusive Social Development{% endblock %}
+
+{% block extra_css %}
+
+<link href="{% static 'css/article_details.css' %}" rel="stylesheet">
+<style>
+    /* Related Articles Three Column Layout */
+    .related-articles-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .related-card-column {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .related-articles-list {
+        background: white;
+        padding: 0;
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        height: fit-content;
+    }
+
+    .related-articles-list-header {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-bottom: 3px solid #0EA5E9;
+        margin-bottom: 0;
+    }
+
+    .related-articles-list-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #333;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .related-articles-list-content {
+        padding: 0;
+    }
+
+    .related-article-item {
+        padding: 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        transition: background-color 0.3s ease;
+    }
+
+    .related-article-item:last-child {
+        border-bottom: none;
+    }
+
+    .related-article-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .related-article-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #333;
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+        text-decoration: none;
+    }
+
+    .related-article-title:hover {
+        color: #0EA5E9;
+    }
+
+    .related-article-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: #666;
+    }
+
+    .related-article-date {
+        color: #666;
+    }
+
+    .related-article-author {
+        color: #0EA5E9;
+        font-weight: 500;
+    }
+
+    .meta-separator {
+        color: #0EA5E9;
+        font-weight: 700;
+    }
+
+    .more-news-link {
+        display: block;
+        padding: 1.5rem;
+        text-align: center;
+        background: #f8f9fa;
+        color: #0EA5E9;
+        font-weight: 700;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-decoration: none;
+        border-top: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .more-news-link:hover {
+        background: #0EA5E9;
+        color: white;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+        .related-articles-container {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .related-card {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .related-articles-list {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .related-articles-container {
+            gap: 1.5rem;
+        }
+
+        .related-article-item {
+            padding: 1rem;
+        }
+
+        .related-articles-list-header {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock extra_css %}
+{% block content %}
+<div x-data="articleApp()">
+
+    <!-- Breadcrumb -->
+    <section class="breadcrumb-section">
+        <div class="container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="#">Home</a></li>
+                    <li class="breadcrumb-item"><a href="#">Our Work</a></li>
+                    <li class="breadcrumb-item"><a href="#">Research & Reports</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ article.title|truncatewords:5 }}</li>
+                </ol>
+            </nav>
+        </div>
+    </section>
+
+    <!-- Article Hero -->
+    <section class="article-hero">
+        <div class="container">
+            <div class="article-hero-container">
+                <div class="article-content-side" x-data="{ editMode: false }">
+                    <div class="article-badge" x-text="article.category.toUpperCase()"></div>
+
+                    <template x-if="!editMode">
+                        <h1 class="article-title" x-text="article.title" @click="isAdmin && (editMode = true)"></h1>
+                    </template>
+
+                    <template x-if="editMode">
+                        <div class="mb-3">
+                            <input type="text" class="form-control-custom" x-model="article.title"
+                                @blur="editMode = false; saveField('title', article.title)">
+                        </div>
+                    </template>
+
+                    <p class="article-excerpt" x-text="article.excerpt"></p>
+
+                    <div class="article-meta">
+                        <div class="author-avatar" x-text="getInitials(article.author)"></div>
+                        <div class="author-info">
+                            <p class="author-name" x-text="article.author"></p>
+                            <p class="publish-date" x-text="'PUBLISHED: ' + article.publishDate"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="article-image-side">
+                    <img :src="article.mainImage" alt="Article main image" class="article-main-image">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Article Body -->
+    <section class="article-body">
+        <div class="container">
+            <div class="article-content">
+                <template x-for="(section, index) in article.content" :key="index">
+                    <div>
+                        <template x-if="section.type === 'paragraph'">
+                            <p x-html="section.text" @click="isAdmin && editContent(index)"></p>
+                        </template>
+
+                        <template x-if="section.type === 'heading'">
+                            <h3 x-text="section.text" @click="isAdmin && editContent(index)"></h3>
+                        </template>
+
+                        <template x-if="section.type === 'image'">
+                            <div>
+                                <img :src="section.src" :alt="section.alt" class="content-image">
+                                <p class="image-caption" x-text="section.caption"></p>
+                            </div>
+                        </template>
+
+                        <template x-if="section.type === 'quote'">
+                            <div class="quote-block" x-text="section.text"></div>
+                        </template>
+
+                        <template x-if="section.type === 'interview'">
+                            <div class="interview-section">
+                                <p class="interview-question" x-text="section.question"></p>
+                                <p class="interview-answer" x-text="section.answer"></p>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </section>
+
+    <!-- Related Articles -->
+    <section class="related-articles">
+        <div class="container">
+            <h2 class="section-title">Related Articles</h2>
+
+            <div class="related-articles-container">
+                <!-- First Related Article Card -->
+                <div class="related-card-column">
+                    <div class="related-card">
+                        <img :src="relatedArticles[0].image" :alt="relatedArticles[0].title" class="related-image">
+                        <div class="related-content">
+                            <span class="related-tag" :class="relatedArticles[0].category"
+                                x-text="relatedArticles[0].category.toUpperCase()"></span>
+                            <h3 class="related-title" x-text="relatedArticles[0].title"></h3>
+                            <p class="related-excerpt" x-text="relatedArticles[0].excerpt"></p>
+                            <div class="related-meta">
+                                <span x-text="relatedArticles[0].author"></span>
+                                <span x-text="relatedArticles[0].date"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Second Related Article Card -->
+                <div class="related-card-column">
+                    <div class="related-card">
+                        <img :src="relatedArticles[1].image" :alt="relatedArticles[1].title" class="related-image">
+                        <div class="related-content">
+                            <span class="related-tag" :class="relatedArticles[1].category"
+                                x-text="relatedArticles[1].category.toUpperCase()"></span>
+                            <h3 class="related-title" x-text="relatedArticles[1].title"></h3>
+                            <p class="related-excerpt" x-text="relatedArticles[1].excerpt"></p>
+                            <div class="related-meta">
+                                <span x-text="relatedArticles[1].author"></span>
+                                <span x-text="relatedArticles[1].date"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Third Column - Related Articles List -->
+                <div class="related-articles-list">
+                    <div class="related-articles-list-header">
+                        <h3 class="related-articles-list-title">Related Articles</h3>
+                    </div>
+                    <div class="related-articles-list-content">
+                        <template x-for="listArticle in relatedArticlesList" :key="listArticle.id">
+                            <div class="related-article-item">
+                                <a href="#" class="related-article-title" x-text="listArticle.title"></a>
+                                <div class="related-article-meta">
+                                    <span class="related-article-date" x-text="listArticle.date"></span>
+                                    <span class="meta-separator">//</span>
+                                    <span class="related-article-author" x-text="listArticle.author"></span>
+                                </div>
+                            </div>
+                        </template>
+                        <a href="#" class="more-news-link">MORE NEWS & ANALYSIS</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Admin Floating Button -->
+    <button class="admin-floating-btn" x-show="isAdmin" @click="showAdminPanel = !showAdminPanel">
+        <i class="fas fa-edit"></i>
+    </button>
+
+    <!-- Admin Edit Overlay -->
+    <div class="admin-edit-overlay" :class="{ 'show': showAdminPanel }">
+        <div class="admin-edit-header">
+            <h4>Edit Article</h4>
+            <button @click="showAdminPanel = false" style="background: none; border: none; color: white;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="admin-edit-content">
+            <div class="form-group">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-control-custom" x-model="article.title">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Category</label>
+                <select class="form-control-custom" x-model="article.category">
+                    <option value="analysis">Analysis</option>
+                    <option value="campaign">Campaign</option>
+                    <option value="explainer">Explainer</option>
+                    <option value="qna">Q&A</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Excerpt</label>
+                <textarea class="form-control-custom" rows="3" x-model="article.excerpt"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Author</label>
+                <input type="text" class="form-control-custom" x-model="article.author">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Main Image</label>
+                <input type="file" class="form-control-custom" accept="image/*"
+                    @change="handleImageUpload($event, 'mainImage')">
+            </div>
+
+            <div class="form-group">
+                <button class="btn btn-newsletter w-100" @click="saveArticle()">
+                    Save Changes
+                </button>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="form-group">
+                <label class="form-label">Add Content Section</label>
+                <select class="form-control-custom" x-model="newSectionType">
+                    <option value="paragraph">Paragraph</option>
+                    <option value="heading">Heading</option>
+                    <option value="image">Image</option>
+                    <option value="quote">Quote</option>
+                    <option value="interview">Interview</option>
+                </select>
+                <button class="btn btn-newsletter mt-2" @click="addContentSection()">Add Section</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function articleApp() {
+            return {
+                isAdmin: true, // Set based on user permissions
+                showAdminPanel: false,
+                newSectionType: 'paragraph',
+
+                article: {
+                    id: 1,
+                    title: 'Prototyping Water Access in Karamajiji Using HCD',
+                    category: 'analysis',
+                    excerpt: 'Using human-centered design, CISD worked alongside the Karamajiji community to co-create and test water solutions that are affordable, sustainable, and truly meet local needs — turning residents from passive recipients into active problem-solvers.',
+                    author: 'Michael Daramola',
+                    publishDate: 'August 5, 2025',
+                    mainImage: '{% static "images/hero 1.png" %}',
+                    content: [
+                        {
+                            type: 'paragraph',
+                            text: 'In the spring of 1961, Black and white civil rights activists traveled together on public transportation, setting out on Freedom Rides, to test the segregation laws that defined the Jim Crow South. The interracial bus and train trips were conceived by the Congress of Racial Equality (CORE) after after two Supreme Court decisions in <a href="#" style="color: #1e40af;">1946</a> and <a href="#" style="color: #1e40af;">1960</a> that found that segregation on interstate buses, and later in facilities for interstate travel, was unconstitutional.'
+                        },
+                        {
+                            type: 'paragraph',
+                            text: 'The riders attempted several different trips, such as Washington, D.C. to Birmingham, Alabama, and New Orleans to Jackson, Mississippi. They bravely intermingled in the "whites only" sections of buses, trains, restrooms, waiting rooms, and terminals. They were frequently met by violence from angry mobs of white supremacists, prompting federal intervention and drawing national attention to the civil rights movement.'
+                        },
+                        {
+                            type: 'paragraph',
+                            text: 'The Freedom Rides influenced other efforts to fight discrimination, and this week marks 60 years since the historic passage of the <a href="#" style="color: #1e40af;">Voting Rights Act</a>, which banned racial discrimination in voting.'
+                        },
+                        {
+                            type: 'image',
+                            src: '{% static "images/letter.png" %}',
+                            alt: 'Letter from Joan Browning while in jail',
+                            caption: 'Letter from Joan Browning while in jail for participating in a Freedom Ride in Georgia in 1961.'
+                        },
+                        {
+                            type: 'interview',
+                            question: 'Verhovek: You spent the night in a jail cell alone. Can you share that experience?',
+                            answer: 'Browning: I was afraid. I was also shocked that when they arrested us, I was separated from the two Black women who were on the Freedom Ride. I thought if you were bad enough to go to jail, you could at least go with your friends. I was in a cell all by myself, as the only white woman who was arrested. But we wrote notes back and forth to each other.'
+                        },
+                        {
+                            type: 'paragraph',
+                            text: 'Browning: The wonderful thing about the Freedom Rides is we were so bonded to each other that we looked out for each other. I knew that there were people looking out for me the best they could under the circumstances. We weren\'t sure we were going to come back. When the Freedom Rides started, the expectation was, "Don\'t sign up for the Freedom Rides if you\'re not willing to lose your life over it." Anything short of not coming back was a plus.'
+                        }
+                    ]
+                },
+
+                relatedArticles: [
+                    {
+                        id: 2,
+                        title: 'Youth Engagement Beyond the Ballot Box Campaign',
+                        excerpt: 'This campaign equips young Nigerians with the tools, platforms, and confidence to shape policies.',
+                        category: 'campaign',
+                        author: 'Michael Daramola',
+                        date: 'August 6, 2025',
+                        image: '{% static "images/featured_update_2.png" %}'
+                    },
+                    {
+                        id: 3,
+                        title: 'Gender Civic Tech Innovation',
+                        excerpt: 'Designing civic technology platforms that put women\'s voices and needs at the center of governance and policy engagement.',
+                        category: 'analysis',
+                        author: 'Folahan Johnson',
+                        date: 'August 5, 2025',
+                        image: '{% static "images/featured_update_3.png" %}'
+                    }
+                ],
+
+                getInitials(name) {
+                    return name.split(' ').map(word => word[0]).join('').toUpperCase();
+                },
+
+                editContent(index) {
+                    // Handle inline content editing
+                    console.log('Editing content section:', index);
+                },
+
+                saveField(field, value) {
+                    // Save individual field changes
+                    console.log(`Saving ${field}:`, value);
+                    // Here you would make an API call to save the changes
+                },
+
+                handleImageUpload(event, field) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        // Handle image upload
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.article[field] = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                },
+
+                addContentSection() {
+                    const newSection = {
+                        type: this.newSectionType,
+                        text: 'New content section...'
+                    };
+
+                    if (this.newSectionType === 'image') {
+                        newSection.src = '';
+                        newSection.alt = '';
+                        newSection.caption = '';
+                    } else if (this.newSectionType === 'interview') {
+                        newSection.question = 'New question?';
+                        newSection.answer = 'New answer...';
+                    }
+
+                    this.article.content.push(newSection);
+                },
+
+                saveArticle() {
+                    console.log('Saving article:', this.article);
+                    // Here you would make an API call to save the entire article
+                    alert('Article saved successfully!');
+                    this.showAdminPanel = false;
+                }
+            }
+        }
+
+        function newsletterForm() {
+            return {
+                firstName: '',
+                lastName: '',
+                email: '',
+                zipCode: ''
+            }
+        }
+    </script>
+</div>
+
+{% endblock content %}

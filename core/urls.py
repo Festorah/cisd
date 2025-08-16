@@ -1,13 +1,3 @@
-# from django.urls import path
-
-# from . import views
-
-# urlpatterns = [
-#     # Frontend pages
-#     path("", views.HomePage.as_view(), name="home"),
-# ]
-
-
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path
@@ -49,13 +39,35 @@ urlpatterns = [
     path("api/", include(router.urls)),
     path("api/save-article/", views.save_article_content, name="api_save_article"),
     path("api/bulk-actions/", views.bulk_article_action, name="api_bulk_actions"),
+    path("api/stats/", views.get_dashboard_stats, name="api_stats"),
+    # Enhanced inline editing endpoints
+    path(
+        "api/update-article-field/",
+        views.update_article_field,
+        name="api_update_article_field",
+    ),
+    path(
+        "api/update-content-section/",
+        views.update_content_section,
+        name="api_update_content_section",
+    ),
+    path(
+        "api/add-content-section/",
+        views.add_content_section,
+        name="api_add_content_section",
+    ),
+    path(
+        "api/delete-content-section/<uuid:section_id>/",
+        views.delete_content_section,
+        name="api_delete_content_section",
+    ),
+    # Legacy endpoints (keep for compatibility)
     path("api/update-field/", views.update_article_field, name="api_update_field"),
     path(
         "api/article/<uuid:article_id>/delete/",
         views.delete_article,
         name="api_delete_article",
     ),
-    path("api/stats/", views.get_dashboard_stats, name="api_stats"),
     # Newsletter subscription
     path("api/subscribe/", views.subscribe_newsletter, name="api_subscribe"),
     # Authentication URLs (if using Django's built-in auth)
