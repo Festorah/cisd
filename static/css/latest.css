@@ -743,7 +743,7 @@ body {
     left: 0;
     right: 0;
     height: 300px;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: transparent;
     border-radius: 0;
     display: flex;
     align-items: center;
@@ -2875,3 +2875,450 @@ body {
     }
 }
 
+
+/* Hero Carousel Styles - Fix Carousel Function + Preserve Image Breakout */
+
+/* Basic carousel setup - preserve carousel functionality */
+.hero-section .carousel {
+    height: 100%;
+    min-height: 500px;
+    overflow: visible; /* Allow image to break out */
+}
+
+.hero-section .carousel-inner {
+    height: 100%;
+    overflow: visible; /* Allow image to break out */
+}
+
+.hero-section .carousel-item {
+    height: 100%;
+    min-height: 500px;
+    /* Keep carousel's default positioning for slide transitions */
+}
+
+/* Ensure only active slide is visible - critical for carousel function */
+.hero-section .carousel-item {
+    display: none; /* Hide all slides by default */
+}
+
+.hero-section .carousel-item.active {
+    display: flex !important; /* Show only active slide */
+    align-items: center;
+}
+
+/* Ensure carousel transitions work properly */
+.hero-section .carousel-item-next,
+.hero-section .carousel-item-prev {
+    display: flex !important;
+    align-items: center;
+}
+
+/* Hero container within carousel */
+.hero-section .carousel-item .hero-container {
+    width: 100%;
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+/* Key fix: Make hero-image-container break out properly */
+.hero-section .carousel-item .hero-image-container {
+    position: absolute;
+    left: 50px;
+    top: -40px; /* Break out above the hero section */
+    width: 45%;
+    height: 400px;
+    z-index: 3;
+}
+
+/* Ensure images fill the container properly */
+.hero-section .carousel-item .hero-image-placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    overflow: hidden;
+}
+
+.hero-section .carousel-item .hero-image-placeholder img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Ensure hero-content positioning works correctly */
+.hero-section .carousel-item .hero-content {
+    margin-left: 50%;
+    padding: 20px 250px 80px 30px;
+    color: white;
+    position: relative;
+    z-index: 2;
+}
+
+/* Carousel Controls */
+.hero-section .carousel-control-prev,
+.hero-section .carousel-control-next {
+    width: 50px;
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    transition: all 0.3s ease;
+    opacity: 0.8;
+    z-index: 15; /* Higher than hero image to ensure clickability */
+}
+
+.hero-section .carousel-control-prev {
+    left: 30px;
+}
+
+.hero-section .carousel-control-next {
+    right: 30px;
+}
+
+.hero-section .carousel-control-prev:hover,
+.hero-section .carousel-control-next:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.8);
+    opacity: 1;
+}
+
+.hero-section .carousel-control-prev-icon,
+.hero-section .carousel-control-next-icon {
+    width: 20px;
+    height: 20px;
+    background-size: 20px 20px;
+}
+
+/* Carousel Indicators */
+.hero-section .carousel-indicators {
+    bottom: 30px;
+    margin-bottom: 0;
+    z-index: 15; /* Higher than hero image */
+}
+
+.hero-section .carousel-indicators [data-bs-target] {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    margin: 0 5px;
+    transition: all 0.3s ease;
+}
+
+.hero-section .carousel-indicators .active {
+    background-color: var(--cisd-yellow);
+    border-color: var(--cisd-yellow);
+    transform: scale(1.2);
+}
+
+/* Carousel Animation - preserve Bootstrap transitions */
+.hero-section .carousel-item {
+    transition: transform 0.6s ease-in-out;
+}
+
+/* Pause on hover */
+.hero-section .carousel:hover .carousel-control-prev,
+.hero-section .carousel:hover .carousel-control-next,
+.hero-section .carousel:hover .carousel-indicators {
+    opacity: 1;
+}
+
+/* Smooth transitions for content */
+.hero-section .carousel-item.active .hero-content {
+    animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mobile responsiveness - keep image breakout, text underneath */
+@media (max-width: 992px) {
+    .hero-section .carousel-item {
+        flex-direction: column;
+        min-height: auto;
+        padding: 0;
+        align-items: stretch;
+    }
+
+    .hero-section .carousel-item.active {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    /* Keep image breaking out effect on mobile/tablet */
+    .hero-section .carousel-item .hero-image-container {
+        position: absolute;
+        left: 20px;
+        right: 20px;
+        top: -30px; /* Still breaks out above */
+        width: calc(100% - 40px);
+        height: 280px;
+        z-index: 3;
+    }
+
+    /* Position text clearly underneath the image */
+    .hero-section .carousel-item .hero-content {
+        margin-left: 0;
+        margin-top: 250px; /* Space for the breaking-out image */
+        padding: 40px 30px 60px 30px;
+        text-align: center;
+        position: relative;
+        z-index: 2;
+    }
+    
+    /* Carousel controls for mobile */
+    .hero-section .carousel-control-prev,
+    .hero-section .carousel-control-next {
+        width: 40px;
+        height: 40px;
+        opacity: 0.6;
+    }
+    
+    .hero-section .carousel-control-prev {
+        left: 15px;
+    }
+    
+    .hero-section .carousel-control-next {
+        right: 15px;
+    }
+    
+    .hero-section .carousel-control-prev-icon,
+    .hero-section .carousel-control-next-icon {
+        width: 16px;
+        height: 16px;
+        background-size: 16px 16px;
+    }
+    
+    .hero-section .carousel-indicators {
+        bottom: 20px;
+    }
+    
+    .hero-section .carousel-indicators [data-bs-target] {
+        width: 8px;
+        height: 8px;
+        margin: 0 3px;
+    }
+}
+
+/* Tablet specific adjustments */
+@media (min-width: 768px) and (max-width: 992px) {
+    .hero-section .carousel-item .hero-image-container {
+        height: 320px;
+    }
+
+    .hero-section .carousel-item .hero-content {
+        margin-top: 290px;
+        padding: 50px 40px 70px 40px;
+    }
+}
+
+/* Mobile phone specific adjustments */
+@media (max-width: 768px) {
+    .hero-section .carousel-item .hero-image-container {
+        left: 15px;
+        right: 15px;
+        top: -25px;
+        width: calc(100% - 30px);
+        height: 250px;
+    }
+
+    .hero-section .carousel-item .hero-content {
+        margin-top: 225px;
+        padding: 30px 20px 50px 20px;
+    }
+}
+
+/* Small mobile adjustments */
+@media (max-width: 576px) {
+    .hero-section .carousel-item .hero-image-container {
+        height: 220px;
+        top: -20px;
+    }
+
+    .hero-section .carousel-item .hero-content {
+        margin-top: 200px;
+        padding: 25px 15px 40px 15px;
+    }
+}
+
+/* 
+FIXED: 
+- Carousel slides now properly hide/show (only .active is visible)
+- Image still breaks out above background 
+- Carousel transitions work correctly
+- Controls have higher z-index for clickability
+*/
+
+/* Social Issues Spotlight Mobile/Tablet Fix */
+@media (max-width: 992px) {
+    .social-issues-spotlight {
+        padding: 60px 0;
+    }
+
+    .social-issues-spotlight .spotlight-container .row {
+        flex-direction: column-reverse; /* Image section comes after text */
+    }
+
+    /* Text content comes first and centered */
+    .social-issues-spotlight .spotlight-content {
+        padding: 0;
+        margin-bottom: 0;
+        text-align: center;
+        align-items: center;
+        padding: 0 2rem 2rem 2rem;
+    }
+
+    .social-issues-spotlight .spotlight-title {
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .social-issues-spotlight .spotlight-description {
+        font-size: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .social-issues-spotlight .spotlight-buttons {
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    /* Image section underneath with breakout effect */
+    .social-issues-spotlight .spotlight-image-container {
+        height: 280px;
+        position: relative;
+        margin-top: 2rem;
+    }
+
+    .social-issues-spotlight .spotlight-image {
+        position: absolute;
+        top: -30px; /* Still breaks out above */
+        left: 20px;
+        right: 20px;
+        height: 250px;
+        background-color: rgba(0, 0, 0, 0.4);
+        border-radius: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+        color: white;
+        font-weight: 600;
+    }
+}
+
+/* Tablet specific adjustments for Social Issues Spotlight */
+@media (min-width: 768px) and (max-width: 992px) {
+    .social-issues-spotlight .spotlight-content {
+        padding: 0 3rem 3rem 3rem;
+    }
+
+    .social-issues-spotlight .spotlight-image-container {
+        height: 320px;
+    }
+
+    .social-issues-spotlight .spotlight-image {
+        height: 280px;
+        left: 40px;
+        right: 40px;
+    }
+}
+
+/* Mobile phone specific adjustments for Social Issues Spotlight */
+@media (max-width: 768px) {
+    .social-issues-spotlight .spotlight-title {
+        font-size: 1.8rem;
+    }
+
+    .social-issues-spotlight .spotlight-description {
+        font-size: 0.95rem;
+    }
+
+    .social-issues-spotlight .spotlight-buttons {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .social-issues-spotlight .btn-video,
+    .social-issues-spotlight .btn-explore {
+        width: 200px;
+        text-align: center;
+        margin-right: 0;
+    }
+
+    .social-issues-spotlight .spotlight-image-container {
+        height: 250px;
+    }
+
+    .social-issues-spotlight .spotlight-image {
+        height: 200px;
+        left: 15px;
+        right: 15px;
+        top: -25px;
+    }
+
+    .social-issues-spotlight .play-icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    .social-issues-spotlight .play-icon::after {
+        border-left: 15px solid white;
+        border-top: 9px solid transparent;
+        border-bottom: 9px solid transparent;
+    }
+}
+
+/* Small mobile adjustments for Social Issues Spotlight */
+@media (max-width: 576px) {
+    .social-issues-spotlight .spotlight-content {
+        padding: 0 1.5rem 1.5rem 1.5rem;
+    }
+
+    .social-issues-spotlight .spotlight-title {
+        font-size: 1.6rem;
+    }
+
+    .social-issues-spotlight .spotlight-label {
+        font-size: 11px;
+    }
+
+    .social-issues-spotlight .btn-video,
+    .social-issues-spotlight .btn-explore {
+        padding: 10px 20px;
+        font-size: 12px;
+        width: 180px;
+    }
+
+    .social-issues-spotlight .spotlight-image {
+        top: -20px;
+        height: 180px;
+    }
+
+    .social-issues-spotlight .spotlight-image-container {
+        height: 220px;
+    }
+}

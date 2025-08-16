@@ -3,29 +3,83 @@
 
 {% block title %}Centre for Inclusive Social Development{% endblock %}
 
-
 {% block content %}
-<!-- Hero Section -->
+<!-- Hero Carousel Section -->
 <div class="hero-wrapper">
     <section class="hero-section">
-        <div class="hero-container">
-            <!-- Image Container -->
-            <div class="hero-image-container">
-                <div class="hero-image-placeholder">
-                    <img src="{% static 'images/hero 1.png' %}" alt="Hero Image" class="img-fluid">
-                </div>
+        <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="6000">
+            <div class="carousel-indicators">
+                {% for article in featured_articles %}
+                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ forloop.counter0 }}"
+                        {% if forloop.first %}class="active" aria-current="true"{% endif %}
+                        aria-label="Slide {{ forloop.counter }}"></button>
+                {% empty %}
+                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0"
+                        class="active" aria-current="true" aria-label="Slide 1"></button>
+                {% endfor %}
             </div>
 
-            <!-- Content Side -->
-            <div class="hero-content">
-                <div class="hero-badge">DEMOCRACY</div>
-                <h1 class="hero-title">Reimagining Systems, Empowering People</h1>
-                <p class="hero-subtitle">
-                    Bridging the gap between policy and people through behavioral science, human-centered design,
-                    and participatory development.
-                </p>
-                <a href="#" class="btn-hero">READ MORE</a>
+            <div class="carousel-inner">
+                {% for article in featured_articles %}
+                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                    <div class="hero-container">
+                        <!-- Image Container -->
+                        <div class="hero-image-container">
+                            <div class="hero-image-placeholder">
+                                {% if article.featured_image %}
+                                    <img src="{{ article.featured_image.cloudinary_url }}"
+                                         alt="{{ article.featured_image.alt_text|default:article.title }}"
+                                         class="img-fluid">
+                                {% else %}
+                                    <img src="{% static 'images/hero 1.png' %}" alt="Default Hero Image" class="img-fluid">
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Content Side -->
+                        <div class="hero-content">
+                            <div class="hero-badge">{{ article.category.display_name|upper }}</div>
+                            <h1 class="hero-title">{{ article.title }}</h1>
+                            <p class="hero-subtitle">{{ article.excerpt }}</p>
+                            <a href="{% url 'article_detail' slug=article.slug %}" class="btn-hero">READ MORE</a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <!-- Fallback content if no featured articles -->
+                <div class="carousel-item active">
+                    <div class="hero-container">
+                        <!-- Image Container -->
+                        <div class="hero-image-container">
+                            <div class="hero-image-placeholder">
+                                <img src="{% static 'images/hero 1.png' %}" alt="Hero Image" class="img-fluid">
+                            </div>
+                        </div>
+
+                        <!-- Content Side -->
+                        <div class="hero-content">
+                            <div class="hero-badge">DEMOCRACY</div>
+                            <h1 class="hero-title">Reimagining Systems, Empowering People</h1>
+                            <p class="hero-subtitle">
+                                Bridging the gap between policy and people through behavioral science, human-centered design,
+                                and participatory development.
+                            </p>
+                            <a href="#" class="btn-hero">READ MORE</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
+
+            <!-- Carousel Controls -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
         </div>
     </section>
 </div>
