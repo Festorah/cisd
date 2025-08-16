@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.paginator import Paginator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import F, Prefetch, Q
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -183,9 +183,9 @@ class ArticleDetailView(DetailView):
             "tags",
             Prefetch(
                 "content_sections",
-                queryset=ContentSection.objects.select_related("media_file").order_by(
-                    "order"
-                ),
+                queryset=ContentSection.objects.select_related("media_file")
+                .filter(is_visible=True)
+                .order_by("order"),
             ),
         )
 
@@ -198,22 +198,29 @@ class ArticleDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Get related articles
-        related_articles = self.object.get_related_articles(limit=3)
+        # Get content sections for the article
+        content_sections = self.object.content_sections.filter(
+            is_visible=True
+        ).order_by("order")
 
+        # Get related articles
+        related_articles = self.object.get_related_articles(limit=6)
+
+        # Additional context for the template
         context.update(
             {
+                "content_sections": content_sections,
                 "related_articles": related_articles,
-                "content_sections": self.object.content_sections.filter(
-                    is_visible=True
-                ),
                 "is_admin": is_admin_user(self.request.user),
                 "site_settings": SiteSettings.get_settings(),
+                "reading_time": self.object.reading_time,
+                "page_title": self.object.meta_title or self.object.title,
+                "page_description": self.object.meta_description or self.object.excerpt,
             }
         )
 
-        # Increment view count (atomic operation)
-        if not is_admin_user(self.request.user):  # Don't count admin views
+        # Increment view count (atomic operation) for non-admin users
+        if not is_admin_user(self.request.user):
             self.object.increment_view_count()
 
         return context
@@ -860,25 +867,75 @@ def article_edit_view(request, article_id):
 # AJAX endpoints for real-time features
 @csrf_exempt
 @login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
 @require_http_methods(["POST"])
 def update_article_field(request):
-    """Update a single article field via AJAX"""
+    """Update a single article field via AJAX with proper validation"""
     try:
         data = json.loads(request.body)
         article_id = data.get("article_id")
         field_name = data.get("field")
         field_value = data.get("value")
 
+        if not all([article_id, field_name]):
+            return JsonResponse(
+                {"success": False, "error": "Missing required fields"}, status=400
+            )
+
         article = get_object_or_404(Article, id=article_id)
 
         # Security check - only allow certain fields
-        allowed_fields = ["title", "excerpt", "status", "is_featured", "is_breaking"]
-        if field_name not in allowed_fields:
-            return JsonResponse({"error": "Field not allowed"}, status=400)
+        allowed_fields = {
+            "title": {"max_length": 300, "required": True},
+            "excerpt": {"max_length": 500, "required": True},
+            "status": {"choices": [choice[0] for choice in Article.STATUS_CHOICES]},
+            "is_featured": {"type": "boolean"},
+            "is_breaking": {"type": "boolean"},
+            "meta_title": {"max_length": 60},
+            "meta_description": {"max_length": 160},
+            "social_title": {"max_length": 100},
+            "social_description": {"max_length": 200},
+        }
 
-        setattr(article, field_name, field_value)
-        article.last_modified_by = request.user
-        article.save(update_fields=[field_name, "last_modified_by", "updated_at"])
+        if field_name not in allowed_fields:
+            return JsonResponse(
+                {"success": False, "error": "Field not allowed for editing"}, status=403
+            )
+
+        # Validate field value
+        field_config = allowed_fields[field_name]
+
+        if field_config.get("required") and not field_value:
+            return JsonResponse(
+                {"success": False, "error": f"{field_name} is required"}, status=400
+            )
+
+        if (
+            field_config.get("max_length")
+            and len(str(field_value)) > field_config["max_length"]
+        ):
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": f"{field_name} must be {field_config['max_length']} characters or less",
+                },
+                status=400,
+            )
+
+        if field_config.get("choices") and field_value not in field_config["choices"]:
+            return JsonResponse(
+                {"success": False, "error": f"Invalid value for {field_name}"},
+                status=400,
+            )
+
+        if field_config.get("type") == "boolean":
+            field_value = str(field_value).lower() in ["true", "1", "yes", "on"]
+
+        # Update the field
+        with transaction.atomic():
+            setattr(article, field_name, field_value)
+            article.last_modified_by = request.user
+            article.save(update_fields=[field_name, "last_modified_by", "updated_at"])
 
         logger.info(
             f"Field '{field_name}' updated for article '{article.title}' by {request.user.username}"
@@ -888,12 +945,227 @@ def update_article_field(request):
             {
                 "success": True,
                 "message": f'{field_name.replace("_", " ").title()} updated successfully',
+                "field": field_name,
+                "value": field_value,
+                "updated_at": article.updated_at.isoformat(),
             }
         )
 
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"success": False, "error": "Invalid JSON data"}, status=400
+        )
     except Exception as e:
         logger.error(f"Error updating article field: {str(e)}")
-        return JsonResponse({"error": str(e)}, status=400)
+        return JsonResponse(
+            {"success": False, "error": "An error occurred while updating"}, status=500
+        )
+
+
+@csrf_exempt
+@login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
+@require_http_methods(["POST"])
+def update_content_section(request):
+    """Update content section via AJAX"""
+    try:
+        data = json.loads(request.body)
+        section_id = data.get("section_id")
+        field_name = data.get("field")
+        field_value = data.get("value")
+
+        if not all([section_id, field_name]):
+            return JsonResponse(
+                {"success": False, "error": "Missing required fields"}, status=400
+            )
+
+        section = get_object_or_404(ContentSection, id=section_id)
+
+        # Check if user can edit this article
+        if not (
+            request.user.is_superuser
+            or section.article.created_by == request.user
+            or request.user.is_staff
+        ):
+            return JsonResponse(
+                {"success": False, "error": "Permission denied"}, status=403
+            )
+
+        # Allowed fields for content sections
+        allowed_fields = [
+            "content",
+            "title",
+            "question",
+            "answer",
+            "caption",
+            "alt_text",
+        ]
+
+        if field_name not in allowed_fields:
+            return JsonResponse(
+                {"success": False, "error": "Field not allowed for editing"}, status=403
+            )
+
+        # Update the field
+        with transaction.atomic():
+            setattr(section, field_name, field_value)
+            section.save(update_fields=[field_name, "updated_at"])
+
+            # Update article's last modified
+            section.article.last_modified_by = request.user
+            section.article.save(update_fields=["last_modified_by", "updated_at"])
+
+        logger.info(
+            f"Content section '{field_name}' updated by {request.user.username}"
+        )
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": f'{field_name.replace("_", " ").title()} updated successfully',
+                "field": field_name,
+                "value": field_value,
+                "updated_at": section.updated_at.isoformat(),
+            }
+        )
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"success": False, "error": "Invalid JSON data"}, status=400
+        )
+    except Exception as e:
+        logger.error(f"Error updating content section: {str(e)}")
+        return JsonResponse(
+            {"success": False, "error": "An error occurred while updating"}, status=500
+        )
+
+
+@csrf_exempt
+@login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
+@require_http_methods(["POST"])
+def add_content_section(request):
+    """Add new content section via AJAX"""
+    try:
+        data = json.loads(request.body)
+        article_id = data.get("article_id")
+        section_type = data.get("section_type", "paragraph")
+        content = data.get("content", "")
+        order = data.get("order")
+
+        if not article_id:
+            return JsonResponse(
+                {"success": False, "error": "Article ID required"}, status=400
+            )
+
+        article = get_object_or_404(Article, id=article_id)
+
+        # Check permissions
+        if not (
+            request.user.is_superuser
+            or article.created_by == request.user
+            or request.user.is_staff
+        ):
+            return JsonResponse(
+                {"success": False, "error": "Permission denied"}, status=403
+            )
+
+        # Get next order if not specified
+        if order is None:
+            last_section = article.content_sections.order_by("-order").first()
+            order = (last_section.order + 1) if last_section else 0
+
+        # Create new section
+        with transaction.atomic():
+            section = ContentSection.objects.create(
+                article=article, section_type=section_type, content=content, order=order
+            )
+
+            # Update article's last modified
+            article.last_modified_by = request.user
+            article.save(update_fields=["last_modified_by", "updated_at"])
+
+        logger.info(
+            f"New content section added to article '{article.title}' by {request.user.username}"
+        )
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Content section added successfully",
+                "section_id": str(section.id),
+                "section": {
+                    "id": str(section.id),
+                    "type": section.section_type,
+                    "content": section.content,
+                    "order": section.order,
+                },
+            }
+        )
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"success": False, "error": "Invalid JSON data"}, status=400
+        )
+    except Exception as e:
+        logger.error(f"Error adding content section: {str(e)}")
+        return JsonResponse(
+            {"success": False, "error": "An error occurred while adding section"},
+            status=500,
+        )
+
+
+@csrf_exempt
+@login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
+@require_http_methods(["DELETE"])
+def delete_content_section(request, section_id):
+    """Delete content section via AJAX"""
+    try:
+        section = get_object_or_404(ContentSection, id=section_id)
+
+        # Check permissions
+        if not (
+            request.user.is_superuser
+            or section.article.created_by == request.user
+            or request.user.is_staff
+        ):
+            return JsonResponse(
+                {"success": False, "error": "Permission denied"}, status=403
+            )
+
+        article = section.article
+        section_order = section.order
+
+        with transaction.atomic():
+            section.delete()
+
+            # Reorder remaining sections
+            remaining_sections = article.content_sections.filter(
+                order__gt=section_order
+            )
+            for remaining_section in remaining_sections:
+                remaining_section.order -= 1
+                remaining_section.save(update_fields=["order"])
+
+            # Update article's last modified
+            article.last_modified_by = request.user
+            article.save(update_fields=["last_modified_by", "updated_at"])
+
+        logger.info(
+            f"Content section deleted from article '{article.title}' by {request.user.username}"
+        )
+
+        return JsonResponse(
+            {"success": True, "message": "Content section deleted successfully"}
+        )
+
+    except Exception as e:
+        logger.error(f"Error deleting content section: {str(e)}")
+        return JsonResponse(
+            {"success": False, "error": "An error occurred while deleting section"},
+            status=500,
+        )
 
 
 @csrf_exempt
