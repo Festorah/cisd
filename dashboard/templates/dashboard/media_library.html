@@ -1,0 +1,670 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Media Library - CISD Dashboard{% endblock %}
+{% block breadcrumb %}Media Library{% endblock %}
+
+{% block extra_css %}
+<style>
+    .media-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .media-item {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        cursor: pointer;
+        transition: transform 0.3s ease;
+        position: relative;
+    }
+
+    .media-item:hover {
+        transform: translateY(-2px);
+    }
+
+    .media-item img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+    }
+
+    .media-item .media-placeholder {
+        width: 100%;
+        height: 150px;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+    }
+
+    .media-info {
+        padding: 1rem;
+    }
+
+    .media-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .media-meta {
+        font-size: 0.75rem;
+        color: #666;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .media-actions {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .media-item:hover .media-actions {
+        opacity: 1;
+    }
+
+    .filter-bar {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+    }
+
+    /* Drag and Drop Styles */
+    body.dragover {
+        background-color: rgba(30, 58, 138, 0.05);
+        position: relative;
+    }
+
+    body.dragover::before {
+        content: '📁 Drop files here to upload';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(30, 58, 138, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--cisd-blue);
+        z-index: 10000;
+        backdrop-filter: blur(2px);
+        border: 3px dashed var(--cisd-blue);
+        box-sizing: border-box;
+    }
+
+    .optimization-badge {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+        padding: 0.125rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-left: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div x-data="mediaLibrary()" x-init="init()">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Media Library</h1>
+            <p class="text-muted">Manage images, videos, and documents</p>
+        </div>
+        <div>
+            <button class="btn btn-primary-custom"
+                    @click="$refs.uploadInput.click()"
+                    :disabled="isUploading">
+                <template x-if="!isUploading">
+                    <span><i class="fas fa-cloud-upload-alt me-2"></i>Upload Media</span>
+                </template>
+                <template x-if="isUploading">
+                    <span><i class="fas fa-spinner fa-spin me-2"></i>Uploading...</span>
+                </template>
+            </button>
+            <input type="file" x-ref="uploadInput" style="display: none" multiple
+                accept="image/*,video/*,.pdf,.doc,.docx,.txt" @change="handleUpload($event)">
+        </div>
+    </div>
+
+    <!-- Upload Progress -->
+    <div x-show="uploadProgress.length > 0" class="mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-cloud-upload-alt me-2"></i>Processing Files
+                    <span class="badge bg-primary ms-2" x-text="uploadProgress.length"></span>
+                </h6>
+            </div>
+            <div class="card-body">
+                <template x-for="upload in uploadProgress" :key="upload.id">
+                    <div class="mb-3 p-3 border rounded">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span class="fw-medium" x-text="upload.name"></span>
+                                <small class="text-muted d-block" x-text="upload.status || 'Processing...'"></small>
+                            </div>
+                            <span class="badge"
+                                  :class="upload.error ? 'bg-danger' : (upload.success ? 'bg-success' : 'bg-primary')"
+                                  x-text="upload.error ? 'Failed' : (upload.success ? 'Complete' : upload.progress + '%')"></span>
+                        </div>
+                        <div class="progress mb-2" style="height: 6px;">
+                            <div class="progress-bar"
+                                 :style="`width: ${upload.progress}%`"
+                                 :class="upload.error ? 'bg-danger' : (upload.success ? 'bg-success' : 'bg-primary')"></div>
+                        </div>
+                        <template x-if="upload.error">
+                            <div class="alert alert-danger alert-sm mb-0">
+                                <small><i class="fas fa-exclamation-triangle me-1"></i><span x-text="upload.error"></span></small>
+                            </div>
+                        </template>
+                        <template x-if="upload.success">
+                            <div class="alert alert-success alert-sm mb-0">
+                                <small>
+                                    <i class="fas fa-check-circle me-1"></i>Upload completed successfully!
+                                    <template x-if="upload.name.includes('.webp') || upload.status.includes('Optimization')">
+                                        <span class="optimization-badge">Optimized</span>
+                                    </template>
+                                </small>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Media Grid -->
+    <div class="media-grid">
+        {% for media in media_page %}
+        <div class="media-item" @click="selectMedia('{{ media.id }}')">
+            {% if media.file_type == 'image' %}
+            <img src="{{ media.cloudinary_url }}" alt="{{ media.alt_text|default:media.title }}">
+            {% else %}
+            <div class="media-placeholder">
+                <i class="fas fa-{% if media.file_type == 'video' %}video{% elif media.file_type == 'document' %}file-alt{% else %}file{% endif %} fa-2x"></i>
+            </div>
+            {% endif %}
+
+            <div class="media-actions">
+                <button class="btn btn-sm btn-light" @click.stop="viewMedia('{{ media.id }}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" @click.stop="deleteMedia('{{ media.id }}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+
+            <div class="media-info">
+                <div class="media-name">{{ media.title }}</div>
+                <div class="media-meta">
+                    <span>{{ media.file_type|title }}</span>
+                    <span>{{ media.file_size_formatted }}</span>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-images fa-3x text-muted mb-3"></i>
+                <h5>No Media Files</h5>
+                <p class="text-muted">Upload your first media file to get started</p>
+                <p class="text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    You can also drag and drop files anywhere on this page
+                </p>
+                <button class="btn btn-primary-custom" @click="$refs.uploadInput.click()">
+                    <i class="fas fa-cloud-upload-alt me-2"></i>Upload Media
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    function mediaLibrary() {
+        return {
+            uploadProgress: [],
+            isUploading: false,
+            services: null,
+
+            // Image optimization settings
+            optimizationSettings: {
+                maxWidth: 1920,
+                maxHeight: 1080,
+                quality: 0.85,
+                format: 'webp'
+            },
+
+            async init() {
+                await this.waitForServices();
+                this.setupDragDrop();
+                console.log('Media library initialized');
+            },
+
+            async waitForServices(maxAttempts = 10, delay = 100) {
+                for (let i = 0; i < maxAttempts; i++) {
+                    if (window.dashboardServices) {
+                        this.services = window.dashboardServices;
+                        return;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+                this.createFallbackServices();
+            },
+
+            createFallbackServices() {
+                this.services = {
+                    http: {
+                        async post(url, data) {
+                            let headers = {};
+                            let body;
+
+                            if (data instanceof FormData) {
+                                headers['X-CSRFToken'] = this.getCSRFToken();
+                                body = data;
+                            } else {
+                                headers = {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': this.getCSRFToken()
+                                };
+                                body = JSON.stringify(data);
+                            }
+
+                            const response = await fetch(url, {
+                                method: 'POST',
+                                headers: headers,
+                                body: body
+                            });
+
+                            if (!response.ok) {
+                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                            }
+
+                            return await response.json();
+                        },
+
+                        getCSRFToken() {
+                            return document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                                   document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+                        }
+                    },
+
+                    notifications: {
+                        success: (msg) => this.showNotification(msg, 'success'),
+                        error: (msg) => this.showNotification(msg, 'danger'),
+                        warning: (msg) => this.showNotification(msg, 'warning'),
+                        info: (msg) => this.showNotification(msg, 'info')
+                    }
+                };
+            },
+
+            setupDragDrop() {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    document.body.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+                });
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    document.body.addEventListener(eventName, () => {
+                        document.body.classList.add('dragover');
+                    });
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    document.body.addEventListener(eventName, () => {
+                        document.body.classList.remove('dragover');
+                    });
+                });
+
+                document.body.addEventListener('drop', (e) => {
+                    const files = Array.from(e.dataTransfer.files);
+                    if (files.length > 0) {
+                        this.handleUpload({ target: { files } });
+                    }
+                });
+            },
+
+            async handleUpload(event) {
+                if (this.isUploading) {
+                    this.services.notifications.warning('Upload already in progress. Please wait.');
+                    return;
+                }
+
+                const files = Array.from(event.target.files);
+                if (files.length === 0) return;
+
+                this.isUploading = true;
+
+                try {
+                    for (let file of files) {
+                        await this.processAndUploadFile(file);
+                    }
+                } finally {
+                    this.isUploading = false;
+                    if (event.target) {
+                        event.target.value = '';
+                    }
+                }
+            },
+
+            async processAndUploadFile(file) {
+                const uploadId = this.addUploadProgress(file.name);
+
+                try {
+                    this.validateFile(file);
+
+                    let processedFile = file;
+                    if (file.type.startsWith('image/')) {
+                        this.updateUploadProgress(uploadId, 10, null, 'Optimizing image...');
+                        processedFile = await this.optimizeImage(file);
+                        this.updateUploadProgress(uploadId, 30, null, 'Optimization complete');
+                    }
+
+                    this.updateUploadProgress(uploadId, 40, null, 'Uploading...');
+                    const response = await this.uploadToServer(processedFile, uploadId);
+
+                    if (response.success) {
+                        this.updateUploadProgress(uploadId, 100, null, 'Upload successful!', true);
+                        this.services.notifications.success(`${file.name} uploaded successfully`);
+
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        throw new Error(response.error || 'Upload failed');
+                    }
+                } catch (error) {
+                    this.updateUploadProgress(uploadId, 0, error.message);
+                    this.services.notifications.error(`Upload failed: ${error.message}`);
+                }
+            },
+
+            validateFile(file) {
+                const limits = {
+                    'image/': 10 * 1024 * 1024,  // 10MB for images
+                    'video/': 100 * 1024 * 1024, // 100MB for videos
+                    'application/pdf': 25 * 1024 * 1024, // 25MB for PDFs
+                    'application/': 25 * 1024 * 1024 // 25MB for other documents
+                };
+
+                let maxSize = 5 * 1024 * 1024; // Default 5MB
+                for (const [type, size] of Object.entries(limits)) {
+                    if (file.type.startsWith(type)) {
+                        maxSize = size;
+                        break;
+                    }
+                }
+
+                if (file.size > maxSize) {
+                    throw new Error(`File size (${this.formatFileSize(file.size)}) exceeds maximum allowed size (${this.formatFileSize(maxSize)})`);
+                }
+
+                const allowedTypes = [
+                    'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif',
+                    'video/mp4', 'video/webm', 'video/ogg',
+                    'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'text/plain'
+                ];
+
+                if (!allowedTypes.includes(file.type)) {
+                    throw new Error(`File type '${file.type}' is not allowed`);
+                }
+            },
+
+            async optimizeImage(file) {
+                return new Promise((resolve, reject) => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = new Image();
+
+                    img.onload = () => {
+                        try {
+                            let { width, height } = this.calculateOptimalDimensions(
+                                img.width,
+                                img.height,
+                                this.optimizationSettings.maxWidth,
+                                this.optimizationSettings.maxHeight
+                            );
+
+                            canvas.width = width;
+                            canvas.height = height;
+
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, width, height);
+                            ctx.drawImage(img, 0, 0, width, height);
+
+                            canvas.toBlob(
+                                (blob) => {
+                                    if (blob) {
+                                        const optimizedFile = new File(
+                                            [blob],
+                                            file.name.replace(/\.[^/.]+$/, '.webp'),
+                                            {
+                                                type: 'image/webp',
+                                                lastModified: Date.now()
+                                            }
+                                        );
+                                        resolve(optimizedFile);
+                                    } else {
+                                        reject(new Error('Failed to optimize image'));
+                                    }
+                                },
+                                'image/webp',
+                                this.optimizationSettings.quality
+                            );
+                        } catch (error) {
+                            reject(new Error(`Image optimization failed: ${error.message}`));
+                        }
+                    };
+
+                    img.onerror = () => {
+                        reject(new Error('Failed to load image for optimization'));
+                    };
+
+                    img.src = URL.createObjectURL(file);
+                });
+            },
+
+            calculateOptimalDimensions(originalWidth, originalHeight, maxWidth, maxHeight) {
+                let width = originalWidth;
+                let height = originalHeight;
+
+                if (width > maxWidth || height > maxHeight) {
+                    const aspectRatio = width / height;
+
+                    if (width > height) {
+                        width = maxWidth;
+                        height = maxWidth / aspectRatio;
+                    } else {
+                        height = maxHeight;
+                        width = maxHeight * aspectRatio;
+                    }
+
+                    if (height > maxHeight) {
+                        height = maxHeight;
+                        width = maxHeight * aspectRatio;
+                    }
+                    if (width > maxWidth) {
+                        width = maxWidth;
+                        height = maxWidth / aspectRatio;
+                    }
+                }
+
+                return {
+                    width: Math.round(width),
+                    height: Math.round(height)
+                };
+            },
+
+            async uploadToServer(file, uploadId) {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('title', file.name.split('.')[0]);
+
+                return new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+
+                    xhr.upload.addEventListener('progress', (e) => {
+                        if (e.lengthComputable) {
+                            const progress = 40 + ((e.loaded / e.total) * 50);
+                            this.updateUploadProgress(uploadId, Math.round(progress), null, 'Uploading...');
+                        }
+                    });
+
+                    xhr.addEventListener('load', () => {
+                        if (xhr.status === 200) {
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                resolve(response);
+                            } catch (e) {
+                                reject(new Error('Invalid response format'));
+                            }
+                        } else {
+                            reject(new Error(`Upload failed with status ${xhr.status}`));
+                        }
+                    });
+
+                    xhr.addEventListener('error', () => {
+                        reject(new Error('Network error during upload'));
+                    });
+
+                    xhr.open('POST', '/dashboard/ajax/upload-file/');
+                    xhr.setRequestHeader('X-CSRFToken', this.getCSRFToken());
+                    xhr.send(formData);
+                });
+            },
+
+            addUploadProgress(filename) {
+                const uploadId = Date.now() + Math.random();
+                this.uploadProgress.push({
+                    id: uploadId,
+                    name: filename,
+                    progress: 0,
+                    error: null,
+                    success: false,
+                    status: 'Starting...'
+                });
+                return uploadId;
+            },
+
+            updateUploadProgress(uploadId, progress, error = null, status = '', success = false) {
+                const upload = this.uploadProgress.find(u => u.id === uploadId);
+                if (upload) {
+                    upload.progress = progress;
+                    upload.error = error;
+                    upload.success = success;
+                    upload.status = status;
+
+                    if (progress === 100 || error) {
+                        setTimeout(() => {
+                            this.uploadProgress = this.uploadProgress.filter(u => u.id !== uploadId);
+                        }, error ? 5000 : 3000);
+                    }
+                }
+            },
+
+            async deleteMedia(mediaId) {
+                if (!confirm('Are you sure you want to delete this media file? This action cannot be undone.')) {
+                    return;
+                }
+
+                try {
+                    const response = await this.services.http.post(`/dashboard/ajax/delete-media/${mediaId}/`, {
+                        action: 'delete'
+                    });
+
+                    if (response.success) {
+                        this.services.notifications.success('Media file deleted successfully');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        throw new Error(response.error || 'Failed to delete media');
+                    }
+                } catch (error) {
+                    this.services.notifications.error(`Error deleting media: ${error.message}`);
+                    console.error('Error deleting media:', error);
+                }
+            },
+
+            selectMedia(mediaId) {
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'media-selected',
+                        mediaId: mediaId
+                    }, '*');
+                    window.close();
+                }
+            },
+
+            viewMedia(mediaId) {
+                console.log('View media:', mediaId);
+                this.services.notifications.info('Media viewer coming soon!');
+            },
+
+            getCSRFToken() {
+                return document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                       document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+            },
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            },
+
+            showNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+                notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+
+                const icons = {
+                    success: 'check-circle',
+                    danger: 'exclamation-triangle',
+                    warning: 'exclamation-circle',
+                    info: 'info-circle'
+                };
+
+                notification.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-${icons[type] || 'info-circle'} me-2"></i>
+                        <span>${message}</span>
+                    </div>
+                    <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+                `;
+
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 5000);
+            }
+        }
+    }
+</script>
+{% endblock %}

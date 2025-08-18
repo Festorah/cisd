@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CISD Admin Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.0/cdn.min.js" defer></script>
+    <style>
+        :root {
+            --cisd-red: #dc2626;
+            --cisd-deep-red: #b91c1c;
+            --cisd-blue: #1e3a8a;
+            --cisd-deep-blue: #1e40af;
+            --cisd-yellow: #fbbf24;
+            --cisd-gray: #f3f4f6;
+            --sidebar-width: 280px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--cisd-blue) 0%, var(--cisd-deep-blue) 100%);
+            color: white;
+            z-index: 1000;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .sidebar-brand img {
+            height: 40px;
+            margin-right: 12px;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            padding: 0 1.5rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .nav-item {
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: var(--cisd-yellow);
+        }
+
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-left-color: var(--cisd-yellow);
+        }
+
+        .nav-link i {
+            width: 20px;
+            margin-right: 12px;
+            text-align: center;
+        }
+
+        .nav-badge {
+            background-color: var(--cisd-red);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 12px;
+            margin-left: auto;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: #666;
+            margin-right: 1rem;
+            padding: 0.5rem;
+            cursor: pointer;
+        }
+
+        .breadcrumb {
+            background: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .breadcrumb-item {
+            color: #666;
+        }
+
+        .breadcrumb-item.active {
+            color: var(--cisd-blue);
+            font-weight: 600;
+        }
+
+        .top-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .search-box {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-input {
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            padding: 0.5rem 1rem 0.5rem 2.5rem;
+            font-size: 0.9rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .notification-btn {
+            position: relative;
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            color: #666;
+            padding: 0.5rem;
+            cursor: pointer;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--cisd-red);
+            color: white;
+            font-size: 0.7rem;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .user-menu:hover {
+            background-color: #f8f9fa;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--cisd-blue), var(--cisd-red));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Content Area */
+        .content-area {
+            padding: 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        /* Cards */
+        .dashboard-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-header {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: between;
+        }
+
+        .card-title {
+            font-weight: 700;
+            color: #333;
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .card-actions {
+            margin-left: auto;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: #666;
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-icon:hover {
+            background-color: #f8f9fa;
+            color: var(--cisd-blue);
+        }
+
+        .card-content {
+            padding: 1.5rem;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--cisd-red), var(--cisd-blue));
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .stat-icon.red {
+            background: linear-gradient(45deg, var(--cisd-red), var(--cisd-deep-red));
+        }
+
+        .stat-icon.blue {
+            background: linear-gradient(45deg, var(--cisd-blue), var(--cisd-deep-blue));
+        }
+
+        .stat-icon.yellow {
+            background: linear-gradient(45deg, var(--cisd-yellow), #f59e0b);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .stat-change.positive {
+            background-color: #d1fae5;
+            color: #059669;
+        }
+
+        .stat-change.negative {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* Table */
+        .data-table {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .table-header {
+            background: var(--cisd-gray);
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .table-title {
+            font-weight: 700;
+            color: #333;
+            margin: 0;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-primary-custom {
+            background: var(--cisd-red);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            background: var(--cisd-deep-red);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline-custom {
+            border: 2px solid var(--cisd-blue);
+            color: var(--cisd-blue);
+            background: transparent;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--cisd-blue);
+            color: white;
+        }
+
+        .custom-table {
+            width: 100%;
+            margin: 0;
+        }
+
+        .custom-table th {
+            background: #f8f9fa;
+            border: none;
+            padding: 1rem 1.5rem;
+            font-weight: 700;
+            color: #333;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .custom-table td {
+            border: none;
+            padding: 1rem 1.5rem;
+            color: #666;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .custom-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-published {
+            background-color: #d1fae5;
+            color: #059669;
+        }
+
+        .status-draft {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-archived {
+            background-color: #f3f4f6;
+            color: #6b7280;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .form-control-custom {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control-custom:focus {
+            outline: none;
+            border-color: var(--cisd-blue);
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+        }
+
+        .form-select-custom {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .top-bar {
+                padding: 1rem;
+            }
+
+            .search-box {
+                width: 200px;
+            }
+
+            .content-area {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 999;
+        }
+
+        .fab {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--cisd-red);
+            color: white;
+            border: none;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .fab:hover {
+            background: var(--cisd-deep-red);
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+        }
+
+        /* Content Editor Preview */
+        .content-preview {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .preview-badge {
+            background-color: var(--cisd-red);
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .preview-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .preview-content {
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body x-data="dashboardApp()">
+    <!-- Sidebar -->
+    <div class="sidebar" :class="{ 'collapsed': !sidebarOpen, 'show': sidebarOpen }">
+        <div class="sidebar-header">
+            <a href="#" class="sidebar-brand">
+                <div class="user-avatar" style="margin-right: 12px; width: 40px; height: 40px;">
+                    <span style="font-size: 0.8rem;">CISD</span>
+                </div>
+                <div>
+                    <div style="font-size: 1.2rem; font-weight: 700;">Admin Panel</div>
+                    <div style="font-size: 0.8rem; opacity: 0.8;">Content Management</div>
+                </div>
+            </a>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Dashboard</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" :class="{ 'active': activeTab === 'overview' }"
+                        @click="setActiveTab('overview')">
+                        <i class="fas fa-chart-line"></i>
+                        Overview
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" :class="{ 'active': activeTab === 'analytics' }"
+                        @click="setActiveTab('analytics')">
+                        <i class="fas fa-chart-bar"></i>
+                        Analytics
+                    </a>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Content</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" :class="{ 'active': activeTab === 'hero' }"
+                        @click="setActiveTab('hero')">
+                        <i class="fas fa-home"></i>
+                        Hero Section
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" :class="{ 'active': activeTab === 'articles' }"
+                        @click="setActiveTab('articles')">
+                        <i class="fas fa-newspaper"></i>
+                        Featured Updates
+                        <span class="nav-badge" x-text="stats.draftArticles"></span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" :class="{ 'active': activeTab === 'events' }"
+                        @click="setActiveTab('events')">
+                        <i class="fas fa-calendar"></i>
+                        Events
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" :class="{ 'active': activeTab === 'issues' }"
+                        @click="setActiveTab('issues')">
+                        <i class="fas fa-list"></i>
+                        Core Issues
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" :class="{ 'active': activeTab === 'mission' }"
+                        @click="setActiveTab('mission')">
+                        <i class="fas fa-bullseye"></i>
+                        Mission Content
+                    </a>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Management</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" :class="{ 'active': activeTab === 'team' }"
+                        @click="setActiveTab('team')">
+                        <i class="fas fa-users"></i>
+                        Team & Experts
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" :class="{ 'active': activeTab === 'newsletter' }"
+                        @click="setActiveTab('newsletter')">
+                        <i class="fas fa-envelope"></i>
+                        Newsletter
+                        <span class="nav-badge" x-text="stats.newSubscribers"></span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" :class="{ 'active': activeTab === 'media' }"
+                        @click="setActiveTab('media')">
+                        <i class="fas fa-images"></i>
+                        Media Library
+                    </a>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">System</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" :class="{ 'active': activeTab === 'users' }"
+                        @click="setActiveTab('users')">
+                        <i class="fas fa-user-cog"></i>
+                        Users & Permissions
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" :class="{ 'active': activeTab === 'settings' }"
+                        @click="setActiveTab('settings')">
+                        <i class="fas fa-cog"></i>
+                        Site Settings
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" :class="{ 'expanded': !sidebarOpen }">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-bar-left">
+                <button class="sidebar-toggle" @click="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <nav class="breadcrumb">
+                    <span class="breadcrumb-item">CISD Admin</span>
+                    <span class="breadcrumb-item active" x-text="getBreadcrumb()"></span>
+                </nav>
+            </div>
+
+            <div class="top-bar-right">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="search-input" placeholder="Search content, users, settings...">
+                </div>
+
+                <button class="notification-btn">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </button>
+
+                <div class="user-menu">
+                    <div class="user-avatar">FJ</div>
+                    <div class="user-info">
+                        <div class="user-name">Folahan Johnson</div>
+                        <div class="user-role">Super Admin</div>
+                    </div>
+                    <i class="fas fa-chevron-down" style="color: #666; font-size: 0.8rem; margin-left: 0.5rem;"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Overview Tab -->
+            <div x-show="activeTab === 'overview'">
+                <div class="page-header">
+                    <h1 class="page-title">Dashboard Overview</h1>
+                    <p class="page-subtitle">Monitor your website performance and content status</p>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon red">
+                                <i class="fas fa-newspaper"></i>
+                            </div>
+                            <div class="stat-change positive">+12% this week</div>
+                        </div>
+                        <div class="stat-label">Total Articles</div>
+                        <div class="stat-value" x-text="stats.totalArticles"></div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon blue">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="stat-change positive">+3 upcoming</div>
+                        </div>
+                        <div class="stat-label">Events This Month</div>
+                        <div class="stat-value" x-text="stats.eventsThisMonth"></div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon yellow">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div class="stat-change positive">+24% growth</div>
+                        </div>
+                        <div class="stat-label">Newsletter Subscribers</div>
+                        <div class="stat-value" x-text="stats.newsletterSubscribers.toLocaleString()"></div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon red">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="stat-change positive">+18% this month</div>
+                        </div>
+                        <div class="stat-label">Page Views</div>
+                        <div class="stat-value" x-text="stats.pageViews.toLocaleString()"></div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Table -->
+                <div class="data-table">
+                    <div class="table-header">
+                        <h3 class="table-title">Recent Activity</h3>
+                        <div class="table-actions">
+                            <button class="btn-outline-custom">View All</button>
+                        </div>
+                    </div>
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Content</th>
+                                <th>Type</th>
+                                <th>Author</th>
+                                <th>Status</th>
+                                <th>Last Modified</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="item in recentActivity" :key="item.id">
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold" x-text="item.title"></div>
+                                        <div class="text-muted small" x-text="item.excerpt"></div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge" x-text="item.type"></span>
+                                    </td>
+                                    <td x-text="item.author"></td>
+                                    <td>
+                                        <span class="status-badge" :class="'status-' + item.status"
+                                            x-text="item.status"></span>
+                                    </td>
+                                    <td x-text="item.lastModified"></td>
+                                    <td>
+                                        <button class="btn-icon">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Articles Tab -->
+            <div x-show="activeTab === 'articles'">
+                <div class="page-header">
+                    <h1 class="page-title">Featured Updates</h1>
+                    <p class="page-subtitle">Manage your news articles, analysis, and campaign content</p>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="data-table">
+                            <div class="table-header">
+                                <h3 class="table-title">All Articles</h3>
+                                <div class="table-actions">
+                                    <button class="btn-primary-custom" @click="showArticleForm = true">
+                                        <i class="fas fa-plus me-2"></i>New Article
+                                    </button>
+                                </div>
+                            </div>
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Category</th>
+                                        <th>Author</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="article in articles" :key="article.id">
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold" x-text="article.title"></div>
+                                                <div class="text-muted small" x-text="article.excerpt"></div>
+                                            </td>
+                                            <td>
+                                                <span class="status-badge" x-text="article.category"></span>
+                                            </td>
+                                            <td x-text="article.author"></td>
+                                            <td>
+                                                <span class="status-badge" :class="'status-' + article.status"
+                                                    x-text="article.status"></span>
+                                            </td>
+                                            <td x-text="article.date"></td>
+                                            <td>
+                                                <button class="btn-icon" @click="editArticle(article)">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn-icon">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn-icon text-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="dashboard-card" x-show="showArticleForm">
+                            <div class="card-header">
+                                <h4 class="card-title">Quick Edit</h4>
+                                <button class="btn-icon" @click="showArticleForm = false">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="card-content">
+                                <div class="form-group">
+                                    <label class="form-label">Title</label>
+                                    <input type="text" class="form-control-custom" x-model="currentArticle.title">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Category</label>
+                                    <select class="form-select-custom" x-model="currentArticle.category">
+                                        <option value="analysis">Analysis</option>
+                                        <option value="campaign">Campaign</option>
+                                        <option value="news">News</option>
+                                        <option value="research">Research</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select-custom" x-model="currentArticle.status">
+                                        <option value="draft">Draft</option>
+                                        <option value="published">Published</option>
+                                        <option value="archived">Archived</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Excerpt</label>
+                                    <textarea class="form-control-custom" rows="3"
+                                        x-model="currentArticle.excerpt"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <button class="btn-primary-custom w-100" @click="saveArticle()">
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Article Preview -->
+                        <div class="content-preview mt-3" x-show="currentArticle.title">
+                            <div class="preview-badge" x-text="currentArticle.category.toUpperCase()"></div>
+                            <h3 class="preview-title" x-text="currentArticle.title"></h3>
+                            <p class="preview-content" x-text="currentArticle.excerpt"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hero Section Tab -->
+            <div x-show="activeTab === 'hero'">
+                <div class="page-header">
+                    <h1 class="page-title">Hero Section</h1>
+                    <p class="page-subtitle">Manage the main banner content on your homepage</p>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h4 class="card-title">Edit Hero Content</h4>
+                            </div>
+                            <div class="card-content">
+                                <div class="form-group">
+                                    <label class="form-label">Badge Text</label>
+                                    <input type="text" class="form-control-custom" x-model="heroContent.badge"
+                                        placeholder="e.g., DEMOCRACY">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Main Title</label>
+                                    <input type="text" class="form-control-custom" x-model="heroContent.title"
+                                        placeholder="Enter compelling title">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Subtitle</label>
+                                    <textarea class="form-control-custom" rows="3" x-model="heroContent.subtitle"
+                                        placeholder="Describe your mission and approach"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Call-to-Action Text</label>
+                                    <input type="text" class="form-control-custom" x-model="heroContent.ctaText"
+                                        placeholder="e.g., READ MORE">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Hero Image</label>
+                                    <input type="file" class="form-control-custom" accept="image/*">
+                                    <small class="text-muted">Recommended size: 1200x800px</small>
+                                </div>
+                                <button class="btn-primary-custom w-100">Update Hero Section</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="content-preview">
+                            <div class="preview-badge" x-text="heroContent.badge || 'DEMOCRACY'"></div>
+                            <h1 class="preview-title"
+                                x-text="heroContent.title || 'Reimagining Systems, Empowering People'"></h1>
+                            <p class="preview-content"
+                                x-text="heroContent.subtitle || 'Bridging the gap between policy and people through behavioral science, human-centered design, and participatory development.'">
+                            </p>
+                            <button class="btn-outline-custom mt-3"
+                                x-text="heroContent.ctaText || 'READ MORE'"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Events Tab -->
+            <div x-show="activeTab === 'events'">
+                <div class="page-header">
+                    <h1 class="page-title">Events</h1>
+                    <p class="page-subtitle">Manage upcoming events and community dialogues</p>
+                </div>
+
+                <div class="data-table">
+                    <div class="table-header">
+                        <h3 class="table-title">All Events</h3>
+                        <div class="table-actions">
+                            <button class="btn-primary-custom">
+                                <i class="fas fa-plus me-2"></i>New Event
+                            </button>
+                        </div>
+                    </div>
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Event Title</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th>Speakers</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="event in events" :key="event.id">
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold" x-text="event.title"></div>
+                                        <div class="text-muted small" x-text="event.description"></div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge" x-text="event.type"></span>
+                                    </td>
+                                    <td x-text="event.date"></td>
+                                    <td x-text="event.speakers"></td>
+                                    <td>
+                                        <span class="status-badge" :class="'status-' + event.status"
+                                            x-text="event.status"></span>
+                                    </td>
+                                    <td>
+                                        <button class="btn-icon">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon text-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Newsletter Tab -->
+            <div x-show="activeTab === 'newsletter'">
+                <div class="page-header">
+                    <h1 class="page-title">Newsletter Management</h1>
+                    <p class="page-subtitle">Manage subscribers and send Reform Dispatch newsletters</p>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="data-table">
+                            <div class="table-header">
+                                <h3 class="table-title">Recent Subscribers</h3>
+                                <div class="table-actions">
+                                    <button class="btn-outline-custom">Export CSV</button>
+                                    <button class="btn-primary-custom">Send Newsletter</button>
+                                </div>
+                            </div>
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Location</th>
+                                        <th>Subscribed</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="subscriber in subscribers" :key="subscriber.id">
+                                        <tr>
+                                            <td x-text="subscriber.name"></td>
+                                            <td x-text="subscriber.email"></td>
+                                            <td x-text="subscriber.location"></td>
+                                            <td x-text="subscriber.subscribed"></td>
+                                            <td>
+                                                <span class="status-badge status-published">Active</span>
+                                            </td>
+                                            <td>
+                                                <button class="btn-icon">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn-icon text-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon blue">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                            </div>
+                            <div class="stat-label">Total Subscribers</div>
+                            <div class="stat-value" x-text="stats.newsletterSubscribers.toLocaleString()"></div>
+                            <div class="stat-change positive">+24% this month</div>
+                        </div>
+
+                        <div class="dashboard-card mt-3">
+                            <div class="card-header">
+                                <h4 class="card-title">Quick Actions</h4>
+                            </div>
+                            <div class="card-content">
+                                <button class="btn-outline-custom w-100 mb-2">
+                                    <i class="fas fa-download me-2"></i>Export All Subscribers
+                                </button>
+                                <button class="btn-outline-custom w-100 mb-2">
+                                    <i class="fas fa-chart-bar me-2"></i>View Analytics
+                                </button>
+                                <button class="btn-primary-custom w-100">
+                                    <i class="fas fa-paper-plane me-2"></i>Compose Newsletter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Default/Empty state for other tabs -->
+            <div x-show="!['overview', 'articles', 'hero', 'events', 'newsletter'].includes(activeTab)">
+                <div class="page-header">
+                    <h1 class="page-title" x-text="getBreadcrumb()"></h1>
+                    <p class="page-subtitle">This section is under development</p>
+                </div>
+
+                <div class="dashboard-card text-center py-5">
+                    <i class="fas fa-tools fa-3x text-muted mb-3"></i>
+                    <h4>Coming Soon</h4>
+                    <p class="text-muted">This feature is currently being developed and will be available soon.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions FAB -->
+    <div class="quick-actions">
+        <button class="fab" title="Quick Add Content" @click="showQuickMenu = !showQuickMenu">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function dashboardApp() {
+            return {
+                sidebarOpen: true,
+                activeTab: 'overview',
+                showArticleForm: false,
+                showQuickMenu: false,
+
+                // Sample data
+                stats: {
+                    totalArticles: 24,
+                    eventsThisMonth: 7,
+                    newsletterSubscribers: 2847,
+                    pageViews: 15420,
+                    draftArticles: 3,
+                    newSubscribers: 12
+                },
+
+                recentActivity: [
+                    {
+                        id: 1,
+                        title: "Prototyping Water Access in Karamajiji Using HCD",
+                        excerpt: "Using human-centered design, CISD worked alongside...",
+                        type: "Article",
+                        author: "Kendall Verhovek",
+                        status: "published",
+                        lastModified: "2 hours ago"
+                    },
+                    {
+                        id: 2,
+                        title: "Monthly Learning Jams and Community Dialogues",
+                        excerpt: "Virtual event scheduled for August 19, 2025",
+                        type: "Event",
+                        author: "George Kacuna",
+                        status: "published",
+                        lastModified: "5 hours ago"
+                    },
+                    {
+                        id: 3,
+                        title: "Gendered Civic Tech Innovations",
+                        excerpt: "Designing civic technology platforms that put women's voices...",
+                        type: "Article",
+                        author: "Nkenna Williams",
+                        status: "draft",
+                        lastModified: "1 day ago"
+                    }
+                ],
+
+                articles: [
+                    {
+                        id: 1,
+                        title: "Prototyping Water Access in Karamajiji Using HCD",
+                        excerpt: "Using human-centered design, CISD worked alongside the Karamajiji community...",
+                        category: "analysis",
+                        author: "Kendall Verhovek",
+                        status: "published",
+                        date: "Aug 5, 2025"
+                    },
+                    {
+                        id: 2,
+                        title: "Youth Engagement Beyond the Ballot Box Campaign",
+                        excerpt: "This campaign equips young Nigerians with the tools, platforms...",
+                        category: "campaign",
+                        author: "Kendall Verhovek",
+                        status: "published",
+                        date: "Aug 5, 2025"
+                    },
+                    {
+                        id: 3,
+                        title: "Gendered Civic Tech Innovations",
+                        excerpt: "Designing civic technology platforms that put women's voices...",
+                        category: "analysis",
+                        author: "Kendall Verhovek",
+                        status: "draft",
+                        date: "Aug 4, 2025"
+                    }
+                ],
+
+                events: [
+                    {
+                        id: 1,
+                        title: "Monthly Learning Jams and Community Dialogues",
+                        description: "Interactive discussion on inclusive governance",
+                        type: "Virtual Event",
+                        date: "Aug 19, 2025",
+                        speakers: "Folahan Johnson, George Kacuna",
+                        status: "published"
+                    },
+                    {
+                        id: 2,
+                        title: "Public Square Dialogue - Lagos",
+                        description: "Community engagement on tax justice",
+                        type: "In-Person",
+                        date: "Aug 25, 2025",
+                        speakers: "Chinoso Asuma, Natalie Tennant",
+                        status: "draft"
+                    }
+                ],
+
+                subscribers: [
+                    {
+                        id: 1,
+                        name: "Adebayo Ogundimu",
+                        email: "a.ogundimu@email.com",
+                        location: "Lagos, Nigeria",
+                        subscribed: "Aug 12, 2025"
+                    },
+                    {
+                        id: 2,
+                        name: "Fatima Hassan",
+                        email: "f.hassan@email.com",
+                        location: "Abuja, Nigeria",
+                        subscribed: "Aug 11, 2025"
+                    },
+                    {
+                        id: 3,
+                        name: "Chinedu Okoro",
+                        email: "c.okoro@email.com",
+                        location: "Port Harcourt, Nigeria",
+                        subscribed: "Aug 10, 2025"
+                    }
+                ],
+
+                heroContent: {
+                    badge: 'DEMOCRACY',
+                    title: 'Reimagining Systems, Empowering People',
+                    subtitle: 'Bridging the gap between policy and people through behavioral science, human-centered design, and participatory development.',
+                    ctaText: 'READ MORE'
+                },
+
+                currentArticle: {
+                    title: '',
+                    category: 'analysis',
+                    status: 'draft',
+                    excerpt: ''
+                },
+
+                toggleSidebar() {
+                    this.sidebarOpen = !this.sidebarOpen;
+                },
+
+                setActiveTab(tab) {
+                    this.activeTab = tab;
+                    this.showArticleForm = false;
+                },
+
+                getBreadcrumb() {
+                    const breadcrumbs = {
+                        'overview': 'Dashboard Overview',
+                        'analytics': 'Analytics',
+                        'hero': 'Hero Section',
+                        'articles': 'Featured Updates',
+                        'events': 'Events',
+                        'issues': 'Core Issues',
+                        'mission': 'Mission Content',
+                        'team': 'Team & Experts',
+                        'newsletter': 'Newsletter',
+                        'media': 'Media Library',
+                        'users': 'Users & Permissions',
+                        'settings': 'Site Settings'
+                    };
+                    return breadcrumbs[this.activeTab] || 'Dashboard';
+                },
+
+                editArticle(article) {
+                    this.currentArticle = { ...article };
+                    this.showArticleForm = true;
+                },
+
+                saveArticle() {
+                    // Here you would typically send data to Django backend
+                    console.log('Saving article:', this.currentArticle);
+
+                    // Update the article in the list
+                    const index = this.articles.findIndex(a => a.id === this.currentArticle.id);
+                    if (index !== -1) {
+                        this.articles[index] = { ...this.currentArticle };
+                    }
+
+                    // Show success message (you could add a toast notification here)
+                    alert('Article saved successfully!');
+                    this.showArticleForm = false;
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

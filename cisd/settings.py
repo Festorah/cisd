@@ -206,9 +206,10 @@ CLOUDINARY_API_KEY = config("CLOUDINARY_API_KEY", default="")
 CLOUDINARY_API_SECRET = config("CLOUDINARY_API_SECRET", default="")
 
 
-# File upload settings
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+# File Upload Settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024  # 25MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024  # 25MB
+FILE_UPLOAD_PERMISSIONS = 0o644
 
 # Security settings for production
 if not DEBUG:
@@ -333,3 +334,28 @@ REDIS_URL = "redis://127.0.0.1:6379/1"
 
 # Site Configuration
 SITE_URL = "http://localhost:8000"
+
+
+# Dashboard Specific Settings
+DASHBOARD_SETTINGS = {
+    "AUTO_SAVE_INTERVAL": 30,  # seconds
+    "MAX_FILE_SIZE": 25 * 1024 * 1024,  # 25MB
+    "ALLOWED_FILE_TYPES": [
+        "pdf",
+        "doc",
+        "docx",
+        "txt",
+        "jpg",
+        "jpeg",
+        "png",
+        "gif",
+        "webp",
+        "mp4",
+        "mov",
+        "avi",
+        "webm",
+    ],
+    "DEFAULT_ARTICLE_TEMPLATE": "default",
+    "ENABLE_AUTO_BACKUP": True,
+    "BACKUP_RETENTION_DAYS": 30,
+}

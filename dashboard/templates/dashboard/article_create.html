@@ -1,0 +1,888 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Create Article - CISD Dashboard{% endblock %}
+{% block breadcrumb %}Create Article{% endblock %}
+
+{% block content %}
+<div x-data="articleEditor()" x-init="init()">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Create New Article</h1>
+            <p class="text-muted">Write and publish compelling content for your audience</p>
+        </div>
+        <div>
+            <button
+                class="btn btn-outline-secondary me-2"
+                @click="saveDraft()"
+                :disabled="isLoading"
+                data-action="save">
+                <i class="fas fa-save me-2"></i>Save Draft
+            </button>
+            <button
+                class="btn btn-primary-custom"
+                @click="publishArticle()"
+                :disabled="isLoading"
+                data-action="publish">
+                <i class="fas fa-paper-plane me-2"></i>Publish
+            </button>
+        </div>
+    </div>
+
+    <!-- Auto-save Status -->
+    <div x-show="autoSaveStatus" x-transition class="alert alert-info mb-3" x-text="autoSaveStatus"></div>
+
+    <!-- File Import Section -->
+    <div class="editor-container mb-4" x-show="!article.id">
+        <div class="editor-header">
+            <h5 class="mb-0">Quick Start</h5>
+        </div>
+        <div class="p-3">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="file-upload-area"
+                         x-ref="fileDropZone"
+                         @click="$refs.fileInput.click()">
+                        <i class="fas fa-file-upload fa-2x mb-2 text-muted"></i>
+                        <h6>Import from Document</h6>
+                        <p class="text-muted mb-0">Upload PDF, Word, or text file to auto-generate article structure</p>
+                        <small class="text-muted">Supported: .pdf, .doc, .docx, .txt</small>
+                    </div>
+                    <input type="file"
+                           x-ref="fileInput"
+                           style="display: none"
+                           accept=".pdf,.doc,.docx,.txt"
+                           @change="handleFileUpload($event)">
+                </div>
+                <div class="col-md-6 d-flex align-items-center">
+                    <div class="text-center w-100">
+                        <i class="fas fa-plus-circle fa-2x text-muted mb-2"></i>
+                        <h6>Start from Scratch</h6>
+                        <p class="text-muted mb-3">Begin with our default article template</p>
+                        <button class="btn btn-outline-primary" @click="loadDefaultTemplate()">
+                            Use Default Template
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Progress -->
+    <div x-show="uploadProgress.length > 0" class="mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Processing Files</h6>
+            </div>
+            <div class="card-body">
+                <template x-for="upload in uploadProgress" :key="upload.id">
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small" x-text="upload.name"></span>
+                            <span class="small" x-text="upload.progress + '%'"></span>
+                        </div>
+                        <div class="progress" style="height: 4px;">
+                            <div class="progress-bar"
+                                 :style="`width: ${upload.progress}%`"
+                                 :class="upload.error ? 'bg-danger' : (upload.progress === 100 ? 'bg-success' : 'bg-primary')"></div>
+                        </div>
+                        <template x-if="upload.error">
+                            <small class="text-danger" x-text="upload.error"></small>
+                        </template>
+                        <template x-if="upload.success">
+                            <small class="text-success">Processing complete!</small>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Editor -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Article Details -->
+            <div class="editor-container">
+                <div class="editor-header">
+                    <h5 class="mb-0">Article Details</h5>
+                </div>
+                <div class="p-3">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Article Title *</label>
+                                <input type="text"
+                                       class="form-control-custom"
+                                       x-model="article.title"
+                                       @input="scheduleAutoSave()"
+                                       placeholder="Enter compelling article title"
+                                       maxlength="300">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Category *</label>
+                                <select class="form-control-custom"
+                                        x-model="article.category_id"
+                                        @change="scheduleAutoSave()">
+                                    <option value="">Select category</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.display_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Article Excerpt *</label>
+                        <textarea class="form-control-custom"
+                                  rows="3"
+                                  x-model="article.excerpt"
+                                  @input="scheduleAutoSave()"
+                                  placeholder="Brief description of the article (max 500 characters)"
+                                  maxlength="500"></textarea>
+                        <small class="text-muted" x-text="`${article.excerpt ? article.excerpt.length : 0}/500 characters`"></small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Author *</label>
+                                <select class="form-control-custom"
+                                        x-model="article.author_id"
+                                        @change="scheduleAutoSave()">
+                                    <option value="">Select author</option>
+                                    {% for author in authors %}
+                                    <option value="{{ author.id }}" {% if author.id == request.user.id %}selected{% endif %}>{{ author.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Status</label>
+                                <select class="form-control-custom"
+                                        x-model="article.status"
+                                        @change="scheduleAutoSave()">
+                                    <option value="draft">Draft</option>
+                                    <option value="review">Under Review</option>
+                                    <option value="published">Published</option>
+                                    <option value="scheduled">Scheduled</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Featured Image</label>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <select class="form-control-custom"
+                                        x-model="article.featured_image_id"
+                                        @change="scheduleAutoSave()">
+                                    <option value="">No featured image</option>
+                                    {% for media in recent_media %}
+                                    {% if media.file_type == 'image' %}
+                                    <option value="{{ media.id }}">{{ media.title }}</option>
+                                    {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-outline-primary w-100" @click="openMediaLibrary()">
+                                    <i class="fas fa-images me-2"></i>Browse Media
+                                </button>
+                            </div>
+                        </div>
+                        <template x-if="getSelectedImageUrl()">
+                            <div class="mt-2">
+                                <img :src="getSelectedImageUrl()"
+                                     class="img-thumbnail"
+                                     style="max-height: 100px;"
+                                     alt="Featured image preview">
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Sections -->
+            <div class="editor-container mt-4">
+                <div class="editor-header">
+                    <h5 class="mb-0">Article Content</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-primary-custom dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-plus me-2"></i>Add Section
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" @click="addSection('paragraph')">
+                                <i class="fas fa-paragraph me-2"></i>Paragraph
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" @click="addSection('heading')">
+                                <i class="fas fa-heading me-2"></i>Heading
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" @click="addSection('image')">
+                                <i class="fas fa-image me-2"></i>Image
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" @click="addSection('quote')">
+                                <i class="fas fa-quote-right me-2"></i>Quote
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" @click="addSection('interview')">
+                                <i class="fas fa-comments me-2"></i>Interview
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="p-3">
+                    <!-- Content Sections -->
+                    <template x-for="(section, index) in article.content_sections" :key="section.id || index">
+                        <div class="content-section">
+                            <div class="section-header">
+                                <span class="section-type" x-text="section.type.toUpperCase()"></span>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-secondary me-1"
+                                            @click="moveSection(index, -1)"
+                                            :disabled="index === 0"
+                                            title="Move up">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary me-1"
+                                            @click="moveSection(index, 1)"
+                                            :disabled="index === article.content_sections.length - 1"
+                                            title="Move down">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            @click="removeSection(index)"
+                                            title="Delete section">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="section-content">
+                                <!-- Paragraph Section -->
+                                <template x-if="section.type === 'paragraph'">
+                                    <div>
+                                        <textarea class="form-control-custom"
+                                                  rows="4"
+                                                  x-model="section.content"
+                                                  @input="scheduleAutoSave()"
+                                                  placeholder="Enter paragraph content"></textarea>
+                                    </div>
+                                </template>
+
+                                <!-- Heading Section -->
+                                <template x-if="section.type === 'heading'">
+                                    <div>
+                                        <input type="text"
+                                               class="form-control-custom"
+                                               x-model="section.content"
+                                               @input="scheduleAutoSave()"
+                                               placeholder="Enter heading text">
+                                    </div>
+                                </template>
+
+                                <!-- Image Section -->
+                                <template x-if="section.type === 'image'">
+                                    <div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Select Image</label>
+                                            <select class="form-control-custom"
+                                                    x-model="section.media_file_id"
+                                                    @change="scheduleAutoSave()">
+                                                <option value="">Choose an image</option>
+                                                {% for media in recent_media %}
+                                                {% if media.file_type == 'image' %}
+                                                <option value="{{ media.id }}">{{ media.title }}</option>
+                                                {% endif %}
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Caption</label>
+                                            <input type="text"
+                                                   class="form-control-custom"
+                                                   x-model="section.caption"
+                                                   @input="scheduleAutoSave()"
+                                                   placeholder="Image caption">
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Alt Text (for accessibility)</label>
+                                            <input type="text"
+                                                   class="form-control-custom"
+                                                   x-model="section.alt_text"
+                                                   @input="scheduleAutoSave()"
+                                                   placeholder="Describe the image for screen readers">
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Quote Section -->
+                                <template x-if="section.type === 'quote'">
+                                    <div>
+                                        <textarea class="form-control-custom"
+                                                  rows="3"
+                                                  x-model="section.content"
+                                                  @input="scheduleAutoSave()"
+                                                  placeholder="Enter quote text"></textarea>
+                                        <div class="mt-2">
+                                            <input type="text"
+                                                   class="form-control-custom"
+                                                   x-model="section.attribution"
+                                                   @input="scheduleAutoSave()"
+                                                   placeholder="Quote attribution (optional)">
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Interview Section -->
+                                <template x-if="section.type === 'interview'">
+                                    <div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Question</label>
+                                            <input type="text"
+                                                   class="form-control-custom"
+                                                   x-model="section.question"
+                                                   @input="scheduleAutoSave()"
+                                                   placeholder="Interview question">
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Answer</label>
+                                            <textarea class="form-control-custom"
+                                                      rows="4"
+                                                      x-model="section.answer"
+                                                      @input="scheduleAutoSave()"
+                                                      placeholder="Interview answer"></textarea>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Empty State -->
+                    <template x-if="article.content_sections.length === 0">
+                        <div class="text-center py-5">
+                            <i class="fas fa-plus-circle fa-3x text-muted mb-3"></i>
+                            <h5>Start Adding Content</h5>
+                            <p class="text-muted">Add your first content section to begin writing your article.</p>
+                            <button class="btn btn-primary-custom" @click="addSection('paragraph')">
+                                <i class="fas fa-plus me-2"></i>Add Paragraph
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="col-lg-4">
+            <div class="preview-panel">
+                <div class="preview-header">
+                    <i class="fas fa-eye me-2"></i>Live Preview
+                </div>
+                <div class="preview-content">
+                    <template x-if="article.category_id">
+                        <div class="badge bg-primary mb-2" x-text="getCategoryName(article.category_id)"></div>
+                    </template>
+
+                    <template x-if="article.title">
+                        <h3 class="mb-2" x-text="article.title"></h3>
+                    </template>
+
+                    <template x-if="!article.title">
+                        <h3 class="mb-2 text-muted">Article Title</h3>
+                    </template>
+
+                    <template x-if="article.excerpt">
+                        <p class="text-muted mb-3" x-text="article.excerpt"></p>
+                    </template>
+
+                    <template x-if="article.author_id">
+                        <div class="mb-3">
+                            <small class="text-muted">By <span x-text="getAuthorName(article.author_id)"></span></small>
+                        </div>
+                    </template>
+
+                    <div class="content-preview">
+                        <template x-for="section in article.content_sections" :key="section.id">
+                            <div class="mb-3">
+                                <template x-if="section.type === 'paragraph' && section.content">
+                                    <p x-text="section.content"></p>
+                                </template>
+                                <template x-if="section.type === 'heading' && section.content">
+                                    <h4 x-text="section.content"></h4>
+                                </template>
+                                <template x-if="section.type === 'quote' && section.content">
+                                    <blockquote class="blockquote">
+                                        <p x-text="section.content"></p>
+                                        <template x-if="section.attribution">
+                                            <footer class="blockquote-footer">
+                                                <cite x-text="section.attribution"></cite>
+                                            </footer>
+                                        </template>
+                                    </blockquote>
+                                </template>
+                                <template x-if="section.type === 'interview' && (section.question || section.answer)">
+                                    <div class="bg-light p-3 rounded">
+                                        <template x-if="section.question">
+                                            <p class="fw-bold text-primary mb-2" x-text="section.question"></p>
+                                        </template>
+                                        <template x-if="section.answer">
+                                            <p class="mb-0" x-text="section.answer"></p>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <template x-if="article.content_sections.length === 0">
+                            <p class="text-muted fst-italic">Your article content will appear here as you write...</p>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function articleEditor() {
+        return {
+            // Domain Model - Article Entity
+            article: {
+                id: null,
+                title: '',
+                excerpt: '',
+                category_id: '',
+                author_id: '{{ request.user.id }}', // Default to current user
+                featured_image_id: '',
+                status: 'draft',
+                content_sections: []
+            },
+
+            // UI State
+            dragover: false,
+            isLoading: false,
+            autoSaveStatus: '',
+            uploadProgress: [],
+
+            // Domain Data (like your Django model choices)
+            categories: [
+                {% for category in categories %}
+                { id: '{{ category.id }}', name: '{{ category.display_name }}' },
+                {% endfor %}
+            ],
+
+            authors: [
+                {% for author in authors %}
+                { id: '{{ author.id }}', name: '{{ author.name }}' },
+                {% endfor %}
+            ],
+
+            mediaFiles: [
+                {% for media in recent_media %}
+                { id: '{{ media.id }}', title: '{{ media.title }}', url: '{{ media.cloudinary_url }}', type: '{{ media.file_type }}' },
+                {% endfor %}
+            ],
+
+            defaultStructure: {{ default_structure | safe }},
+
+            // Services (injected dependencies)
+            services: null,
+            autoSaveService: null,
+            dragDropService: null,
+
+            // Lifecycle Methods
+            init() {
+                // Wait for services to be available with retry mechanism
+                this.waitForServices().then(() => {
+                    this.setupAutoSave();
+                    this.setupDragDrop();
+                    this.setupMediaListener();
+                    console.log('Article editor initialized');
+                }).catch((error) => {
+                    console.warn('Services not available, using fallback mode:', error);
+                    this.setupFallbackMode();
+                });
+            },
+
+            async waitForServices(maxAttempts = 10, delay = 100) {
+                for (let i = 0; i < maxAttempts; i++) {
+                    if (window.dashboardServices) {
+                        this.services = window.dashboardServices;
+                        return;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+                throw new Error('Dashboard services not available after maximum attempts');
+            },
+
+            setupFallbackMode() {
+                // Create minimal fallback services
+                this.services = {
+                    http: {
+                        post: async (url, data) => {
+                            const response = await fetch(url, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': this.getCSRFToken()
+                                },
+                                body: JSON.stringify(data)
+                            });
+                            return await response.json();
+                        }
+                    },
+                    notifications: {
+                        success: (msg) => this.showFallbackNotification(msg, 'success'),
+                        error: (msg) => this.showFallbackNotification(msg, 'danger'),
+                        warning: (msg) => this.showFallbackNotification(msg, 'warning'),
+                        info: (msg) => this.showFallbackNotification(msg, 'info')
+                    },
+                    fileUpload: {
+                        uploadFile: async (file) => {
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            const response = await fetch('/dashboard/ajax/upload-file/', {
+                                method: 'POST',
+                                headers: { 'X-CSRFToken': this.getCSRFToken() },
+                                body: formData
+                            });
+                            return await response.json();
+                        }
+                    },
+                    autoSave: {
+                        start: () => console.log('Auto-save not available in fallback mode'),
+                        stop: () => {},
+                        scheduleDebounced: () => {}
+                    },
+                    dragDrop: {
+                        setupDropZone: () => console.log('Drag-drop not available in fallback mode'),
+                        cleanup: () => {}
+                    }
+                };
+            },
+
+            setupAutoSave() {
+                if (!this.services?.autoSave) {
+                    console.warn('Auto-save service not available');
+                    return;
+                }
+
+                this.autoSaveService = this.services.autoSave;
+
+                // Start auto-save with a function that returns current article data
+                this.autoSaveService.start(() => {
+                    if (this.article.title || this.article.content_sections.length > 0) {
+                        return this.article;
+                    }
+                    return null;
+                });
+            },
+
+            setupDragDrop() {
+                if (!this.services?.dragDrop || !this.$refs.fileDropZone) {
+                    console.warn('Drag-drop service not available');
+                    return;
+                }
+
+                this.dragDropService = this.services.dragDrop;
+
+                // Setup drop zone for file uploads
+                this.dragDropService.setupDropZone(
+                    this.$refs.fileDropZone,
+                    (files) => this.processFiles(files),
+                    {
+                        allowedTypes: ['application/pdf', 'application/msword', 'text/plain'],
+                        maxFiles: 1
+                    }
+                );
+            },
+
+            setupMediaListener() {
+                // Listen for media selection from media library popup
+                window.addEventListener('message', (event) => {
+                    if (event.data.type === 'media-selected') {
+                        this.handleMediaSelection(event.data.mediaId);
+                    }
+                });
+            },
+
+            // Auto-save Methods
+            scheduleAutoSave() {
+                if (this.autoSaveService?.scheduleDebounced) {
+                    this.autoSaveService.scheduleDebounced(2000);
+                }
+            },
+
+            // File Processing Methods
+            async handleFileUpload(event) {
+                const files = Array.from(event.target.files);
+                await this.processFiles(files);
+            },
+
+            async processFiles(files) {
+                if (!this.services?.fileUpload) {
+                    this.showFallbackNotification('File upload not available', 'warning');
+                    return;
+                }
+
+                for (const file of files) {
+                    const uploadId = this.addUploadProgress(file.name);
+
+                    try {
+                        const response = await this.services.fileUpload.uploadFile(
+                            file,
+                            (progress) => this.updateUploadProgress(uploadId, progress)
+                        );
+
+                        if (response.success && response.file_type === 'document') {
+                            this.loadArticleFromFile(response.article_data);
+                            this.updateUploadProgress(uploadId, 100, null, true);
+                            this.services.notifications.success('Document processed successfully!');
+                        } else {
+                            throw new Error(response.error || 'Failed to process file');
+                        }
+                    } catch (error) {
+                        this.updateUploadProgress(uploadId, 0, error.message);
+                        this.services.notifications.error(`Upload failed: ${error.message}`);
+                    }
+                }
+            },
+
+            loadArticleFromFile(articleData) {
+                this.article.title = articleData.title || this.article.title;
+                this.article.excerpt = articleData.excerpt || this.article.excerpt;
+                this.article.content_sections = articleData.sections || this.article.content_sections;
+            },
+
+            // Upload Progress Management
+            addUploadProgress(filename) {
+                const uploadId = Date.now() + Math.random();
+                this.uploadProgress.push({
+                    id: uploadId,
+                    name: filename,
+                    progress: 0,
+                    error: null,
+                    success: false
+                });
+                return uploadId;
+            },
+
+            updateUploadProgress(uploadId, progress, error = null, success = false) {
+                const upload = this.uploadProgress.find(u => u.id === uploadId);
+                if (upload) {
+                    upload.progress = progress;
+                    upload.error = error;
+                    upload.success = success;
+
+                    if (progress === 100 || error) {
+                        setTimeout(() => {
+                            this.uploadProgress = this.uploadProgress.filter(u => u.id !== uploadId);
+                        }, 3000);
+                    }
+                }
+            },
+
+            // Template Methods
+            loadDefaultTemplate() {
+                this.article.content_sections = [...this.defaultStructure];
+                this.scheduleAutoSave();
+            },
+
+            // Content Section Management
+            addSection(type) {
+                const section = {
+                    id: Date.now() + Math.random(),
+                    type: type,
+                    content: '',
+                    order: this.article.content_sections.length
+                };
+
+                // Type-specific initialization
+                if (type === 'image') {
+                    section.media_file_id = '';
+                    section.caption = '';
+                    section.alt_text = '';
+                } else if (type === 'interview') {
+                    section.question = '';
+                    section.answer = '';
+                } else if (type === 'quote') {
+                    section.attribution = '';
+                }
+
+                this.article.content_sections.push(section);
+                this.scheduleAutoSave();
+            },
+
+            removeSection(index) {
+                if (confirm('Are you sure you want to remove this section?')) {
+                    this.article.content_sections.splice(index, 1);
+                    this.scheduleAutoSave();
+                }
+            },
+
+            moveSection(index, direction) {
+                const newIndex = index + direction;
+                if (newIndex >= 0 && newIndex < this.article.content_sections.length) {
+                    const section = this.article.content_sections.splice(index, 1)[0];
+                    this.article.content_sections.splice(newIndex, 0, section);
+                    this.scheduleAutoSave();
+                }
+            },
+
+            // Article Operations
+            async saveDraft() {
+                this.article.status = 'draft';
+                await this.saveArticle();
+            },
+
+            async publishArticle() {
+                if (!this.validateArticle()) return;
+
+                this.article.status = 'published';
+                const success = await this.saveArticle();
+
+                if (success) {
+                    setTimeout(() => {
+                        window.location.href = '/dashboard/';
+                    }, 2000);
+                }
+            },
+
+            validateArticle() {
+                const errors = [];
+
+                if (!this.article.title?.trim()) {
+                    errors.push('Article title is required');
+                }
+                if (!this.article.excerpt?.trim()) {
+                    errors.push('Article excerpt is required');
+                }
+                if (!this.article.category_id) {
+                    errors.push('Please select a category');
+                }
+                if (!this.article.author_id) {
+                    errors.push('Please select an author');
+                }
+                if (this.article.content_sections.length === 0) {
+                    errors.push('Article must have at least one content section');
+                }
+
+                if (errors.length > 0) {
+                    this.services.notifications.error(errors.join('\n'));
+                    return false;
+                }
+                return true;
+            },
+
+            async saveArticle() {
+                if (!this.services?.http) {
+                    this.showFallbackNotification('Save service not available', 'danger');
+                    return false;
+                }
+
+                try {
+                    this.isLoading = true;
+
+                    const response = await this.services.http.post('/dashboard/ajax/save-article/', this.article);
+
+                    if (response.success) {
+                        this.article.id = response.article_id;
+                        this.services.notifications.success(response.message);
+                        return true;
+                    } else {
+                        throw new Error(response.error || 'Failed to save article');
+                    }
+                } catch (error) {
+                    this.services.notifications.error(`Error saving article: ${error.message}`);
+                    console.error('Error saving article:', error);
+                    return false;
+                } finally {
+                    this.isLoading = false;
+                }
+            },
+
+            // Helper Methods
+            getCategoryName(categoryId) {
+                const category = this.categories.find(c => c.id == categoryId);
+                return category ? category.name : '';
+            },
+
+            getAuthorName(authorId) {
+                const author = this.authors.find(a => a.id == authorId);
+                return author ? author.name : '';
+            },
+
+            getSelectedImageUrl() {
+                if (!this.article.featured_image_id) return null;
+                const media = this.mediaFiles.find(m => m.id == this.article.featured_image_id);
+                return media ? media.url : null;
+            },
+
+            getCSRFToken() {
+                return document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                       document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+            },
+
+            showFallbackNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+                notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+                notification.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-${this.getNotificationIcon(type)} me-2"></i>
+                        <span>${message}</span>
+                    </div>
+                    <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+                `;
+
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 5000);
+            },
+
+            getNotificationIcon(type) {
+                const icons = {
+                    success: 'check-circle',
+                    danger: 'exclamation-triangle',
+                    warning: 'exclamation-circle',
+                    info: 'info-circle'
+                };
+                return icons[type] || 'info-circle';
+            },
+
+            openMediaLibrary() {
+                const popup = window.open('/dashboard/media/', '_blank', 'width=1200,height=800');
+                if (!popup) {
+                    this.services.notifications.warning('Please allow popups to browse media files');
+                }
+            },
+
+            handleMediaSelection(mediaId) {
+                // This could be enhanced to target specific sections
+                this.article.featured_image_id = mediaId;
+                this.scheduleAutoSave();
+                this.services.notifications.success('Media selected successfully');
+            },
+
+            // Cleanup
+            destroy() {
+                this.autoSaveService?.stop();
+                this.dragDropService?.cleanup();
+            }
+        }
+    }
+</script>
+{% endblock %}

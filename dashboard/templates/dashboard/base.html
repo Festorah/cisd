@@ -1,0 +1,339 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CISD Dashboard{% endblock %}</title>
+
+    <!-- External CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Dashboard CSS -->
+    <link href="{% static 'css/dashboard.css' %}" rel="stylesheet">
+
+    <!-- Dashboard Services (must load before Alpine.js) -->
+    <script src="{% static 'js/dashboard.js' %}"></script>
+    <script>
+        // Dashboard Initialization Script - Ensures services are ready
+        (function() {
+            'use strict';
+
+            // Simple service availability check and fallback
+            function ensureServicesAvailable() {
+                function getCSRFToken() {
+                    return document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                           document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+                }
+
+                function showNotification(message, type = 'info') {
+                    const notification = document.createElement('div');
+                    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+                    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+
+                    const icons = {
+                        success: 'check-circle',
+                        danger: 'exclamation-triangle',
+                        warning: 'exclamation-circle',
+                        info: 'info-circle'
+                    };
+
+                    notification.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-${icons[type] || 'info-circle'} me-2"></i>
+                            <span>${message}</span>
+                        </div>
+                        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+                    `;
+
+                    document.body.appendChild(notification);
+                    setTimeout(() => notification.remove(), 5000);
+                }
+
+                // Ensure services are available
+                if (!window.dashboardServices) {
+                    console.log('Creating fallback dashboard services...');
+
+                    window.dashboardServices = {
+                        http: {
+                            async post(url, data) {
+                                const response = await fetch(url, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': getCSRFToken()
+                                    },
+                                    body: JSON.stringify(data)
+                                });
+
+                                if (!response.ok) {
+                                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                                }
+                                return await response.json();
+                            }
+                        },
+
+                        notifications: {
+                            success: (msg) => showNotification(msg, 'success'),
+                            error: (msg) => showNotification(msg, 'danger'),
+                            warning: (msg) => showNotification(msg, 'warning'),
+                            info: (msg) => showNotification(msg, 'info')
+                        },
+
+                        fileUpload: {
+                            async uploadFile(file, onProgress) {
+                                const formData = new FormData();
+                                formData.append('file', file);
+
+                                return new Promise((resolve, reject) => {
+                                    const xhr = new XMLHttpRequest();
+
+                                    if (onProgress) {
+                                        xhr.upload.addEventListener('progress', (e) => {
+                                            if (e.lengthComputable) {
+                                                onProgress((e.loaded / e.total) * 100);
+                                            }
+                                        });
+                                    }
+
+                                    xhr.addEventListener('load', () => {
+                                        if (xhr.status === 200) {
+                                            resolve(JSON.parse(xhr.responseText));
+                                        } else {
+                                            reject(new Error(`Upload failed: ${xhr.status}`));
+                                        }
+                                    });
+
+                                    xhr.addEventListener('error', () => {
+                                        reject(new Error('Upload failed'));
+                                    });
+
+                                    xhr.open('POST', '/dashboard/ajax/upload-file/');
+                                    xhr.setRequestHeader('X-CSRFToken', getCSRFToken());
+                                    xhr.send(formData);
+                                });
+                            }
+                        },
+
+                        autoSave: {
+                            start: () => console.log('Auto-save started (fallback)'),
+                            stop: () => console.log('Auto-save stopped'),
+                            scheduleDebounced: () => console.log('Auto-save scheduled')
+                        },
+
+                        dragDrop: {
+                            setupDropZone: () => console.log('Drop zone setup (fallback)'),
+                            cleanup: () => console.log('Drop zone cleanup')
+                        }
+                    };
+                }
+            }
+
+            // Ensure services are available immediately
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', ensureServicesAvailable);
+            } else {
+                ensureServicesAvailable();
+            }
+        })();
+    </script>
+
+    <!-- Alpine.js (loads after services are ready) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.0/cdn.min.js" defer></script>
+
+    <!-- CSRF Token for AJAX requests -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <a href="{% url 'dashboard:home' %}" class="sidebar-brand">
+                <div class="d-flex align-items-center">
+                    <div class="sidebar-logo">
+                        <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
+                            <span style="font-size: 0.8rem; font-weight: 700;">CISD</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.2rem; font-weight: 700;">Dashboard</div>
+                        <div style="font-size: 0.8rem; opacity: 0.8;">Content Management</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <nav class="sidebar-nav p-3">
+            <!-- Content Management Section -->
+            <div class="nav-section">
+                <div class="nav-section-title">Content Management</div>
+                <div class="nav-item">
+                    <a href="{% url 'dashboard:home' %}"
+                        class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'dashboard:article_create' %}"
+                        class="nav-link {% if 'article' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-edit"></i>
+                        Create Article
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'dashboard:media_library' %}"
+                        class="nav-link {% if 'media' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-images"></i>
+                        Media Library
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'dashboard:articles_list' %}" class="nav-link">
+                        <i class="fas fa-list"></i>
+                        All Articles
+                    </a>
+                </div>
+            </div>
+
+            <!-- Site Content Section -->
+            <div class="nav-section">
+                <div class="nav-section-title">Site Content</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-file-alt"></i>
+                        Pages
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-calendar"></i>
+                        Events
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-users"></i>
+                        Team & Experts
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-tags"></i>
+                        Categories
+                    </a>
+                </div>
+            </div>
+
+            <!-- System Section -->
+            <div class="nav-section">
+                <div class="nav-section-title">System</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-chart-bar"></i>
+                        Analytics
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/" class="nav-link" target="_blank">
+                        <i class="fas fa-external-link-alt"></i>
+                        View Site
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Top Navigation Bar -->
+        <div class="top-bar">
+            <nav class="breadcrumb">
+                <span class="breadcrumb-item">
+                    <i class="fas fa-home me-1"></i>CISD Dashboard
+                </span>
+                <span class="breadcrumb-item active">{% block breadcrumb %}Dashboard{% endblock %}</span>
+            </nav>
+
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <small class="text-muted">Welcome back,</small>
+                    <br>
+                    <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                </div>
+
+                <div class="btn-group">
+                    <a href="/" class="btn btn-outline-secondary btn-sm" target="_blank">
+                        <i class="fas fa-external-link-alt me-2"></i>View Site
+                    </a>
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle dropdown-toggle-split"
+                            data-bs-toggle="dropdown">
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'admin:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- System Messages -->
+            {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <div class="d-flex align-items-center">
+                        {% if message.tags == 'success' %}
+                            <i class="fas fa-check-circle me-2"></i>
+                        {% elif message.tags == 'error' %}
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                        {% elif message.tags == 'warning' %}
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                        {% else %}
+                            <i class="fas fa-info-circle me-2"></i>
+                        {% endif %}
+                        <span>{{ message }}</span>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Page Content -->
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- External JavaScript Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Page-specific JavaScript -->
+    {% block extra_js %}{% endblock %}
+
+    <!-- Development Helper -->
+    {% if debug %}
+    <script>
+        console.log('Dashboard running in development mode');
+        console.log('Available services:', window.dashboardServices);
+    </script>
+    {% endif %}
+</body>
+
+</html>
