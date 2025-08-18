@@ -277,6 +277,46 @@
             background: #9ca3af;
             cursor: not-allowed;
         }
+
+        /* Office Information Styles */
+        .office-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .office-info img {
+            height: 40px;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .office-details {
+            flex: 1;
+        }
+
+        .office-title {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 0.25rem;
+        }
+
+        .office-address {
+            font-size: 0.85rem;
+            color: #ccc;
+            line-height: 1.3;
+        }
+
+        /* Responsive adjustments for office layout */
+        @media (max-width: 991px) {
+            .office-info {
+                margin-bottom: 2rem;
+            }
+
+            .office-info:last-of-type {
+                margin-bottom: 1rem;
+            }
+        }
     </style>
 
     <!-- Footer -->
@@ -351,17 +391,41 @@
             <hr class="my-4">
 
             <div class="row align-items-center">
+                <!-- Office Information - Desktop: Side by side, Mobile: Stacked -->
                 <div class="col-lg-6">
-                    <div class="d-flex align-items-center">
-                        <img src="{% static 'images/logo_2.png' %}" alt="CISD" class="me-3" style="height: 40px;">
-                        <div>
-                            <div style="font-weight: 600;">Abuja Office</div>
-                            <div style="font-size: 0.85rem; color: #ccc;">3rd Floor Donatella Media</div>
-                            <div style="font-size: 0.85rem; color: #ccc;">Plot 398 Constitution Ave</div>
-                            <div style="font-size: 0.85rem; color: #ccc;">Central Business District</div>
+                    <div class="row">
+                        <!-- Abuja Office -->
+                        <div class="col-md-6">
+                            <div class="office-info">
+                                <img src="{% static 'images/logo_2.png' %}" alt="CISD">
+                                <div class="office-details">
+                                    <div class="office-title">Abuja Office</div>
+                                    <div class="office-address">
+                                        3rd Floor Coscharis Motors<br>
+                                        Plot 388 Constitution Ave<br>
+                                        Central Business District, Abuja
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lagos Office -->
+                        <div class="col-md-6">
+                            <div class="office-info">
+                                <img src="{% static 'images/logo_2.png' %}" alt="CISD">
+                                <div class="office-details">
+                                    <div class="office-title">Lagos Office</div>
+                                    <div class="office-address">
+                                        65b Opebi Rd, Opebi<br>
+                                        Ikeja, Lagos
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Copyright Information -->
                 <div class="col-lg-6 text-lg-end">
                     <div style="font-size: 0.85rem; color: #ccc;">
                         <span>© 2025 Centre for Inclusive Social Development</span>
