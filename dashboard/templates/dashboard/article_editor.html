@@ -1,0 +1,809 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Edit Article - CISD Dashboard{% endblock %}
+{% block breadcrumb %}Edit Article{% endblock %}
+
+{% block content %}
+<div x-data="articleEditor()" x-init="init()">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Edit Article</h1>
+            <p class="text-muted">Update your article content and settings</p>
+        </div>
+        <div>
+            <a href="{% url 'dashboard:articles_list' %}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left me-2"></i>Back to Articles
+            </a>
+            <button class="btn btn-outline-secondary me-2" 
+                    @click="saveDraft()" 
+                    :disabled="isLoading"
+                    data-action="save">
+                <template x-if="!isLoading">
+                    <span><i class="fas fa-save me-2"></i>Save Draft</span>
+                </template>
+                <template x-if="isLoading">
+                    <span><i class="fas fa-spinner fa-spin me-2"></i>Saving...</span>
+                </template>
+            </button>
+            <button class="btn btn-primary-custom"
+                    @click="publishArticle()"
+                    :disabled="isLoading"
+                    data-action="publish">
+                <template x-if="!isLoading">
+                    <span>
+                        <i class="fas fa-paper-plane me-2"></i>
+                        <span x-text="article.status === 'published' ? 'Update' : 'Publish'"></span>
+                    </span>
+                </template>
+                <template x-if="isLoading">
+                    <span><i class="fas fa-spinner fa-spin me-2"></i>Publishing...</span>
+                </template>
+            </button>
+        </div>
+    </div>
+
+    <!-- Article Status Alert -->
+    <div class="alert alert-info mb-4" x-show="article.id">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-info-circle me-2"></i>
+            <div>
+                <strong>Article Status:</strong>
+                <span class="badge ms-1"
+                      :class="getStatusBadgeClass(article.status)"
+                      x-text="article.status.charAt(0).toUpperCase() + article.status.slice(1)"></span>
+                <template x-if="article.published_date">
+                    <span class="ms-3">
+                        <strong>Published:</strong> <span x-text="formatDate(article.published_date)"></span>
+                    </span>
+                </template>
+                <template x-if="!article.published_date && article.status !== 'draft'">
+                    <span class="ms-3 text-muted">Not yet published</span>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto-save Status -->
+    <div x-show="autoSaveStatus" x-transition class="alert alert-success mb-3" x-text="autoSaveStatus"></div>
+
+    <!-- Main Editor -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Article Details -->
+            <div class="editor-container">
+                <div class="editor-header">
+                    <h5 class="mb-0">Article Details</h5>
+                    <small class="text-muted">Last updated: {{ article.updated_at|timesince }} ago</small>
+                </div>
+                <div class="p-3">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Article Title *</label>
+                                <input type="text"
+                                       class="form-control-custom"
+                                       x-model="article.title"
+                                       @input="scheduleAutoSave()"
+                                       placeholder="Enter compelling article title"
+                                       maxlength="300">
+                                <small class="text-muted" x-show="article.title" x-text="`${article.title.length}/300 characters`"></small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Category *</label>
+                                <select class="form-control-custom"
+                                        x-model="article.category_id"
+                                        @change="scheduleAutoSave()">
+                                    <option value="">Select category</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.display_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Article Excerpt *</label>
+                        <textarea class="form-control-custom"
+                                  rows="3"
+                                  x-model="article.excerpt"
+                                  @input="scheduleAutoSave()"
+                                  placeholder="Brief description of the article (max 500 characters)"
+                                  maxlength="500"></textarea>
+                        <small class="text-muted" x-text="`${article.excerpt ? article.excerpt.length : 0}/500 characters`"></small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Author *</label>
+                                <select class="form-control-custom"
+                                        x-model="article.author_id"
+                                        @change="scheduleAutoSave()">
+                                    <option value="">Select author</option>
+                                    {% for author in authors %}
+                                    <option value="{{ author.id }}">{{ author.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Status</label>
+                                <select class="form-control-custom"
+                                        x-model="article.status"
+                                        @change="scheduleAutoSave()">
+                                    <option value="draft">Draft</option>
+                                    <option value="review">Under Review</option>
+                                    <option value="published">Published</option>
+                                    <option value="scheduled">Scheduled</option>
+                                    <option value="archived">Archived</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Featured Image</label>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <select class="form-control-custom"
+                                        x-model="article.featured_image_id"
+                                        @change="scheduleAutoSave()">
+                                    <option value="">No featured image</option>
+                                    {% for media in recent_media %}
+                                    {% if media.file_type == 'image' %}
+                                    <option value="{{ media.id }}">{{ media.title }}</option>
+                                    {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-outline-primary w-100" @click="openMediaLibrary()">
+                                    <i class="fas fa-images me-2"></i>Browse Media
+                                </button>
+                            </div>
+                        </div>
+                        <template x-if="getSelectedImageUrl()">
+                            <div class="mt-2">
+                                <img :src="getSelectedImageUrl()"
+                                     class="img-thumbnail"
+                                     style="max-height: 100px;"
+                                     alt="Featured image preview">
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Sections -->
+            <div class="editor-container mt-4">
+                <div class="editor-header">
+                    <h5 class="mb-0">Article Content</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-primary-custom dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-plus me-2"></i>Add Section
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" @click="addSection('paragraph')">
+                                <i class="fas fa-paragraph me-2"></i>Paragraph
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" @click="addSection('heading')">
+                                <i class="fas fa-heading me-2"></i>Heading
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" @click="addSection('image')">
+                                <i class="fas fa-image me-2"></i>Image
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" @click="addSection('quote')">
+                                <i class="fas fa-quote-right me-2"></i>Quote
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" @click="addSection('interview')">
+                                <i class="fas fa-comments me-2"></i>Interview
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="p-3">
+                    <!-- Debug info (remove in production) -->
+                    <div x-show="false" class="alert alert-info">
+                        <small>Sections loaded: <span x-text="article.content_sections.length"></span></small>
+                    </div>
+
+                    <!-- Content Sections -->
+                    <template x-for="(section, index) in article.content_sections" :key="section.id || index">
+                        <div class="content-section">
+                            <div class="section-header">
+                                <span class="section-type" x-text="section.type.toUpperCase()"></span>
+                                <div class="d-flex">
+                                    <span class="badge bg-secondary me-2" x-text="`#${index + 1}`"></span>
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-secondary me-1"
+                                                @click="moveSection(index, -1)"
+                                                :disabled="index === 0"
+                                                title="Move up">
+                                            <i class="fas fa-chevron-up"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary me-1"
+                                                @click="moveSection(index, 1)"
+                                                :disabled="index === article.content_sections.length - 1"
+                                                title="Move down">
+                                            <i class="fas fa-chevron-down"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger"
+                                                @click="removeSection(index)"
+                                                title="Delete section">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="section-content">
+                                <!-- Paragraph Section -->
+                                <template x-if="section.type === 'paragraph'">
+                                    <div>
+                                        <label class="form-label small">Content</label>
+                                        <textarea class="form-control-custom"
+                                                  rows="4"
+                                                  x-model="section.content"
+                                                  @input="scheduleAutoSave()"
+                                                  placeholder="Enter paragraph content"
+                                                  :id="`section-${section.id || index}-content`"></textarea>
+                                    </div>
+                                </template>
+
+                                <!-- Heading Section -->
+                                <template x-if="section.type === 'heading'">
+                                    <div>
+                                        <label class="form-label small">Heading Text</label>
+                                        <input type="text"
+                                               class="form-control-custom"
+                                               x-model="section.content"
+                                               @input="scheduleAutoSave()"
+                                               placeholder="Enter heading text"
+                                               :id="`section-${section.id || index}-content`">
+                                    </div>
+                                </template>
+
+                                <!-- Image Section -->
+                                <template x-if="section.type === 'image'">
+                                    <div>
+                                        <div class="mb-3">
+                                            <label class="form-label small">Select Image</label>
+                                            <select class="form-control-custom"
+                                                    x-model="section.media_file_id"
+                                                    @change="scheduleAutoSave()">
+                                                <option value="">Choose an image</option>
+                                                {% for media in recent_media %}
+                                                {% if media.file_type == 'image' %}
+                                                <option value="{{ media.id }}">{{ media.title }}</option>
+                                                {% endif %}
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label small">Caption</label>
+                                            <input type="text"
+                                                   class="form-control-custom"
+                                                   x-model="section.caption"
+                                                   @input="scheduleAutoSave()"
+                                                   placeholder="Image caption">
+                                        </div>
+                                        <div>
+                                            <label class="form-label small">Alt Text (for accessibility)</label>
+                                            <input type="text"
+                                                   class="form-control-custom"
+                                                   x-model="section.alt_text"
+                                                   @input="scheduleAutoSave()"
+                                                   placeholder="Describe the image for screen readers">
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Quote Section -->
+                                <template x-if="section.type === 'quote'">
+                                    <div>
+                                        <div class="mb-3">
+                                            <label class="form-label small">Quote Text</label>
+                                            <textarea class="form-control-custom"
+                                                      rows="3"
+                                                      x-model="section.content"
+                                                      @input="scheduleAutoSave()"
+                                                      placeholder="Enter quote text"></textarea>
+                                        </div>
+                                        <div>
+                                            <label class="form-label small">Attribution (optional)</label>
+                                            <input type="text"
+                                                   class="form-control-custom"
+                                                   x-model="section.attribution"
+                                                   @input="scheduleAutoSave()"
+                                                   placeholder="Quote attribution (e.g., John Doe, CEO)">
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Interview Section -->
+                                <template x-if="section.type === 'interview'">
+                                    <div>
+                                        <div class="mb-3">
+                                            <label class="form-label small">Question</label>
+                                            <input type="text"
+                                                   class="form-control-custom"
+                                                   x-model="section.question"
+                                                   @input="scheduleAutoSave()"
+                                                   placeholder="Interview question">
+                                        </div>
+                                        <div>
+                                            <label class="form-label small">Answer</label>
+                                            <textarea class="form-control-custom"
+                                                      rows="4"
+                                                      x-model="section.answer"
+                                                      @input="scheduleAutoSave()"
+                                                      placeholder="Interview answer"></textarea>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Empty State -->
+                    <template x-if="article.content_sections.length === 0">
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                            <h5>No Content Sections</h5>
+                            <p class="text-muted">This article doesn't have any content sections yet.</p>
+                            <button class="btn btn-primary-custom" @click="addSection('paragraph')">
+                                <i class="fas fa-plus me-2"></i>Add First Section
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="col-lg-4">
+            <div class="preview-panel">
+                <div class="preview-header">
+                    <i class="fas fa-eye me-2"></i>Live Preview
+                    <small class="ms-auto text-muted">Updates as you type</small>
+                </div>
+                <div class="preview-content">
+                    <template x-if="article.category_id">
+                        <div class="badge bg-primary mb-2" x-text="getCategoryName(article.category_id)"></div>
+                    </template>
+
+                    <template x-if="article.title">
+                        <h3 class="mb-2" x-text="article.title"></h3>
+                    </template>
+
+                    <template x-if="!article.title">
+                        <h3 class="mb-2 text-muted">Article Title</h3>
+                    </template>
+
+                    <template x-if="article.excerpt">
+                        <p class="text-muted mb-3" x-text="article.excerpt"></p>
+                    </template>
+
+                    <template x-if="article.author_id">
+                        <div class="mb-3">
+                            <small class="text-muted">By <span x-text="getAuthorName(article.author_id)"></span></small>
+                        </div>
+                    </template>
+
+                    <div class="content-preview">
+                        <template x-for="section in article.content_sections" :key="section.id">
+                            <div class="mb-3">
+                                <template x-if="section.type === 'paragraph' && section.content">
+                                    <p x-text="section.content"></p>
+                                </template>
+                                <template x-if="section.type === 'heading' && section.content">
+                                    <h4 x-text="section.content"></h4>
+                                </template>
+                                <template x-if="section.type === 'quote' && section.content">
+                                    <blockquote class="blockquote">
+                                        <p x-text="section.content"></p>
+                                        <template x-if="section.attribution">
+                                            <footer class="blockquote-footer">
+                                                <cite x-text="section.attribution"></cite>
+                                            </footer>
+                                        </template>
+                                    </blockquote>
+                                </template>
+                                <template x-if="section.type === 'interview' && (section.question || section.answer)">
+                                    <div class="bg-light p-3 rounded">
+                                        <template x-if="section.question">
+                                            <p class="fw-bold text-primary mb-2" x-text="section.question"></p>
+                                        </template>
+                                        <template x-if="section.answer">
+                                            <p class="mb-0" x-text="section.answer"></p>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <template x-if="article.content_sections.length === 0">
+                            <p class="text-muted fst-italic">Your article content will appear here as you write...</p>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function articleEditor() {
+        return {
+            // Pre-load existing article data from backend
+            article: {},
+
+            // UI State
+            isLoading: false,
+            autoSaveStatus: '',
+
+            // Domain Data
+            categories: [
+                {% for category in categories %}
+                { id: '{{ category.id }}', name: '{{ category.display_name }}' },
+                {% endfor %}
+            ],
+
+            authors: [
+                {% for author in authors %}
+                { id: '{{ author.id }}', name: '{{ author.name }}' },
+                {% endfor %}
+            ],
+
+            mediaFiles: [
+                {% for media in recent_media %}
+                { id: '{{ media.id }}', title: '{{ media.title }}', url: '{{ media.cloudinary_url }}', type: '{{ media.file_type }}' },
+                {% endfor %}
+            ],
+
+            services: null,
+            autoSaveService: null,
+
+            async init() {
+                // Load article data from backend
+                this.loadArticleData();
+
+                await this.waitForServices();
+                this.setupAutoSave();
+
+                console.log('Article editor initialized with existing article:', this.article);
+                console.log('Content sections loaded:', this.article.content_sections?.length || 0);
+            },
+
+            loadArticleData() {
+                try {
+                    // Parse the article data passed from Django
+                    const articleData = {{ article_data_json|safe }};
+
+                    // Ensure all required properties exist
+                    this.article = {
+                        id: articleData.id || '',
+                        title: articleData.title || '',
+                        excerpt: articleData.excerpt || '',
+                        category_id: articleData.category_id || '',
+                        author_id: articleData.author_id || '',
+                        featured_image_id: articleData.featured_image_id || '',
+                        status: articleData.status || 'draft',
+                        published_date: articleData.published_date || '',
+                        content_sections: articleData.content_sections || [],
+                        meta_title: articleData.meta_title || '',
+                        meta_description: articleData.meta_description || '',
+                        social_title: articleData.social_title || '',
+                        social_description: articleData.social_description || '',
+                        is_featured: articleData.is_featured || false,
+                        is_breaking: articleData.is_breaking || false,
+                        allow_comments: articleData.allow_comments !== false, // Default to true
+                    };
+
+                    // Ensure content sections have all required properties
+                    this.article.content_sections = this.article.content_sections.map(section => ({
+                        id: section.id || '',
+                        type: section.type || 'paragraph',
+                        content: section.content || '',
+                        title: section.title || '',
+                        order: section.order || 0,
+                        media_file_id: section.media_file_id || '',
+                        caption: section.caption || '',
+                        alt_text: section.alt_text || '',
+                        question: section.question || '',
+                        answer: section.answer || '',
+                        interviewer: section.interviewer || '',
+                        interviewee: section.interviewee || '',
+                        attribution: section.attribution || '', // For quotes
+                    }));
+
+                    console.log('Article data loaded successfully:', this.article.title);
+                    console.log('Sections loaded:', this.article.content_sections.length);
+
+                } catch (error) {
+                    console.error('Error loading article data:', error);
+                    this.showNotification('Error loading article data', 'danger');
+
+                    // Fallback to empty article
+                    this.article = {
+                        id: '',
+                        title: '',
+                        excerpt: '',
+                        category_id: '',
+                        author_id: '',
+                        featured_image_id: '',
+                        status: 'draft',
+                        content_sections: []
+                    };
+                }
+            },
+
+            async waitForServices(maxAttempts = 10, delay = 100) {
+                for (let i = 0; i < maxAttempts; i++) {
+                    if (window.dashboardServices) {
+                        this.services = window.dashboardServices;
+                        return;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+                this.createFallbackServices();
+            },
+
+            createFallbackServices() {
+                this.services = {
+                    http: {
+                        async post(url, data) {
+                            const response = await fetch(url, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': this.getCSRFToken()
+                                },
+                                body: JSON.stringify(data)
+                            });
+
+                            if (!response.ok) {
+                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                            }
+                            return await response.json();
+                        },
+
+                        getCSRFToken() {
+                            return document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                                   document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+                        }
+                    },
+
+                    notifications: {
+                        success: (msg) => this.showNotification(msg, 'success'),
+                        error: (msg) => this.showNotification(msg, 'danger'),
+                        warning: (msg) => this.showNotification(msg, 'warning'),
+                        info: (msg) => this.showNotification(msg, 'info')
+                    },
+
+                    autoSave: {
+                        start: () => console.log('Auto-save started (fallback)'),
+                        stop: () => console.log('Auto-save stopped'),
+                        scheduleDebounced: () => console.log('Auto-save scheduled')
+                    }
+                };
+            },
+
+            setupAutoSave() {
+                if (this.services?.autoSave) {
+                    this.autoSaveService = this.services.autoSave;
+                    this.autoSaveService.start(() => {
+                        if (this.article.title || this.article.content_sections.length > 0) {
+                            return this.article;
+                        }
+                        return null;
+                    });
+                }
+            },
+
+            scheduleAutoSave() {
+                if (this.autoSaveService?.scheduleDebounced) {
+                    this.autoSaveService.scheduleDebounced(2000);
+                }
+            },
+
+            // Content section management
+            addSection(type) {
+                const section = {
+                    id: Date.now() + Math.random(),
+                    type: type,
+                    content: '',
+                    order: this.article.content_sections.length
+                };
+
+                if (type === 'image') {
+                    section.media_file_id = '';
+                    section.caption = '';
+                    section.alt_text = '';
+                } else if (type === 'interview') {
+                    section.question = '';
+                    section.answer = '';
+                } else if (type === 'quote') {
+                    section.attribution = '';
+                }
+
+                this.article.content_sections.push(section);
+                this.scheduleAutoSave();
+            },
+
+            removeSection(index) {
+                if (confirm('Are you sure you want to remove this section?')) {
+                    this.article.content_sections.splice(index, 1);
+                    this.scheduleAutoSave();
+                }
+            },
+
+            moveSection(index, direction) {
+                const newIndex = index + direction;
+                if (newIndex >= 0 && newIndex < this.article.content_sections.length) {
+                    const section = this.article.content_sections.splice(index, 1)[0];
+                    this.article.content_sections.splice(newIndex, 0, section);
+                    this.scheduleAutoSave();
+                }
+            },
+
+            // Article operations
+            async saveDraft() {
+                this.article.status = 'draft';
+                await this.saveArticle();
+            },
+
+            async publishArticle() {
+                if (!this.validateArticle()) return;
+
+                if (this.article.status !== 'published') {
+                    this.article.status = 'published';
+                }
+
+                const success = await this.saveArticle();
+
+                if (success) {
+                    this.services.notifications.success('Article updated successfully!');
+                }
+            },
+
+            validateArticle() {
+                const errors = [];
+
+                if (!this.article.title?.trim()) {
+                    errors.push('Article title is required');
+                }
+                if (!this.article.excerpt?.trim()) {
+                    errors.push('Article excerpt is required');
+                }
+                if (!this.article.category_id) {
+                    errors.push('Please select a category');
+                }
+                if (!this.article.author_id) {
+                    errors.push('Please select an author');
+                }
+
+                if (errors.length > 0) {
+                    this.services.notifications.error(errors.join('\n'));
+                    return false;
+                }
+                return true;
+            },
+
+            async saveArticle() {
+                if (!this.services?.http) {
+                    this.showNotification('Save service not available', 'danger');
+                    return false;
+                }
+
+                try {
+                    this.isLoading = true;
+
+                    const response = await this.services.http.post('/dashboard/ajax/save-article/', this.article);
+
+                    if (response.success) {
+                        this.article.id = response.article_id;
+                        this.services.notifications.success(response.message);
+                        return true;
+                    } else {
+                        throw new Error(response.error || 'Failed to save article');
+                    }
+                } catch (error) {
+                    this.services.notifications.error(`Error saving article: ${error.message}`);
+                    console.error('Error saving article:', error);
+                    return false;
+                } finally {
+                    this.isLoading = false;
+                }
+            },
+
+            // Helper methods
+            getCategoryName(categoryId) {
+                const category = this.categories.find(c => c.id == categoryId);
+                return category ? category.name : '';
+            },
+
+            getAuthorName(authorId) {
+                const author = this.authors.find(a => a.id == authorId);
+                return author ? author.name : '';
+            },
+
+            getSelectedImageUrl() {
+                if (!this.article.featured_image_id) return null;
+                const media = this.mediaFiles.find(m => m.id == this.article.featured_image_id);
+                return media ? media.url : null;
+            },
+
+            getStatusBadgeClass(status) {
+                const classes = {
+                    'draft': 'bg-warning text-dark',
+                    'review': 'bg-info text-white',
+                    'published': 'bg-success text-white',
+                    'scheduled': 'bg-primary text-white',
+                    'archived': 'bg-secondary text-white'
+                };
+                return classes[status] || 'bg-secondary text-white';
+            },
+
+            formatDate(dateString) {
+                if (!dateString) return '';
+                return new Date(dateString).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            },
+
+            openMediaLibrary() {
+                const popup = window.open('/dashboard/media/', '_blank', 'width=1200,height=800');
+                if (!popup) {
+                    this.services.notifications.warning('Please allow popups to browse media files');
+                }
+            },
+
+            getCSRFToken() {
+                return document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                       document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+            },
+
+            showNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+                notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+
+                const icons = {
+                    success: 'check-circle',
+                    danger: 'exclamation-triangle',
+                    warning: 'exclamation-circle',
+                    info: 'info-circle'
+                };
+
+                notification.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-${icons[type] || 'info-circle'} me-2"></i>
+                        <span>${message}</span>
+                    </div>
+                    <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+                `;
+
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 5000);
+            }
+        }
+    }
+</script>
+{% endblock %}
