@@ -168,6 +168,8 @@ REST_FRAMEWORK = {
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "https://cisdnigeria.org",
+    "https://www.cisdnigeria.org",
 ]
 
 CSRF_COOKIE_HTTPONLY = False
@@ -180,6 +182,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:8000",  # Add this
     "http://127.0.0.1:8000",
+    "https://cisdnigeria.org",
+    "https://www.cisdnigeria.org",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
