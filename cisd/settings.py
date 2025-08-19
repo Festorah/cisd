@@ -304,21 +304,29 @@ LOGGING = {
 os.makedirs(BASE_DIR / "logs", exist_ok=True)
 
 # Cache configuration
+# CACHES = {
+#     "default": (
+#         {
+#             "BACKEND": "django.core.cache.backends.redis.RedisCache",
+#             "LOCATION": config("REDIS_URL", default="redis://127.0.0.1:6379/1"),
+#         }
+#         if not DEBUG
+#         else {
+#             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+#         }
+#     )
+# }
 CACHES = {
-    "default": (
-        {
-            "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            "LOCATION": config("REDIS_URL", default="redis://127.0.0.1:6379/1"),
-        }
-        if not DEBUG
-        else {
-            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        }
-    )
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    }
 }
 
 # Session configuration
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+# SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+SESSION_COOKIE_AGE = 1209600  # 2 weeks
 SESSION_CACHE_ALIAS = "default"
 
 # Custom CMS settings
