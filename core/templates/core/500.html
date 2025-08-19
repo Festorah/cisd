@@ -1,0 +1,767 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Server Error - Centre for Inclusive Social Development{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb Section -->
+<section class="breadcrumb-section">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Server Error</li>
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<!-- Error Hero Section -->
+<section class="server-error-hero-section">
+    <div class="container">
+        <div class="row align-items-center justify-content-center min-vh-50">
+            <div class="col-lg-6 text-center">
+                <div class="server-error-content">
+                    <div class="server-error-number">500</div>
+                    <div class="server-error-label">INTERNAL SERVER ERROR</div>
+                    <h1 class="server-error-title">We're Experiencing Technical Difficulties</h1>
+                    <p class="server-error-description">
+                        Something went wrong on our end, and we're working to fix it. 
+                        This isn't your fault—our technical team has been notified and 
+                        is addressing the issue. Please try again in a few moments.
+                    </p>
+                    <div class="server-error-actions">
+                        <a href="{% url 'home' %}" class="btn btn-server-primary">
+                            <i class="fas fa-home me-2"></i>RETURN HOME
+                        </a>
+                        <button class="btn btn-server-secondary" onclick="location.reload()">
+                            <i class="fas fa-redo me-2"></i>TRY AGAIN
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="server-error-illustration">
+                    <div class="server-illustration-container">
+                        <div class="server-graphic">
+                            <div class="server-box">
+                                <div class="server-screen">
+                                    <div class="error-lines">
+                                        <span class="error-line"></span>
+                                        <span class="error-line"></span>
+                                        <span class="error-line"></span>
+                                    </div>
+                                    <div class="warning-icon">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                </div>
+                                <div class="server-lights">
+                                    <span class="light red blink"></span>
+                                    <span class="light amber"></span>
+                                    <span class="light green"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="server-illustration-text">System Maintenance in Progress</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Support Section -->
+<section class="contact-support-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="support-card">
+                    <h2 class="support-title">Need Immediate Assistance?</h2>
+                    <p class="support-description">
+                        If this is urgent or you continue experiencing issues, 
+                        please don't hesitate to reach out to us directly.
+                    </p>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="contact-method">
+                                <div class="contact-icon">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="contact-details">
+                                    <h5 class="contact-title">Email Us</h5>
+                                    <p class="contact-info">info@inclusivedev.org</p>
+                                    <a href="mailto:info@inclusivedev.org" class="contact-link">SEND EMAIL</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <div class="contact-method">
+                                <div class="contact-icon">
+                                    <i class="fas fa-phone"></i>
+                                </div>
+                                <div class="contact-details">
+                                    <h5 class="contact-title">Call Us</h5>
+                                    <p class="contact-info">+234 (0) 123 456 7890</p>
+                                    <a href="tel:+2341234567890" class="contact-link">CALL NOW</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Status Information Section -->
+<section class="status-info-section">
+    <div class="container">
+        <h2 class="section-title">What's Happening?</h2>
+        <div class="section-divider"></div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="status-timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h5 class="timeline-title">Issue Detected</h5>
+                            <p class="timeline-description">
+                                Our monitoring systems have automatically detected the issue 
+                                and alerted our technical team.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item active">
+                        <div class="timeline-icon">
+                            <i class="fas fa-tools"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h5 class="timeline-title">Investigation in Progress</h5>
+                            <p class="timeline-description">
+                                Our engineers are currently investigating and working to 
+                                resolve the issue as quickly as possible.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h5 class="timeline-title">Resolution Expected</h5>
+                            <p class="timeline-description">
+                                Normal service should be restored shortly. Thank you for 
+                                your patience as we work to fix this.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Alternative Access Section -->
+<section class="alternative-access-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4 mb-4">
+                <div class="alternative-card">
+                    <div class="alt-icon">
+                        <i class="fab fa-twitter"></i>
+                    </div>
+                    <h5 class="alt-title">Follow on Social</h5>
+                    <p class="alt-description">Stay updated with our latest work and announcements</p>
+                    <a href="#" class="alt-link">@CISDNigeria</a>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 mb-4">
+                <div class="alternative-card">
+                    <div class="alt-icon">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <h5 class="alt-title">Download Reports</h5>
+                    <p class="alt-description">Access our research and policy documents directly</p>
+                    <a href="#" class="alt-link">VIEW LIBRARY</a>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 mb-4">
+                <div class="alternative-card">
+                    <div class="alt-icon">
+                        <i class="fas fa-calendar"></i>
+                    </div>
+                    <h5 class="alt-title">Upcoming Events</h5>
+                    <p class="alt-description">Join our webinars and community dialogues</p>
+                    <a href="#" class="alt-link">VIEW EVENTS</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+/* Server Error Hero Section */
+.server-error-hero-section {
+    padding: 80px 0;
+    background-color: #f8f9fa;
+    min-height: 60vh;
+}
+
+.server-error-content {
+    padding: 2rem;
+}
+
+.server-error-number {
+    font-size: 8rem;
+    font-weight: 900;
+    color: #e67e22; /* Orange for server error instead of red */
+    line-height: 1;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
+.server-error-label {
+    background-color: #e67e22;
+    color: white;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: inline-block;
+    margin-bottom: 1.5rem;
+}
+
+.server-error-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.server-error-description {
+    font-size: 1.1rem;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.server-error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-server-primary {
+    background-color: var(--cisd-blue);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 0;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.btn-server-primary:hover {
+    background-color: var(--cisd-deep-blue);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-server-secondary {
+    background: transparent;
+    border: 2px solid #e67e22;
+    color: #e67e22;
+    padding: 10px 22px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 0;
+    transition: all 0.3s ease;
+}
+
+.btn-server-secondary:hover {
+    background-color: #e67e22;
+    color: white;
+}
+
+/* Server Illustration */
+.server-error-illustration {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.server-illustration-container {
+    text-align: center;
+}
+
+.server-graphic {
+    margin-bottom: 1rem;
+}
+
+.server-box {
+    width: 200px;
+    height: 120px;
+    background: linear-gradient(145deg, #2c3e50, #34495e);
+    border-radius: 8px;
+    margin: 0 auto;
+    position: relative;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.server-screen {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    right: 15px;
+    height: 70px;
+    background: #1a1a1a;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.error-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 8px;
+}
+
+.error-line {
+    width: 80px;
+    height: 2px;
+    background: #e67e22;
+    opacity: 0.7;
+    animation: errorFlicker 1.5s ease-in-out infinite alternate;
+}
+
+.error-line:nth-child(2) {
+    width: 60px;
+    animation-delay: 0.3s;
+}
+
+.error-line:nth-child(3) {
+    width: 70px;
+    animation-delay: 0.6s;
+}
+
+@keyframes errorFlicker {
+    0% { opacity: 0.3; }
+    100% { opacity: 0.8; }
+}
+
+.warning-icon {
+    color: #f39c12;
+    font-size: 1.2rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.server-lights {
+    position: absolute;
+    bottom: 10px;
+    left: 15px;
+    display: flex;
+    gap: 8px;
+}
+
+.light {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    opacity: 0.3;
+}
+
+.light.red {
+    background-color: #e74c3c;
+}
+
+.light.amber {
+    background-color: #f39c12;
+}
+
+.light.green {
+    background-color: #27ae60;
+}
+
+.light.blink {
+    animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+.server-illustration-text {
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Contact Support Section */
+.contact-support-section {
+    padding: 80px 0;
+    background-color: white;
+}
+
+.support-card {
+    background: #f8f9fa;
+    padding: 3rem 2rem;
+    text-align: center;
+    border-radius: 8px;
+}
+
+.support-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.support-description {
+    color: #666;
+    font-size: 1.1rem;
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+}
+
+.contact-method {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 8px;
+    height: 100%;
+    transition: transform 0.3s ease;
+}
+
+.contact-method:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.contact-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--cisd-blue), #e67e22);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.contact-details {
+    text-align: left;
+    flex: 1;
+}
+
+.contact-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.contact-info {
+    color: #666;
+    margin-bottom: 0.8rem;
+    font-size: 0.95rem;
+}
+
+.contact-link {
+    color: var(--cisd-blue);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.contact-link:hover {
+    color: var(--cisd-deep-blue);
+}
+
+/* Status Information Section */
+.status-info-section {
+    padding: 80px 0;
+    background-color: #f8f9fa;
+}
+
+.status-timeline {
+    position: relative;
+    padding: 2rem 0;
+}
+
+.status-timeline::before {
+    content: '';
+    position: absolute;
+    left: 30px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #ddd;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 3rem;
+    padding-left: 80px;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-icon {
+    position: absolute;
+    left: 15px;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    background: #ddd;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.9rem;
+}
+
+.timeline-item.active .timeline-icon {
+    background: #e67e22;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.timeline-item:first-child .timeline-icon {
+    background: #e74c3c;
+}
+
+.timeline-item:last-child .timeline-icon {
+    background: #95a5a6;
+}
+
+.timeline-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 0.8rem;
+}
+
+.timeline-description {
+    color: #666;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Alternative Access Section */
+.alternative-access-section {
+    padding: 80px 0;
+    background-color: white;
+}
+
+.alternative-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    height: 100%;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+}
+
+.alternative-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-color: var(--cisd-blue);
+}
+
+.alt-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--cisd-blue), #e67e22);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.alt-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.alt-description {
+    color: #666;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+
+.alt-link {
+    color: var(--cisd-blue);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.alt-link:hover {
+    color: var(--cisd-deep-blue);
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .server-error-number {
+        font-size: 6rem;
+    }
+    
+    .server-error-title {
+        font-size: 2rem;
+    }
+    
+    .server-error-description {
+        font-size: 1rem;
+    }
+    
+    .server-error-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn-server-primary,
+    .btn-server-secondary {
+        width: 200px;
+    }
+    
+    .support-card {
+        padding: 2rem 1rem;
+    }
+    
+    .contact-method {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+    }
+    
+    .contact-details {
+        text-align: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .server-error-number {
+        font-size: 5rem;
+    }
+    
+    .server-error-title {
+        font-size: 1.8rem;
+    }
+    
+    .support-title {
+        font-size: 1.6rem;
+    }
+    
+    .timeline-item {
+        padding-left: 60px;
+    }
+    
+    .status-timeline::before {
+        left: 20px;
+    }
+    
+    .timeline-icon {
+        left: 5px;
+        width: 25px;
+        height: 25px;
+    }
+    
+    .server-box {
+        width: 160px;
+        height: 100px;
+    }
+    
+    .server-screen {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        height: 55px;
+    }
+}
+
+@media (max-width: 576px) {
+    .server-error-hero-section {
+        padding: 60px 0;
+    }
+    
+    .server-error-number {
+        font-size: 4rem;
+    }
+    
+    .server-error-title {
+        font-size: 1.6rem;
+    }
+    
+    .server-error-content {
+        padding: 1rem;
+    }
+    
+    .support-card {
+        padding: 1.5rem 1rem;
+    }
+    
+    .contact-method {
+        padding: 1rem;
+    }
+    
+    .server-box {
+        width: 140px;
+        height: 90px;
+    }
+    
+    .alternative-card {
+        margin-bottom: 2rem;
+    }
+}
+</style>
+{% endblock content %}

@@ -75,7 +75,10 @@ ROOT_URLCONF = "cisd.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [
+            BASE_DIR / "templates",  # This allows templates/errors/ to be found
+        ],
+        # "DIRS": [],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

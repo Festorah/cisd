@@ -1,0 +1,557 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Page Not Found - Centre for Inclusive Social Development{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb Section -->
+<section class="breadcrumb-section">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">404 Error</li>
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<!-- Error Hero Section -->
+<section class="error-hero-section">
+    <div class="container">
+        <div class="row align-items-center justify-content-center min-vh-50">
+            <div class="col-lg-6 text-center">
+                <div class="error-content">
+                    <div class="error-number">404</div>
+                    <div class="error-label">PAGE NOT FOUND</div>
+                    <h1 class="error-title">We Can't Find That Page</h1>
+                    <p class="error-description">
+                        The page you're looking for seems to have moved or doesn't exist.
+                        But don't worry—there's still plenty to discover about our work in
+                        inclusive social development.
+                    </p>
+                    <div class="error-actions">
+                        <a href="{% url 'home' %}" class="btn btn-error-primary">
+                            <i class="fas fa-home me-2"></i>RETURN HOME
+                        </a>
+                        <button class="btn btn-error-secondary" onclick="history.back()">
+                            <i class="fas fa-arrow-left me-2"></i>GO BACK
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="error-illustration">
+                    <div class="illustration-container">
+                        <div class="broken-link-graphic">
+                            <div class="link-part link-left"></div>
+                            <div class="link-gap">
+                                <div class="gap-particles">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </div>
+                            <div class="link-part link-right"></div>
+                        </div>
+                        <p class="illustration-text">Connection Interrupted</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Helpful Links Section -->
+<section class="helpful-links-section">
+    <div class="container">
+        <h2 class="section-title">Maybe You're Looking For</h2>
+        <div class="section-divider"></div>
+
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="help-card">
+                    <div class="help-icon">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    <h5 class="help-title">Latest News</h5>
+                    <p class="help-description">Stay updated with our recent analysis and policy insights</p>
+                    <a href="{% url 'articles' %}" class="help-link">VIEW ARTICLES</a>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="help-card">
+                    <div class="help-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h5 class="help-title">Our Experts</h5>
+                    <p class="help-description">Meet the team driving inclusive social development</p>
+                    <a href="#" class="help-link">MEET THE TEAM</a>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="help-card">
+                    <div class="help-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h5 class="help-title">Core Issues</h5>
+                    <p class="help-description">Explore our focus areas in governance and development</p>
+                    <a href="#" class="help-link">EXPLORE ISSUES</a>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="help-card">
+                    <div class="help-icon">
+                        <i class="fas fa-hands-helping"></i>
+                    </div>
+                    <h5 class="help-title">Get Involved</h5>
+                    <p class="help-description">Join our mission for inclusive social change</p>
+                    <a href="#" class="help-link">TAKE ACTION</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Search Section -->
+<section class="error-search-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="search-box">
+                    <h3 class="search-title">Still Can't Find What You Need?</h3>
+                    <p class="search-subtitle">Try searching our site for specific content</p>
+                    <form class="error-search-form" action="{% url 'articles' %}" method="get">
+                        <div class="search-input-group">
+                            <input type="text" name="q" class="search-field" placeholder="Search for articles, reports, or topics...">
+                            <button type="submit" class="search-btn">
+                                <i class="fas fa-search me-2"></i>SEARCH
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+/* Error Hero Section */
+.error-hero-section {
+    padding: 80px 0;
+    background-color: #f8f9fa;
+    min-height: 60vh;
+}
+
+.error-content {
+    padding: 2rem;
+}
+
+.error-number {
+    font-size: 8rem;
+    font-weight: 900;
+    color: var(--cisd-red);
+    line-height: 1;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
+.error-label {
+    background-color: var(--cisd-red);
+    color: white;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: inline-block;
+    margin-bottom: 1.5rem;
+}
+
+.error-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.error-description {
+    font-size: 1.1rem;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-error-primary {
+    background-color: var(--cisd-red);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 0;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.btn-error-primary:hover {
+    background-color: var(--cisd-deep-red);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-error-secondary {
+    background: transparent;
+    border: 2px solid var(--cisd-blue);
+    color: var(--cisd-blue);
+    padding: 10px 22px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 0;
+    transition: all 0.3s ease;
+}
+
+.btn-error-secondary:hover {
+    background-color: var(--cisd-blue);
+    color: white;
+}
+
+/* Error Illustration */
+.error-illustration {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.illustration-container {
+    text-align: center;
+}
+
+.broken-link-graphic {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    height: 100px;
+}
+
+.link-part {
+    width: 80px;
+    height: 20px;
+    background: linear-gradient(45deg, var(--cisd-blue), var(--cisd-red));
+    border-radius: 10px;
+    position: relative;
+}
+
+.link-left::after {
+    content: '';
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 15px solid var(--cisd-red);
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+}
+
+.link-right::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-right: 15px solid var(--cisd-blue);
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+}
+
+.link-gap {
+    width: 60px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.gap-particles {
+    display: flex;
+    gap: 8px;
+}
+
+.gap-particles span {
+    width: 6px;
+    height: 6px;
+    background-color: #ccc;
+    border-radius: 50%;
+    animation: float 2s ease-in-out infinite alternate;
+}
+
+.gap-particles span:nth-child(2) {
+    animation-delay: 0.3s;
+}
+
+.gap-particles span:nth-child(3) {
+    animation-delay: 0.6s;
+}
+
+@keyframes float {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-10px); opacity: 0.3; }
+}
+
+.illustration-text {
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Helpful Links Section */
+.helpful-links-section {
+    padding: 80px 0;
+    background-color: white;
+}
+
+.help-card {
+    background: white;
+    border-radius: 0;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    height: 100%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.help-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.help-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--cisd-blue), var(--cisd-red));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.help-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.help-description {
+    color: #666;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+
+.help-link {
+    color: var(--cisd-red);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    padding-top: 10px;
+}
+
+.help-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 2px;
+    background-color: var(--cisd-red);
+}
+
+.help-link:hover {
+    color: var(--cisd-deep-red);
+}
+
+/* Error Search Section */
+.error-search-section {
+    padding: 60px 0;
+    background-color: #f8f9fa;
+}
+
+.search-box {
+    background: white;
+    padding: 3rem 2rem;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.search-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.search-subtitle {
+    color: #666;
+    margin-bottom: 2rem;
+    font-size: 1rem;
+}
+
+.error-search-form .search-input-group {
+    display: flex;
+    gap: 0;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.error-search-form .search-field {
+    flex: 1;
+    padding: 12px 15px;
+    border: 2px solid #ddd;
+    border-right: none;
+    background-color: white;
+    font-size: 14px;
+    outline: none;
+    border-radius: 0;
+}
+
+.error-search-form .search-field:focus {
+    border-color: var(--cisd-blue);
+}
+
+.error-search-form .search-btn {
+    background-color: var(--cisd-red);
+    color: white;
+    border: 2px solid var(--cisd-red);
+    padding: 12px 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 14px;
+    border-radius: 0;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    white-space: nowrap;
+}
+
+.error-search-form .search-btn:hover {
+    background-color: var(--cisd-deep-red);
+    border-color: var(--cisd-deep-red);
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .error-number {
+        font-size: 6rem;
+    }
+
+    .error-title {
+        font-size: 2rem;
+    }
+
+    .error-description {
+        font-size: 1rem;
+    }
+
+    .error-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .btn-error-primary,
+    .btn-error-secondary {
+        width: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .error-number {
+        font-size: 5rem;
+    }
+
+    .error-title {
+        font-size: 1.8rem;
+    }
+
+    .help-card {
+        margin-bottom: 2rem;
+    }
+
+    .error-search-form .search-input-group {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .error-search-form .search-btn {
+        width: 100%;
+    }
+
+    .search-box {
+        padding: 2rem 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .error-hero-section {
+        padding: 60px 0;
+    }
+
+    .error-number {
+        font-size: 4rem;
+    }
+
+    .error-title {
+        font-size: 1.6rem;
+    }
+
+    .error-content {
+        padding: 1rem;
+    }
+
+    .link-part {
+        width: 60px;
+        height: 15px;
+    }
+
+    .link-gap {
+        width: 40px;
+    }
+
+    .broken-link-graphic {
+        height: 80px;
+    }
+}
+</style>
+{% endblock content %}
