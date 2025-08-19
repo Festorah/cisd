@@ -412,7 +412,7 @@
                             text: '{{ section.content|escapejs|safe }}',
                             {% endif %}
                             {% if section.section_type == 'heading' or section.section_type == 'subheading' %}
-                            text: '{{ section.title|escapejs }}',
+                            text: '{{ section.content|default:section.title|escapejs }}',
                             {% endif %}
                             {% if section.section_type == 'image' and section.media_file %}
                             src: '{{ section.media_file.cloudinary_url }}',
@@ -483,7 +483,7 @@
                     if (!this.isAdmin) return;
 
                     // Make API call to save the field
-                    fetch(`/api/update-field/`, {
+                    fetch(`/dashboard/ajax/update-article-field/`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -535,7 +535,7 @@
                 saveArticle() {
                     if (!this.isAdmin) return;
 
-                    fetch(`/api/save-article/`, {
+                    fetch(`/dashboard/ajax/save-article/`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
