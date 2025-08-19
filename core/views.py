@@ -73,12 +73,13 @@ class HomePageView(ListView):
     context_object_name = "featured_articles"
 
     def get_queryset(self):
+        # Get featured articles for hero carousel using existing utility
         return optimize_database_queries().get_featured_articles(limit=3)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Get recent articles if not enough featured
+        # Get recent articles if not enough featured for hero
         featured_count = context["featured_articles"].count()
         if featured_count < 3:
             recent_articles = (
@@ -89,6 +90,19 @@ class HomePageView(ListView):
                 )[: 3 - featured_count]
             )
             context["recent_articles"] = recent_articles
+
+        # Get featured articles for the "Featured Updates" section
+        # Exclude articles already used in hero carousel to avoid duplicates
+        hero_article_ids = list(
+            context["featured_articles"].values_list("id", flat=True)
+        )
+
+        # Use the new utility method to get featured updates
+        featured_updates = optimize_database_queries().get_featured_updates(
+            exclude_ids=hero_article_ids, limit=3
+        )
+
+        context["featured_updates"] = featured_updates
 
         context.update(
             {

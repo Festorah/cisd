@@ -147,13 +147,61 @@ def optimize_database_queries():
 
         @staticmethod
         def get_featured_articles(limit=3):
-            """Get featured articles for homepage."""
+            """Get featured articles for homepage hero carousel."""
             return (
                 Article.objects.filter(status="published", is_featured=True)
                 .select_related("category", "author", "featured_image")
                 .prefetch_related("tags")
                 .order_by("-published_date")[:limit]
             )
+
+        @staticmethod
+        def get_featured_updates(exclude_ids=None, limit=3):
+            """
+            Get featured articles for the Featured Updates section.
+            Excludes articles already shown in hero section.
+            Falls back to latest articles if not enough featured ones.
+
+            Args:
+                exclude_ids: List of article IDs to exclude (usually from hero section)
+                limit: Number of articles to return
+
+            Returns:
+                QuerySet: Articles for featured updates section
+            """
+            if exclude_ids is None:
+                exclude_ids = []
+
+            # First try to get featured articles not already used
+            featured_updates = (
+                Article.objects.filter(status="published", is_featured=True)
+                .exclude(id__in=exclude_ids)
+                .select_related("category", "author", "featured_image")
+                .prefetch_related("tags")
+                .order_by("-published_date")[:limit]
+            )
+
+            # If we don't have enough featured articles, fill with latest published articles
+            featured_count = featured_updates.count()
+            if featured_count < limit:
+                # Get IDs of articles we already have
+                used_ids = list(exclude_ids) + list(
+                    featured_updates.values_list("id", flat=True)
+                )
+
+                # Get additional latest articles to fill the gap
+                additional_articles = (
+                    Article.objects.filter(status="published")
+                    .exclude(id__in=used_ids)
+                    .select_related("category", "author", "featured_image")
+                    .prefetch_related("tags")
+                    .order_by("-published_date")[: (limit - featured_count)]
+                )
+
+                # Combine the querysets
+                return list(featured_updates) + list(additional_articles)
+
+            return featured_updates
 
         @staticmethod
         def get_popular_articles(limit=5):
