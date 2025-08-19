@@ -1,0 +1,195 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page | Centre for Inclusive Social Development</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{% static 'css/latest.css' %}" rel="stylesheet">
+    <link href="{% static 'css/auth.css' %}" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.0/cdn.min.js" defer></script>
+
+    <meta name="csrf-token" content="{{ csrf_token }}">
+</head>
+
+<body>
+
+    <div class="login-wrapper">
+        <div class="container">
+            <div class="login-container">
+                <!-- Header -->
+                <div class="login-header">
+                    <div class="login-logo">
+                        <img src="{% static 'images/logo_2.png' %}" alt="CISD Logo">
+                    </div>
+                    <h1 class="login-title">Welcome Back</h1>
+                    <p class="login-subtitle">Sign in to your account</p>
+                </div>
+
+                <!-- Form -->
+                <div class="login-form">
+                    <!-- Messages -->
+                    {% if messages %}
+                        <div class="error-messages">
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Form Errors -->
+                    {% if form.non_field_errors %}
+                        <div class="error-messages">
+                            {% for error in form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <form method="post" id="loginForm">
+                        {% csrf_token %}
+
+                        <!-- Username Field -->
+                        <div class="form-group">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">
+                                {{ form.username.label }}
+                            </label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                                <div class="field-errors">
+                                    {% for error in form.username.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Password Field -->
+                        <div class="form-group">
+                            <label for="{{ form.password.id_for_label }}" class="form-label">
+                                {{ form.password.label }}
+                            </label>
+                            {{ form.password }}
+                            {% if form.password.errors %}
+                                <div class="field-errors">
+                                    {% for error in form.password.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Login Options -->
+                        <div class="login-options">
+                            <div class="remember-me">
+                                <div class="custom-checkbox" id="rememberCheckbox"></div>
+                                <label for="rememberCheckbox" class="remember-label">
+                                    Remember me
+                                </label>
+                                <input type="hidden" name="remember_me" id="rememberInput" value="false">
+                            </div>
+
+                            <a href="{% url 'auth:password_reset' %}" class="forgot-password">
+                                Forgot your password?
+                            </a>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn-login" id="loginButton">
+                            <span class="loading-spinner" id="loadingSpinner"></span>
+                            <span id="buttonText">Sign In</span>
+                        </button>
+
+                        <!-- Hidden Next Field -->
+                        {% if next %}
+                            <input type="hidden" name="next" value="{{ next }}">
+                        {% endif %}
+                    </form>
+                </div>
+
+                <!-- Footer -->
+                <div class="login-footer">
+                    <p class="login-footer-text">
+                        Need help? Contact our <a href="mailto:support@cisd.org.ng" style="color: var(--cisd-red);">support team</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Remember me checkbox functionality
+            const checkbox = document.getElementById('rememberCheckbox');
+            const hiddenInput = document.getElementById('rememberInput');
+
+            checkbox.addEventListener('click', function() {
+                if (this.classList.contains('checked')) {
+                    this.classList.remove('checked');
+                    hiddenInput.value = 'false';
+                } else {
+                    this.classList.add('checked');
+                    hiddenInput.value = 'true';
+                }
+            });
+
+            // Form submission handling
+            const form = document.getElementById('loginForm');
+            const button = document.getElementById('loginButton');
+            const spinner = document.getElementById('loadingSpinner');
+            const buttonText = document.getElementById('buttonText');
+
+            form.addEventListener('submit', function() {
+                // Show loading state
+                button.disabled = true;
+                spinner.style.display = 'inline-block';
+                buttonText.textContent = 'Signing In...';
+            });
+
+            // Auto-focus first empty field
+            const usernameField = document.getElementById('{{ form.username.id_for_label }}');
+            const passwordField = document.getElementById('{{ form.password.id_for_label }}');
+
+            if (usernameField && !usernameField.value) {
+                usernameField.focus();
+            } else if (passwordField && !passwordField.value) {
+                passwordField.focus();
+            }
+
+            // Add error class to fields with errors
+            {% if form.username.errors %}
+                usernameField.classList.add('error');
+            {% endif %}
+
+            {% if form.password.errors %}
+                passwordField.classList.add('error');
+            {% endif %}
+
+            // Remove error class on input
+            [usernameField, passwordField].forEach(field => {
+                if (field) {
+                    field.addEventListener('input', function() {
+                        this.classList.remove('error');
+                    });
+                }
+            });
+
+            // Handle Enter key in form fields
+            form.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    form.submit();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -70,8 +70,6 @@ urlpatterns = [
     ),
     # Newsletter subscription
     path("api/subscribe/", views.subscribe_newsletter, name="api_subscribe"),
-    # Authentication URLs (if using Django's built-in auth)
-    path("accounts/", include("django.contrib.auth.urls")),
 ]
 
 # Serve media files in development
