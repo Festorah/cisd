@@ -130,65 +130,107 @@
         <p class="section-subtitle">Impactful work at Centre for Inclusive Social Development</p>
 
         <div class="row">
-            <div class="col-lg-4 mb-4">
-                <div class="update-card">
-                    <div class="update-image">
-                        <img src="{% static 'images/featured_update_1.png' %}" alt="Featured Update 1"
-                            class="img-fluid">
-                    </div>
-                    <div class="update-content">
-                        <span class="update-tag">ANALYSIS</span>
-                        <h3 class="update-title">Prototyping Water Access in Karamajiji Using HCD</h3>
-                        <p class="update-excerpt">Using human-centered design, CISD worked alongside the Karamajiji
-                            community to co-create and test water solutions that are affordable, sustainable, and
-                            truly meet local needs — turning residents from passive recipients into active
-                            problem-solvers.</p>
-                        <div>
-                            <span class="update-author">Kendall Verhovek</span>
-                            <span class="update-date">// August 5, 2025</span>
+            {% if featured_updates %}
+                {% for article in featured_updates %}
+                <div class="col-lg-4 mb-4">
+                    <div class="update-card">
+                        <div class="update-image">
+                            {% if article.featured_image %}
+                                <img src="{{ article.featured_image.cloudinary_url }}"
+                                     alt="{{ article.featured_image.alt_text|default:article.title }}"
+                                     class="img-fluid">
+                            {% else %}
+                                <!-- Fallback to default images if no featured image -->
+                                {% if forloop.counter == 1 %}
+                                    <img src="{% static 'images/featured_update_1.png' %}"
+                                         alt="{{ article.title }}" class="img-fluid">
+                                {% elif forloop.counter == 2 %}
+                                    <img src="{% static 'images/featured_update_2.png' %}"
+                                         alt="{{ article.title }}" class="img-fluid">
+                                {% else %}
+                                    <img src="{% static 'images/featured_update_3.png' %}"
+                                         alt="{{ article.title }}" class="img-fluid">
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        <div class="update-content">
+                            <span class="update-tag">{{ article.category.display_name|upper }}</span>
+                            <h3 class="update-title">
+                                <a href="{% url 'article_detail' slug=article.slug %}" class="text-decoration-none text-dark">
+                                    {{ article.title }}
+                                </a>
+                            </h3>
+                            <p class="update-excerpt">{{ article.excerpt }}</p>
+                            <div>
+                                <span class="update-author">{{ article.author.name }}</span>
+                                <span class="update-date">// {{ article.published_date|date:"F j, Y" }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+                {% endfor %}
+            {% else %}
+                <!-- Fallback content if no articles are available -->
+                <div class="col-lg-4 mb-4">
+                    <div class="update-card">
+                        <div class="update-image">
+                            <img src="{% static 'images/featured_update_1.png' %}" alt="Featured Update 1"
+                                class="img-fluid">
+                        </div>
+                        <div class="update-content">
+                            <span class="update-tag">ANALYSIS</span>
+                            <h3 class="update-title">Prototyping Water Access in Karamajiji Using HCD</h3>
+                            <p class="update-excerpt">Using human-centered design, CISD worked alongside the Karamajiji
+                                community to co-create and test water solutions that are affordable, sustainable, and
+                                truly meet local needs — turning residents from passive recipients into active
+                                problem-solvers.</p>
+                            <div>
+                                <span class="update-author">Kendall Verhovek</span>
+                                <span class="update-date">// August 5, 2025</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="col-lg-4 mb-4">
-                <div class="update-card">
-                    <div class="update-image">
-                        <img src="{% static 'images/featured_update_2.png' %}" alt="Featured Update 2"
-                            class="img-fluid">
-                    </div>
-                    <div class="update-content">
-                        <span class="update-tag">CAMPAIGN</span>
-                        <h3 class="update-title">Youth Engagement Beyond the Ballot Box Campaign</h3>
-                        <p class="update-excerpt">This campaign equips young Nigerians with the tools, platforms,
-                            and confidence to shape policies, hold leaders accountable, and drive change long after
-                            election day.</p>
-                        <div>
-                            <span class="update-author">Kendall Verhovek</span>
-                            <span class="update-date">// August 5, 2025</span>
+                <div class="col-lg-4 mb-4">
+                    <div class="update-card">
+                        <div class="update-image">
+                            <img src="{% static 'images/featured_update_2.png' %}" alt="Featured Update 2"
+                                class="img-fluid">
+                        </div>
+                        <div class="update-content">
+                            <span class="update-tag">CAMPAIGN</span>
+                            <h3 class="update-title">Youth Engagement Beyond the Ballot Box Campaign</h3>
+                            <p class="update-excerpt">This campaign equips young Nigerians with the tools, platforms,
+                                and confidence to shape policies, hold leaders accountable, and drive change long after
+                                election day.</p>
+                            <div>
+                                <span class="update-author">Kendall Verhovek</span>
+                                <span class="update-date">// August 5, 2025</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-lg-4 mb-4">
-                <div class="update-card">
-                    <div class="update-image">
-                        <img src="{% static 'images/featured_update_3.png' %}" alt="Featured Update 3"
-                            class="img-fluid">
-                    </div>
-                    <div class="update-content">
-                        <span class="update-tag">ANALYSIS</span>
-                        <h3 class="update-title">Gendered Civic Tech Innovations</h3>
-                        <p class="update-excerpt">Designing civic technology platforms that put women's voices and
-                            needs at the center of governance and policy engagement.</p>
-                        <div>
-                            <span class="update-author">Kendall Verhovek</span>
-                            <span class="update-date">// August 5, 2025</span>
+                <div class="col-lg-4 mb-4">
+                    <div class="update-card">
+                        <div class="update-image">
+                            <img src="{% static 'images/featured_update_3.png' %}" alt="Featured Update 3"
+                                class="img-fluid">
+                        </div>
+                        <div class="update-content">
+                            <span class="update-tag">ANALYSIS</span>
+                            <h3 class="update-title">Gendered Civic Tech Innovations</h3>
+                            <p class="update-excerpt">Designing civic technology platforms that put women's voices and
+                                needs at the center of governance and policy engagement.</p>
+                            <div>
+                                <span class="update-author">Kendall Verhovek</span>
+                                <span class="update-date">// August 5, 2025</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            {% endif %}
         </div>
     </div>
 </section>
