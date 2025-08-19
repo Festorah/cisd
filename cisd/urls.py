@@ -30,6 +30,7 @@ urlpatterns = [
         "favicon.ico",
         RedirectView.as_view(url="/static/images/favicon.ico", permanent=True),
     ),
+    path("auth/", include("core.auth_urls")),
 ]
 
 

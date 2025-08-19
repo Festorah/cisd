@@ -323,6 +323,10 @@ CACHES = {
     }
 }
 
+LOGIN_URL = "/auth/login/"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"
+
 # Session configuration
 # SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_ENGINE = "django.contrib.sessions.backends.db"

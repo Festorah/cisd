@@ -1,0 +1,65 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Profile - {{ user.get_full_name|default:user.username }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-user me-2"></i>
+                        {{ user.get_full_name|default:user.username }}'s Profile
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Account Information</h5>
+                            <hr>
+                            <p><strong>Username:</strong> {{ user.username }}</p>
+                            <p><strong>Email:</strong> {{ user.email }}</p>
+                            <p><strong>Full Name:</strong> {{ user.get_full_name|default:"Not provided" }}</p>
+                            <p><strong>Date Joined:</strong> {{ user.date_joined|date:"F d, Y" }}</p>
+                            <p><strong>Last Login:</strong> {{ user.last_login|date:"F d, Y g:i A"|default:"Never" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Account Status</h5>
+                            <hr>
+                            <p><strong>Account Type:</strong> 
+                                {% if user.is_superuser %}
+                                    <span class="badge bg-danger">Super Admin</span>
+                                {% elif user.is_staff %}
+                                    <span class="badge bg-warning">Staff</span>
+                                {% else %}
+                                    <span class="badge bg-success">Regular User</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Status:</strong> 
+                                {% if user.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'auth:logout' %}" class="btn btn-outline-danger">
+                            <i class="fas fa-sign-out-alt me-2"></i>Sign Out
+                        </a>
+                        {% if user.is_staff %}
+                            <a href="{% url 'admin_dashboard' %}" class="btn btn-primary ms-2">
+                                <i class="fas fa-dashboard me-2"></i>Dashboard
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

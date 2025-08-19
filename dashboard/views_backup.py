@@ -1,8 +1,9 @@
 import json
 import logging
-from functools import wraps
 
 from core.forms import ArticleForm, ContentSectionFormSet
+
+# Import from core app
 from core.models import (
     Article,
     Author,
@@ -19,11 +20,11 @@ from core.utils.cloudinary_utils import CloudinaryManager
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -46,105 +47,15 @@ def is_admin_user(user):
     return user.is_authenticated and (user.is_staff or user.is_superuser)
 
 
-def admin_required(view_func=None, *, login_url="/auth/login/", message=None):
-    """
-    Enhanced decorator for admin-only views with custom login URL and messaging
-    """
-
-    def decorator(view_func):
-        @wraps(view_func)
-        def wrapper(request, *args, **kwargs):
-            if not request.user.is_authenticated:
-                # Add helpful message for unauthenticated users
-                messages.info(
-                    request, message or "Please sign in to access the admin dashboard."
-                )
-                return redirect(f"{login_url}?next={request.get_full_path()}")
-
-            if not is_admin_user(request.user):
-                # Add permission denied message for regular users
-                messages.error(
-                    request,
-                    "You don't have permission to access this area. Contact an administrator if you need access.",
-                )
-                logger.warning(
-                    f"User {request.user.username} attempted to access admin area at {request.get_full_path()}"
-                )
-                return redirect("home")  # Redirect to home instead of login
-
-            return view_func(request, *args, **kwargs)
-
-        return wrapper
-
-    if view_func is None:
-        return decorator
-    else:
-        return decorator(view_func)
-
-
-def ajax_admin_required(view_func):
-    """
-    Decorator for AJAX views that require admin access
-    Returns JSON responses instead of redirects
-    """
-
-    @wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return JsonResponse(
-                {
-                    "success": False,
-                    "error": "Authentication required",
-                    "redirect": "/auth/login/",
-                },
-                status=401,
-            )
-
-        if not is_admin_user(request.user):
-            logger.warning(
-                f"User {request.user.username} attempted to access admin AJAX endpoint at {request.path}"
-            )
-            return JsonResponse(
-                {"success": False, "error": "Administrator privileges required"},
-                status=403,
-            )
-
-        return view_func(request, *args, **kwargs)
-
-    return wrapper
-
-
 class AdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
-    """
-    Enhanced mixin to require admin access with custom auth integration
-    """
-
-    login_url = "/auth/login/"  # Use our custom login URL
-    permission_denied_message = "Administrator privileges required to access this page."
+    """Mixin to require admin access"""
 
     def test_func(self):
         return is_admin_user(self.request.user)
 
-    def handle_no_permission(self):
-        if not self.request.user.is_authenticated:
-            messages.info(self.request, "Please sign in to access the admin dashboard.")
-            return redirect(
-                f"{self.get_login_url()}?next={self.request.get_full_path()}"
-            )
-        else:
-            # User is authenticated but not admin
-            messages.error(self.request, self.permission_denied_message)
-            logger.warning(
-                f"User {self.request.user.username} attempted to access admin area at {self.request.get_full_path()}"
-            )
-            return redirect("home")
-
-
-# Enhanced Dashboard Views with Custom Auth Integration
-
 
 class DashboardHomeView(AdminRequiredMixin, ListView):
-    """Dashboard homepage with real statistics - Protected"""
+    """Dashboard homepage with real statistics"""
 
     template_name = "dashboard/home.html"
     context_object_name = "recent_articles"
@@ -170,7 +81,6 @@ class DashboardHomeView(AdminRequiredMixin, ListView):
                 "scheduled_posts": Article.objects.filter(status="scheduled").order_by(
                     "scheduled_publish_date"
                 )[:5],
-                "user": self.request.user,  # Add user context for welcome message
             }
         )
 
@@ -178,7 +88,7 @@ class DashboardHomeView(AdminRequiredMixin, ListView):
 
 
 class ArticleCreateView(AdminRequiredMixin, CreateView):
-    """Create new article with enhanced functionality - Protected"""
+    """Create new article with enhanced functionality"""
 
     model = Article
     form_class = ArticleForm
@@ -187,6 +97,7 @@ class ArticleCreateView(AdminRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
         context.update(
             {
                 "formset": (
@@ -199,6 +110,7 @@ class ArticleCreateView(AdminRequiredMixin, CreateView):
                 "default_structure": ContentGenerator.get_default_structure(),
             }
         )
+
         return context
 
     def form_valid(self, form):
@@ -217,21 +129,17 @@ class ArticleCreateView(AdminRequiredMixin, CreateView):
                 messages.success(
                     self.request, f'Article "{article.title}" created successfully!'
                 )
-                logger.info(
-                    f"Article '{article.title}' created by {self.request.user.username}"
-                )
 
             return redirect(self.success_url)
         else:
             return self.form_invalid(form)
 
 
-# Protected Function-Based Views
-
-
-@admin_required(message="Please sign in to access the article editor.")
+@login_required
+@user_passes_test(is_admin_user)
 def article_editor_view(request, article_id=None):
-    """Enhanced article editor with real-time functionality - Protected"""
+    """Enhanced article editor with real-time functionality"""
+
     article = None
     if article_id:
         article = get_object_or_404(Article, id=article_id)
@@ -248,166 +156,13 @@ def article_editor_view(request, article_id=None):
     return render(request, "dashboard/article_editor.html", context)
 
 
-@admin_required(message="Please sign in to access the media library.")
-def media_library_view(request):
-    """Media library with pagination and search - Protected"""
-    media_list = CloudinaryMedia.objects.select_related("uploaded_by").order_by(
-        "-created_at"
-    )
-
-    # Apply filters
-    file_type = request.GET.get("type")
-    if file_type:
-        media_list = media_list.filter(file_type=file_type)
-
-    search = request.GET.get("search")
-    if search:
-        media_list = media_list.filter(title__icontains=search)
-
-    paginator = Paginator(media_list, 24)  # 24 items per page
-    page_number = request.GET.get("page")
-    media_page = paginator.get_page(page_number)
-
-    context = {
-        "media_page": media_page,
-        "file_types": CloudinaryMedia.objects.values_list(
-            "file_type", flat=True
-        ).distinct(),
-        "current_filters": {
-            "type": file_type,
-            "search": search,
-        },
-    }
-
-    return render(request, "dashboard/media_library.html", context)
-
-
-@admin_required()
-def articles_list_view(request):
-    """Display all articles with filtering and pagination - Protected"""
-    articles = Article.objects.select_related(
-        "category", "author", "featured_image"
-    ).order_by("-updated_at")
-
-    # Apply filters
-    search = request.GET.get("search")
-    if search:
-        articles = articles.filter(
-            Q(title__icontains=search)
-            | Q(excerpt__icontains=search)
-            | Q(author__name__icontains=search)
-        )
-
-    status = request.GET.get("status")
-    if status:
-        articles = articles.filter(status=status)
-
-    category = request.GET.get("category")
-    if category:
-        articles = articles.filter(category_id=category)
-
-    author = request.GET.get("author")
-    if author:
-        articles = articles.filter(author_id=author)
-
-    # Pagination
-    paginator = Paginator(articles, 20)  # 20 articles per page
-    page_number = request.GET.get("page")
-    articles_page = paginator.get_page(page_number)
-
-    # Get filter options
-    categories = Category.objects.filter(is_active=True).order_by(
-        "sort_order", "display_name"
-    )
-    authors = Author.objects.filter(is_active=True).order_by("name")
-
-    context = {
-        "articles": articles_page,
-        "categories": categories,
-        "authors": authors,
-    }
-
-    return render(request, "dashboard/articles_list.html", context)
-
-
-@admin_required()
-def article_edit_view(request, article_id):
-    """Edit an existing article with properly loaded content - Protected"""
-    article = get_object_or_404(Article, id=article_id)
-
-    # Get content sections ordered properly
-    content_sections = article.content_sections.all().order_by("order")
-
-    # Serialize content sections for JavaScript with proper handling of None values
-    sections_data = []
-    for section in content_sections:
-        section_data = {
-            "id": str(section.id) if section.id else "",
-            "type": section.section_type or "paragraph",
-            "content": section.content or "",
-            "title": section.title or "",
-            "order": section.order if section.order is not None else 0,
-            "media_file_id": str(section.media_file.id) if section.media_file else "",
-            "caption": section.caption or "",
-            "alt_text": section.alt_text or "",
-            "question": section.question or "",
-            "answer": section.answer or "",
-            "interviewer": section.interviewer or "",
-            "interviewee": section.interviewee or "",
-            "attribution": getattr(section, "attribution", "") or "",  # For quotes
-        }
-        sections_data.append(section_data)
-
-    # Get dropdown options
-    categories = Category.objects.filter(is_active=True).order_by(
-        "sort_order", "display_name"
-    )
-    authors = Author.objects.filter(is_active=True).order_by("name")
-    recent_media = CloudinaryMedia.objects.order_by("-created_at")[:50]
-
-    # Prepare article data for JavaScript with proper None handling
-    article_data = {
-        "id": str(article.id),
-        "title": article.title or "",
-        "excerpt": article.excerpt or "",
-        "category_id": str(article.category.id) if article.category else "",
-        "author_id": str(article.author.id) if article.author else "",
-        "featured_image_id": (
-            str(article.featured_image.id) if article.featured_image else ""
-        ),
-        "status": article.status or "draft",
-        "published_date": (
-            article.published_date.isoformat() if article.published_date else ""
-        ),
-        "content_sections": sections_data,
-        "meta_title": article.meta_title or "",
-        "meta_description": article.meta_description or "",
-        "social_title": article.social_title or "",
-        "social_description": article.social_description or "",
-        "is_featured": article.is_featured,
-        "is_breaking": article.is_breaking,
-        "allow_comments": article.allow_comments,
-    }
-
-    context = {
-        "article": article,
-        "article_data_json": json.dumps(article_data),  # Properly serialized data
-        "categories": categories,
-        "authors": authors,
-        "recent_media": recent_media,
-    }
-
-    return render(request, "dashboard/article_edit.html", context)
-
-
-# Protected AJAX Views
-
-
 @csrf_exempt
-@ajax_admin_required
+@login_required
+@user_passes_test(is_admin_user)
 @require_http_methods(["POST"])
 def save_article_ajax(request):
-    """Save article via AJAX with proper validation - Protected"""
+    """Save article via AJAX with proper validation"""
+
     try:
         data = json.loads(request.body)
 
@@ -457,8 +212,6 @@ def save_article_ajax(request):
                 article_data, sections_data, request.user
             )
 
-        logger.info(f"Article '{article.title}' saved by {request.user.username}")
-
         return JsonResponse(
             {
                 "success": True,
@@ -469,7 +222,7 @@ def save_article_ajax(request):
         )
 
     except Exception as e:
-        logger.error(f"Error saving article by {request.user.username}: {str(e)}")
+        logger.error(f"Error saving article: {str(e)}")
         return JsonResponse(
             {"success": False, "error": "An error occurred while saving the article"},
             status=500,
@@ -477,10 +230,12 @@ def save_article_ajax(request):
 
 
 @csrf_exempt
-@ajax_admin_required
+@login_required
+@user_passes_test(is_admin_user)
 @require_http_methods(["POST"])
 def upload_file_ajax(request):
-    """Handle file upload and processing - Protected"""
+    """Handle file upload and processing"""
+
     try:
         uploaded_file = request.FILES.get("file")
         if not uploaded_file:
@@ -501,10 +256,6 @@ def upload_file_ajax(request):
                     processed_file
                 )
 
-                logger.info(
-                    f"Document processed by {request.user.username}: {uploaded_file.name}"
-                )
-
                 return JsonResponse(
                     {
                         "success": True,
@@ -522,8 +273,6 @@ def upload_file_ajax(request):
             # Handle media file upload
             media = MediaOptimizer.upload_and_optimize(uploaded_file, request.user)
 
-            logger.info(f"Media uploaded by {request.user.username}: {media.title}")
-
             return JsonResponse(
                 {
                     "success": True,
@@ -540,15 +289,53 @@ def upload_file_ajax(request):
             )
 
     except Exception as e:
-        logger.error(f"Error uploading file by {request.user.username}: {str(e)}")
+        logger.error(f"Error uploading file: {str(e)}")
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
+@login_required
+@user_passes_test(is_admin_user)
+def media_library_view(request):
+    """Media library with pagination and search"""
+
+    media_list = CloudinaryMedia.objects.select_related("uploaded_by").order_by(
+        "-created_at"
+    )
+
+    # Apply filters
+    file_type = request.GET.get("type")
+    if file_type:
+        media_list = media_list.filter(file_type=file_type)
+
+    search = request.GET.get("search")
+    if search:
+        media_list = media_list.filter(title__icontains=search)
+
+    paginator = Paginator(media_list, 24)  # 24 items per page
+    page_number = request.GET.get("page")
+    media_page = paginator.get_page(page_number)
+
+    context = {
+        "media_page": media_page,
+        "file_types": CloudinaryMedia.objects.values_list(
+            "file_type", flat=True
+        ).distinct(),
+        "current_filters": {
+            "type": file_type,
+            "search": search,
+        },
+    }
+
+    return render(request, "dashboard/media_library.html", context)
+
+
 @csrf_exempt
-@ajax_admin_required
+@login_required
+@user_passes_test(is_admin_user)
 @require_http_methods(["DELETE"])
 def delete_media_ajax(request, media_id):
-    """Delete media file - Protected"""
+    """Delete media file"""
+
     try:
         media = get_object_or_404(CloudinaryMedia, id=media_id)
 
@@ -561,11 +348,7 @@ def delete_media_ajax(request, media_id):
         )
 
         if delete_result["success"]:
-            media_title = media.title
             media.delete()
-
-            logger.info(f"Media deleted by {request.user.username}: {media_title}")
-
             return JsonResponse(
                 {"success": True, "message": "Media deleted successfully"}
             )
@@ -576,29 +359,30 @@ def delete_media_ajax(request, media_id):
             )
 
     except Exception as e:
-        logger.error(f"Error deleting media by {request.user.username}: {str(e)}")
+        logger.error(f"Error deleting media: {str(e)}")
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
+# API endpoints for real-time features
 @csrf_exempt
-@ajax_admin_required
+@login_required
+@user_passes_test(is_admin_user)
 @require_http_methods(["GET"])
 def get_dashboard_stats_ajax(request):
-    """Get dashboard statistics via AJAX - Protected"""
+    """Get dashboard statistics via AJAX"""
+
     try:
         stats = DashboardStatsManager.get_overview_stats()
         return JsonResponse({"success": True, "stats": stats})
     except Exception as e:
-        logger.error(
-            f"Error getting dashboard stats for {request.user.username}: {str(e)}"
-        )
+        logger.error(f"Error getting dashboard stats: {str(e)}")
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
-@ajax_admin_required
+@login_required
+@csrf_exempt
 @require_http_methods(["POST"])
 def upload_file_view(request):
-    """Enhanced file upload with proper auth - Protected"""
     try:
         # Validate file upload
         if "file" not in request.FILES:
@@ -625,8 +409,6 @@ def upload_file_view(request):
         if serializer.is_valid():
             media = serializer.save()
 
-            logger.info(f"File uploaded by {request.user.username}: {media.title}")
-
             return JsonResponse(
                 {
                     "success": True,
@@ -648,16 +430,14 @@ def upload_file_view(request):
             )
 
     except Exception as e:
-        logger.error(f"Upload failed for {request.user.username}: {str(e)}")
         return JsonResponse(
             {"success": False, "error": f"Upload failed: {str(e)}"}, status=500
         )
 
 
-@ajax_admin_required
+@login_required
 @require_http_methods(["POST", "DELETE"])
 def delete_media_view(request, media_id):
-    """Enhanced media deletion with proper auth - Protected"""
     try:
         media = CloudinaryMedia.objects.get(id=media_id)
 
@@ -674,10 +454,7 @@ def delete_media_view(request, media_id):
         )
 
         # Delete from database
-        media_title = media.title
         media.delete()
-
-        logger.info(f"Media deleted by {request.user.username}: {media_title}")
 
         return JsonResponse(
             {"success": True, "message": "Media file deleted successfully"}
@@ -688,19 +465,136 @@ def delete_media_view(request, media_id):
             {"success": False, "error": "Media file not found"}, status=404
         )
     except Exception as e:
-        logger.error(f"Delete failed for {request.user.username}: {str(e)}")
         return JsonResponse(
             {"success": False, "error": f"Delete failed: {str(e)}"}, status=500
         )
 
 
-# Additional Protected Views (continue with the same pattern...)
+@login_required
+def articles_list_view(request):
+    """Display all articles with filtering and pagination"""
+    articles = Article.objects.select_related(
+        "category", "author", "featured_image"
+    ).order_by("-updated_at")
+
+    # Apply filters
+    search = request.GET.get("search")
+    if search:
+        articles = articles.filter(
+            Q(title__icontains=search)
+            | Q(excerpt__icontains=search)
+            | Q(author__name__icontains=search)
+        )
+
+    status = request.GET.get("status")
+    if status:
+        articles = articles.filter(status=status)
+
+    category = request.GET.get("category")
+    if category:
+        articles = articles.filter(category_id=category)
+
+    author = request.GET.get("author")
+    if author:
+        articles = articles.filter(author_id=author)
+
+    # Pagination
+    paginator = Paginator(articles, 20)  # 20 articles per page
+    page_number = request.GET.get("page")
+    articles_page = paginator.get_page(page_number)
+
+    # Get filter options
+    categories = Category.objects.filter(is_active=True).order_by(
+        "sort_order", "display_name"
+    )
+    authors = Author.objects.filter(is_active=True).order_by("name")
+
+    context = {
+        "articles": articles_page,
+        "categories": categories,
+        "authors": authors,
+    }
+
+    return render(request, "dashboard/articles_list.html", context)
 
 
-@ajax_admin_required
+@login_required
+def article_edit_view(request, article_id):
+    """Edit an existing article with properly loaded content"""
+    article = get_object_or_404(Article, id=article_id)
+
+    # Get content sections ordered properly
+    content_sections = article.content_sections.all().order_by("order")
+
+    # Serialize content sections for JavaScript with proper handling of None values
+    sections_data = []
+    for section in content_sections:
+        section_data = {
+            "id": str(section.id) if section.id else "",
+            "type": section.section_type or "paragraph",
+            "content": section.content or "",
+            "title": section.title or "",
+            "order": section.order if section.order is not None else 0,
+            "media_file_id": str(section.media_file.id) if section.media_file else "",
+            "caption": section.caption or "",
+            "alt_text": section.alt_text or "",
+            "question": section.question or "",
+            "answer": section.answer or "",
+            "interviewer": section.interviewer or "",
+            "interviewee": section.interviewee or "",
+            # Add other fields that might be needed
+            "attribution": getattr(section, "attribution", "") or "",  # For quotes
+        }
+        sections_data.append(section_data)
+
+    # Get dropdown options
+    categories = Category.objects.filter(is_active=True).order_by(
+        "sort_order", "display_name"
+    )
+    authors = Author.objects.filter(is_active=True).order_by("name")
+    recent_media = CloudinaryMedia.objects.order_by("-created_at")[:50]
+
+    # Prepare article data for JavaScript with proper None handling
+    article_data = {
+        "id": str(article.id),
+        "title": article.title or "",
+        "excerpt": article.excerpt or "",
+        "category_id": str(article.category.id) if article.category else "",
+        "author_id": str(article.author.id) if article.author else "",
+        "featured_image_id": (
+            str(article.featured_image.id) if article.featured_image else ""
+        ),
+        "status": article.status or "draft",
+        "published_date": (
+            article.published_date.isoformat() if article.published_date else ""
+        ),
+        "content_sections": sections_data,
+        # Additional fields for completeness
+        "meta_title": article.meta_title or "",
+        "meta_description": article.meta_description or "",
+        "social_title": article.social_title or "",
+        "social_description": article.social_description or "",
+        "is_featured": article.is_featured,
+        "is_breaking": article.is_breaking,
+        "allow_comments": article.allow_comments,
+    }
+
+    context = {
+        "article": article,
+        "article_data_json": json.dumps(article_data),  # Properly serialized data
+        "categories": categories,
+        "authors": authors,
+        "recent_media": recent_media,
+    }
+
+    return render(request, "dashboard/article_edit.html", context)
+
+
+# Bulk operations view
+@login_required
 @require_http_methods(["POST"])
 def bulk_articles_view(request):
-    """Handle bulk operations on articles - Protected"""
+    """Handle bulk operations on articles"""
     try:
         data = json.loads(request.body)
         article_ids = data.get("article_ids", [])
@@ -726,10 +620,6 @@ def bulk_articles_view(request):
                 {"success": False, "error": "Invalid action"}, status=400
             )
 
-        logger.info(
-            f"Bulk action '{action}' on {len(article_ids)} articles by {request.user.username}"
-        )
-
         return JsonResponse(
             {
                 "success": True,
@@ -738,14 +628,13 @@ def bulk_articles_view(request):
         )
 
     except Exception as e:
-        logger.error(f"Bulk operation failed for {request.user.username}: {str(e)}")
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
-@ajax_admin_required
+@login_required
 @require_http_methods(["POST"])
 def save_article_view(request):
-    """Save or update an article with content sections - Protected"""
+    """Save or update an article with content sections"""
     try:
         data = json.loads(request.body)
 
@@ -844,8 +733,6 @@ def save_article_view(request):
 
                 section.save()
 
-        logger.info(f"Article '{title}' saved by {request.user.username}")
-
         return JsonResponse(
             {
                 "success": True,
@@ -860,16 +747,15 @@ def save_article_view(request):
             {"success": False, "error": "Invalid JSON data"}, status=400
         )
     except Exception as e:
-        logger.error(f"Failed to save article for {request.user.username}: {str(e)}")
         return JsonResponse(
             {"success": False, "error": f"Failed to save article: {str(e)}"}, status=500
         )
 
 
-@ajax_admin_required
+@login_required
 @require_http_methods(["POST", "DELETE"])
 def delete_article_view(request, article_id):
-    """Delete a single article - Protected"""
+    """Delete a single article"""
     try:
         article = get_object_or_404(Article, id=article_id)
 
@@ -881,8 +767,6 @@ def delete_article_view(request, article_id):
 
         article_title = article.title
         article.delete()
-
-        logger.info(f"Article '{article_title}' deleted by {request.user.username}")
 
         return JsonResponse(
             {
@@ -896,17 +780,16 @@ def delete_article_view(request, article_id):
             {"success": False, "error": "Article not found"}, status=404
         )
     except Exception as e:
-        logger.error(f"Failed to delete article for {request.user.username}: {str(e)}")
         return JsonResponse(
             {"success": False, "error": f"Failed to delete article: {str(e)}"},
             status=500,
         )
 
 
-@ajax_admin_required
+@login_required
 @require_http_methods(["POST"])
 def toggle_featured_view(request, article_id):
-    """Toggle the featured status of an article - Protected"""
+    """Toggle the featured status of an article"""
     try:
         data = json.loads(request.body)
         is_featured = data.get("is_featured", False)
@@ -917,10 +800,6 @@ def toggle_featured_view(request, article_id):
         article.save(update_fields=["is_featured", "updated_at", "last_modified_by"])
 
         status_text = "featured" if is_featured else "removed from featured"
-
-        logger.info(
-            f"Article '{article.title}' {status_text} by {request.user.username}"
-        )
 
         return JsonResponse(
             {
@@ -939,17 +818,16 @@ def toggle_featured_view(request, article_id):
             {"success": False, "error": "Invalid JSON data"}, status=400
         )
     except Exception as e:
-        logger.error(f"Failed to update article for {request.user.username}: {str(e)}")
         return JsonResponse(
             {"success": False, "error": f"Failed to update article: {str(e)}"},
             status=500,
         )
 
 
-@ajax_admin_required
+@login_required
 @require_http_methods(["POST"])
 def duplicate_article_view(request, article_id):
-    """Create a duplicate copy of an article - Protected"""
+    """Create a duplicate copy of an article"""
     try:
         original_article = get_object_or_404(Article, id=article_id)
 
@@ -1000,10 +878,6 @@ def duplicate_article_view(request, article_id):
                 is_expandable=section.is_expandable,
             )
 
-        logger.info(
-            f"Article '{original_article.title}' duplicated by {request.user.username}"
-        )
-
         return JsonResponse(
             {
                 "success": True,
@@ -1018,19 +892,16 @@ def duplicate_article_view(request, article_id):
             {"success": False, "error": "Original article not found"}, status=404
         )
     except Exception as e:
-        logger.error(
-            f"Failed to duplicate article for {request.user.username}: {str(e)}"
-        )
         return JsonResponse(
             {"success": False, "error": f"Failed to duplicate article: {str(e)}"},
             status=500,
         )
 
 
-@ajax_admin_required
+@login_required
 @require_http_methods(["GET"])
 def dashboard_stats_view(request):
-    """Get dashboard statistics for the home page - Protected"""
+    """Get dashboard statistics for the home page"""
     try:
         from datetime import datetime, timedelta
 
@@ -1076,7 +947,6 @@ def dashboard_stats_view(request):
         return JsonResponse({"success": True, "stats": stats})
 
     except Exception as e:
-        logger.error(f"Failed to get stats for {request.user.username}: {str(e)}")
         return JsonResponse(
             {"success": False, "error": f"Failed to get stats: {str(e)}"}, status=500
         )
