@@ -17,4 +17,5 @@ gunicorn==23.0.0
 sentry-sdk==2.35.0
 PyPDF2==3.0.1
 python-docx==0.8.11
+user-agents==2.2.0
 
