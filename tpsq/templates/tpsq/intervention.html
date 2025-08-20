@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Voice, Your Choice | tpsq</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            /* CISD Brand Colors */
+            --primary-blue: #2B5CE6;
+            --primary-green: #0EA5E9;
+            --accent-orange: #F97316;
+            --accent-red: #EF4444;
+            --dark-blue: #1E40AF;
+            --light-blue: #DBEAFE;
+
+            /* CISD Gradients */
+            --gradient-primary: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-green) 100%);
+            --gradient-secondary: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-red) 100%);
+            --gradient-hero: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 50%, var(--primary-green) 100%);
+
+            /* Typography */
+            --font-heading: 'Space Grotesk', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--gradient-hero);
+            color: #1a1a1a;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 0.5rem;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @supports (-webkit-touch-callout: none) {
+            body {
+                height: -webkit-fill-available;
+            }
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 100%;
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 0.75rem;
+            box-shadow:
+                0 20px 40px rgba(43, 92, 230, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            animation: slideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            height: 100%;
+            max-height: 100vh;
+            max-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+            border-radius: 16px 16px 0 0;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 0;
+            padding-top: 0.5rem;
+            gap: 0.75rem;
+        }
+
+        .problem-statement {
+            font-size: clamp(1.3rem, 5vw, 1.5rem);
+            font-weight: 900;
+            color: #1a1a1a;
+            line-height: 1.15;
+            margin-bottom: 0.5rem;
+            text-align: center;
+            background: linear-gradient(135deg, var(--dark-blue), var(--primary-blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: var(--font-heading);
+        }
+
+        .current-behavior {
+            font-size: clamp(0.75rem, 2.5vw, 0.85rem);
+            color: #7f8c8d;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-style: italic;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .main-question {
+            font-size: clamp(0.9rem, 3vw, 1rem);
+            font-weight: 700;
+            color: var(--dark-blue);
+            margin-bottom: 0.75rem;
+            line-height: 1.3;
+            text-align: center;
+        }
+
+        .options-section {
+            margin-bottom: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .section-label {
+            font-size: clamp(0.7rem, 2vw, 0.8rem);
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            min-height: 44px;
+        }
+
+        .option:hover {
+            background: linear-gradient(135deg, var(--light-blue), #e8f4fd);
+            border-color: var(--primary-blue);
+            transform: scale(1.01);
+        }
+
+        .option.selected {
+            background: linear-gradient(135deg, var(--light-blue), #bfdbfe);
+            border-color: var(--primary-green);
+            transform: scale(1.01);
+            box-shadow: 0 4px 12px rgba(43, 92, 230, 0.2);
+        }
+
+        .option input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            margin-right: 0.6rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            accent-color: var(--primary-blue);
+        }
+
+        .option label {
+            cursor: pointer;
+            font-size: clamp(0.7rem, 2.2vw, 0.8rem);
+            color: #2c3e50;
+            font-weight: 600;
+            flex: 1;
+            line-height: 1.3;
+        }
+
+        .cta-section {
+            background: var(--gradient-primary);
+            border-radius: 12px;
+            padding: 0.75rem;
+            color: white;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(43, 92, 230, 0.3);
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .cta-title {
+            font-size: clamp(0.9rem, 3vw, 1rem);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+            line-height: 1.2;
+            font-family: var(--font-heading);
+        }
+
+        .form-group {
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.6rem 0.75rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            font-size: clamp(0.75rem, 2.5vw, 0.85rem);
+            transition: all 0.3s ease;
+            font-family: inherit;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            font-weight: 600;
+            color: #2c3e50;
+            min-height: 44px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+            background: white;
+        }
+
+        .form-input::placeholder {
+            color: #7f8c8d;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: clamp(0.7rem, 2vw, 0.8rem);
+            letter-spacing: 1px;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--gradient-secondary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: clamp(0.85rem, 2.8vw, 1rem);
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 0.5rem;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            z-index: 1;
+            min-height: 48px;
+            font-family: var(--font-heading);
+        }
+
+        .submit-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .submit-button:hover::before {
+            left: 100%;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .submit-button:disabled:hover::before {
+            left: -100%;
+        }
+
+        .privacy-note {
+            font-size: clamp(0.65rem, 1.8vw, 0.75rem);
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            margin-top: 0.4rem;
+            line-height: 1.3;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Responsive styles remain the same as original */
+        @media (min-width: 768px) and (max-height: 1024px) {
+            body { padding: 1rem; }
+            .main-card { padding: 1.5rem; border-radius: 20px; max-height: 95vh; max-height: 95dvh; }
+            .content-wrapper { padding-top: 1rem; gap: 1rem; }
+            .option { padding: 0.75rem; min-height: 48px; }
+            .cta-section { padding: 1.25rem; border-radius: 16px; }
+            .form-input { padding: 0.875rem 1rem; min-height: 48px; }
+            .submit-button { padding: 1rem; min-height: 52px; }
+        }
+
+        @media (min-width: 1024px) {
+            body { padding: 1.5rem; }
+            .container { max-width: 1200px; }
+            .main-card { padding: 2.5rem; border-radius: 24px; max-height: 90vh; max-height: 90dvh; }
+            .content-wrapper { flex-direction: row; gap: 2.5rem; align-items: center; padding-top: 1rem; }
+            .left-section { flex: 1.2; padding-right: 1rem; }
+            .right-section { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+            .problem-statement { font-size: 2.8rem; text-align: left; margin-bottom: 1.5rem; }
+            .current-behavior { font-size: 1.3rem; text-align: left; margin-bottom: 1.5rem; }
+            .main-question { font-size: 1.8rem; text-align: left; margin-bottom: 1.8rem; position: relative; }
+            .main-question::before { content: '❓'; position: absolute; left: -2.5rem; top: 0; font-size: 2rem; opacity: 0.3; }
+            .section-label { font-size: 1.2rem; text-align: left; }
+            .option { padding: 1rem 1.25rem; min-height: 52px; }
+            .option input[type="radio"] { width: 20px; height: 20px; }
+            .option label { font-size: 1rem; }
+            .cta-section { padding: 2.5rem; border-radius: 20px; }
+            .cta-title { font-size: 1.6rem; margin-bottom: 1.5rem; }
+            .form-input { padding: 1rem 1.25rem; font-size: 1rem; min-height: 52px; }
+            .submit-button { padding: 1.25rem; font-size: 1.2rem; margin-top: 1rem; min-height: 56px; }
+        }
+
+        @media (min-width: 1440px) {
+            .main-card { padding: 3.5rem; }
+            .content-wrapper { gap: 3.5rem; }
+        }
+
+        @media (max-height: 600px) {
+            body { padding: 0.25rem; }
+            .main-card { padding: 0.5rem; border-radius: 12px; }
+            .content-wrapper { gap: 0.5rem; padding-top: 0.5rem; }
+            .problem-statement { margin-bottom: 0.3rem; }
+            .current-behavior { margin-bottom: 0.3rem; }
+            .main-question { margin-bottom: 0.5rem; }
+            .options-section { margin-bottom: 0.5rem; }
+            .option-group { gap: 0.25rem; }
+            .option { padding: 0.4rem; min-height: 40px; }
+            .cta-section { padding: 0.6rem; }
+            .form-group { margin-bottom: 0.4rem; }
+            .privacy-note { margin-top: 0.3rem; }
+        }
+
+        @media (max-height: 500px) and (orientation: landscape) {
+            .content-wrapper { flex-direction: row; gap: 1rem; padding-top: 0.5rem; }
+            .left-section { flex: 1.1; }
+            .right-section { flex: 0.9; }
+            .problem-statement { font-size: 1rem; text-align: left; }
+            .current-behavior { text-align: left; }
+            .main-question { text-align: left; }
+            .section-label { text-align: left; }
+        }
+
+        @supports (-webkit-touch-callout: none) {
+            .main-card { max-height: -webkit-fill-available; }
+        }
+
+        @-moz-document url-prefix() {
+            .main-card { max-height: calc(100vh - 1rem); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="main-card">
+            <div class="content-wrapper">
+                <div class="left-section">
+                    <div class="problem-statement">
+                        No light, bad roads, rubbish everywhere!
+                    </div>
+
+                    <div class="current-behavior">
+                        Most times, you talk about it, find a way around it, and move on.
+                    </div>
+
+                    <div class="main-question">
+                        If you could report it, make sure the right people see it, and see how many others have the
+                        same problem, what would you want to happen after?
+                    </div>
+
+                    <div class="options-section">
+                        <div class="option-group">
+                            <div class="option" data-value="nothing">
+                                <input type="radio" id="option1" name="preference" value="nothing">
+                                <label for="option1">Nothing</label>
+                            </div>
+                            <div class="option" data-value="notification">
+                                <input type="radio" id="option2" name="preference" value="notification">
+                                <label for="option2">Be notified when it is resolved</label>
+                            </div>
+                            <div class="option" data-value="updates">
+                                <input type="radio" id="option3" name="preference" value="updates">
+                                <label for="option3">Get updates as progress is made</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="right-section">
+                    <div class="cta-section">
+                        <div class="cta-title">Be first to know when we're live</div>
+
+                        <form id="signupForm">
+                            <div class="form-group">
+                                <input type="text" id="name" name="name" class="form-input" placeholder="NAME" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="email" id="email" name="email" class="form-input" placeholder="EMAIL"
+                                    required>
+                            </div>
+                            <button type="submit" class="submit-button" id="submitBtn">
+                                Get Early Access
+                            </button>
+                            <div class="privacy-note">
+                                🔒 We'll only notify you when the platform launches
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Analytics and tracking system
+        class CivicTracker {
+            constructor() {
+                this.sessionId = this.getOrCreateSessionId();
+                this.pageLoadTime = Date.now();
+                this.events = [];
+                this.surveyStartTime = null;
+                this.selectedOption = null;
+                this.optionChanges = 0;
+                this.formStarted = false;
+
+                this.init();
+            }
+
+            getOrCreateSessionId() {
+                let sessionId = sessionStorage.getItem('civic_session_id');
+                if (!sessionId) {
+                    // Generate a proper UUID v4
+                    sessionId = this.generateUUID();
+                    sessionStorage.setItem('civic_session_id', sessionId);
+                }
+                return sessionId;
+            }
+
+            generateUUID() {
+                // Generate UUID v4
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+
+            getUTMParams() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return {
+                    utm_source: urlParams.get('utm_source') || '',
+                    utm_medium: urlParams.get('utm_medium') || '',
+                    utm_campaign: urlParams.get('utm_campaign') || '',
+                    utm_content: urlParams.get('utm_content') || '',
+                    utm_term: urlParams.get('utm_term') || ''
+                };
+            }
+
+            getDeviceInfo() {
+                const ua = navigator.userAgent;
+                let deviceType = 'desktop';
+                let browser = 'unknown';
+                let os = 'unknown';
+
+                // Device type detection
+                if (/tablet|ipad|playbook|silk/i.test(ua)) {
+                    deviceType = 'tablet';
+                } else if (/mobile|iphone|ipod|android|blackberry|opera|mini|windows\sce|palm|smartphone|iemobile/i.test(ua)) {
+                    deviceType = 'mobile';
+                }
+
+                // Browser detection
+                if (ua.indexOf('Chrome') > -1) browser = 'Chrome';
+                else if (ua.indexOf('Safari') > -1) browser = 'Safari';
+                else if (ua.indexOf('Firefox') > -1) browser = 'Firefox';
+                else if (ua.indexOf('Edge') > -1) browser = 'Edge';
+
+                // OS detection
+                if (ua.indexOf('Windows') > -1) os = 'Windows';
+                else if (ua.indexOf('Mac') > -1) os = 'macOS';
+                else if (ua.indexOf('Android') > -1) os = 'Android';
+                else if (ua.indexOf('iOS') > -1) os = 'iOS';
+
+                return { deviceType, browser, os };
+            }
+
+            async sendEvent(eventType, data = {}) {
+                const event = {
+                    session_id: this.sessionId,
+                    event_type: eventType,
+                    timestamp: new Date().toISOString(),
+                    page_url: window.location.href,
+                    page_title: document.title,
+                    time_since_page_load: Date.now() - this.pageLoadTime,
+                    metadata: data,
+                    ...this.getUTMParams(),
+                    ...this.getDeviceInfo()
+                };
+
+                try {
+                    await fetch('/api/track-event/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCSRFToken()
+                        },
+                        body: JSON.stringify(event)
+                    });
+                } catch (error) {
+                    console.error('Tracking error:', error);
+                }
+            }
+
+            getCSRFToken() {
+                return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+            }
+
+            init() {
+                // Send initial page view
+                this.sendEvent('page_view', {
+                    referrer: document.referrer,
+                    screen_resolution: `${screen.width}x${screen.height}`,
+                    viewport: `${window.innerWidth}x${window.innerHeight}`
+                });
+
+                // Track page exit
+                window.addEventListener('beforeunload', () => {
+                    this.sendEvent('page_exit', {
+                        time_on_page: Date.now() - this.pageLoadTime
+                    });
+                });
+
+                // Track survey interactions
+                this.setupSurveyTracking();
+                this.setupFormTracking();
+            }
+
+            setupSurveyTracking() {
+                const options = document.querySelectorAll('.option');
+
+                options.forEach(option => {
+                    option.addEventListener('click', () => {
+                        if (!this.surveyStartTime) {
+                            this.surveyStartTime = Date.now();
+                            this.sendEvent('survey_start');
+                        }
+
+                        const newSelection = option.dataset.value;
+                        if (this.selectedOption && this.selectedOption !== newSelection) {
+                            this.optionChanges++;
+                        }
+                        this.selectedOption = newSelection;
+
+                        this.sendEvent('survey_complete', {
+                            preference: newSelection,
+                            time_to_select: Math.round((Date.now() - this.surveyStartTime) / 1000),
+                            changes_made: this.optionChanges
+                        });
+                    });
+                });
+            }
+
+            setupFormTracking() {
+                const form = document.getElementById('signupForm');
+                const nameInput = document.getElementById('name');
+                const emailInput = document.getElementById('email');
+
+                // Track form field focus
+                [nameInput, emailInput].forEach(input => {
+                    input.addEventListener('focus', (e) => {
+                        if (!this.formStarted) {
+                            this.formStarted = true;
+                            this.sendEvent('form_start');
+                        }
+
+                        this.sendEvent('form_focus', {
+                            field: e.target.name
+                        });
+                    });
+                });
+
+                // Track form submission
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleFormSubmission();
+                });
+            }
+
+            async handleFormSubmission() {
+                const formData = {
+                    session_id: this.sessionId,
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    preference: this.selectedOption,
+                    time_to_select: this.surveyStartTime ?
+                        Math.round((Date.now() - this.surveyStartTime) / 1000) : null,
+                    changes_made: this.optionChanges,
+                    ...this.getUTMParams(),
+                    ...this.getDeviceInfo()
+                };
+
+                this.sendEvent('signup_attempt', formData);
+
+                try {
+                    const response = await fetch('/api/early-access/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCSRFToken()
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.sendEvent('signup_success', {
+                            signup_id: result.id
+                        });
+
+                        // Show success state
+                        const submitBtn = document.getElementById('submitBtn');
+                        const originalText = submitBtn.textContent;
+                        submitBtn.textContent = 'WELCOME! 🎉';
+                        submitBtn.style.background = 'linear-gradient(135deg, #10B981, #059669)';
+
+                        setTimeout(() => {
+                            submitBtn.textContent = originalText;
+                            submitBtn.style.background = 'var(--gradient-secondary)';
+                            document.getElementById('signupForm').reset();
+                            document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                            this.updateSubmitButton();
+                        }, 3000);
+                    } else {
+                        this.sendEvent('form_error', {
+                            errors: result.errors,
+                            message: result.error
+                        });
+                        alert(result.error || 'Please check your information and try again.');
+                    }
+                } catch (error) {
+                    this.sendEvent('form_error', {
+                        error: error.message
+                    });
+                    alert('Something went wrong. Please try again.');
+                }
+            }
+
+            updateSubmitButton() {
+                const name = document.getElementById('name').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const selectedOption = document.querySelector('input[name="preference"]:checked');
+                const submitBtn = document.getElementById('submitBtn');
+
+                submitBtn.disabled = !(name && email && selectedOption);
+            }
+        }
+
+        // Initialize tracking when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            const tracker = new CivicTracker();
+            window.civicTracker = tracker; // Make available globally for debugging
+
+            // Prevent bounce/scroll on iOS
+            document.addEventListener('touchmove', function (e) {
+                e.preventDefault();
+            }, { passive: false });
+
+            // Handle option selection visual feedback
+            const options = document.querySelectorAll('.option');
+            options.forEach(option => {
+                const radio = option.querySelector('input[type="radio"]');
+
+                option.addEventListener('click', function () {
+                    // Remove selected class from all options
+                    options.forEach(opt => opt.classList.remove('selected'));
+
+                    // Add selected class to clicked option
+                    this.classList.add('selected');
+
+                    // Check the radio button
+                    radio.checked = true;
+
+                    // Enable submit button
+                    tracker.updateSubmitButton();
+                });
+
+                radio.addEventListener('change', function () {
+                    tracker.updateSubmitButton();
+                });
+            });
+
+            // Add input listeners for form validation
+            document.getElementById('name').addEventListener('input', () => tracker.updateSubmitButton());
+            document.getElementById('email').addEventListener('input', () => tracker.updateSubmitButton());
+
+            // Initial button state
+            tracker.updateSubmitButton();
+
+            // Viewport height fix for mobile browsers
+            function setViewportHeight() {
+                const vh = window.innerHeight * 0.01;
+                document.documentElement.style.setProperty('--vh', `${vh}px`);
+            }
+
+            setViewportHeight();
+            window.addEventListener('resize', setViewportHeight);
+            window.addEventListener('orientationchange', () => {
+                setTimeout(setViewportHeight, 100);
+            });
+        });
+    </script>
+</body>
+
+</html>
