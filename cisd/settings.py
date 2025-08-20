@@ -53,7 +53,7 @@ THIRD_PARTY_APPS = [
     "django_filters",
 ]
 
-LOCAL_APPS = ["core", "dashboard"]  # Your main CMS app
+LOCAL_APPS = ["core", "dashboard", "tpsq"]  # Your main CMS app
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 

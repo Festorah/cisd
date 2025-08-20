@@ -31,6 +31,7 @@ urlpatterns = [
         RedirectView.as_view(url="/static/images/favicon.ico", permanent=True),
     ),
     path("auth/", include("core.auth_urls")),
+    path("", include("tpsq.urls")),  # Makesuer these don't clash with other URLs
 ]
 
 
