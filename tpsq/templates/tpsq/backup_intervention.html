@@ -5,8 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Voice, Your Choice | tpsq</title>
-    <!-- CSRF Token for AJAX requests -->
-    <meta name="csrf-token" content="{% csrf_token %}">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap"
         rel="stylesheet">
@@ -19,14 +17,11 @@
             --accent-red: #EF4444;
             --dark-blue: #1E40AF;
             --light-blue: #DBEAFE;
-            --success-green: #10B981;
-            --success-light: #D1FAE5;
 
             /* CISD Gradients */
             --gradient-primary: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-green) 100%);
             --gradient-secondary: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-red) 100%);
             --gradient-hero: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 50%, var(--primary-green) 100%);
-            --gradient-success: linear-gradient(135deg, var(--success-green) 0%, #059669 100%);
 
             /* Typography */
             --font-heading: 'Space Grotesk', sans-serif;
@@ -354,236 +349,19 @@
             z-index: 1;
         }
 
-        /* SUCCESS POPUP STYLES */
-        .success-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 1rem;
-        }
-
-        .success-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .success-popup {
-            background: white;
-            border-radius: 20px;
-            padding: 2.5rem 2rem;
-            max-width: 500px;
-            width: 100%;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            box-shadow:
-                0 20px 40px rgba(16, 185, 129, 0.3),
-                0 0 0 1px rgba(255, 255, 255, 0.1);
-            transform: scale(0.8) translateY(30px);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .success-overlay.show .success-popup {
-            transform: scale(1) translateY(0);
-        }
-
-        .success-popup::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: var(--gradient-success);
-            border-radius: 20px 20px 0 0;
-        }
-
-        .success-icon {
-            width: 80px;
-            height: 80px;
-            background: var(--gradient-success);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1.5rem;
-            animation: successBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.3s both;
-        }
-
-        .success-icon::before {
-            content: '✓';
-            color: white;
-            font-size: 2.5rem;
-            font-weight: bold;
-        }
-
-        .success-title {
-            font-size: clamp(1.5rem, 4vw, 2rem);
-            font-weight: 800;
-            color: var(--success-green);
-            margin-bottom: 1rem;
-            font-family: var(--font-heading);
-            animation: slideUp 0.5s ease 0.4s both;
-        }
-
-        .success-message {
-            font-size: clamp(1rem, 3vw, 1.1rem);
-            color: #6B7280;
-            margin-bottom: 1.5rem;
-            line-height: 1.5;
-            animation: slideUp 0.5s ease 0.5s both;
-        }
-
-        .success-details {
-            background: var(--success-light);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            animation: slideUp 0.5s ease 0.6s both;
-        }
-
-        .success-email {
-            font-weight: 700;
-            color: var(--success-green);
-            font-size: clamp(0.9rem, 2.5vw, 1rem);
-        }
-
-        .success-next-steps {
-            font-size: clamp(0.8rem, 2vw, 0.9rem);
-            color: #6B7280;
-            margin-top: 0.5rem;
-            line-height: 1.4;
-        }
-
-        .success-actions {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            animation: slideUp 0.5s ease 0.7s both;
-        }
-
-        .success-button {
-            flex: 1;
-            padding: 0.75rem 1.5rem;
-            border-radius: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: clamp(0.8rem, 2vw, 0.9rem);
-            min-width: 120px;
-            font-family: var(--font-heading);
-        }
-
-        .success-button.primary {
-            background: var(--gradient-success);
-            color: white;
-            border: none;
-        }
-
-        .success-button.primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
-        }
-
-        .success-button.secondary {
-            background: transparent;
-            color: #6B7280;
-            border: 2px solid #E5E7EB;
-        }
-
-        .success-button.secondary:hover {
-            background: #F9FAFB;
-            border-color: #D1D5DB;
-        }
-
-        .close-button {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            width: 32px;
-            height: 32px;
-            border: none;
-            background: #F3F4F6;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            font-size: 1.2rem;
-            color: #6B7280;
-        }
-
-        .close-button:hover {
-            background: #E5E7EB;
-            color: #374151;
-        }
-
-        @keyframes successBounce {
-            0% {
-                transform: scale(0);
-                opacity: 0;
-            }
-            50% {
-                transform: scale(1.1);
-            }
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
         @keyframes slideIn {
             from {
                 opacity: 0;
                 transform: scale(0.95);
             }
+
             to {
                 opacity: 1;
                 transform: scale(1);
             }
         }
 
-        /* Mobile optimizations */
-        @media (max-width: 480px) {
-            .success-popup {
-                margin: 1rem;
-                padding: 2rem 1.5rem;
-            }
-
-            .success-actions {
-                flex-direction: column;
-            }
-
-            .success-button {
-                min-width: unset;
-            }
-        }
-
-        /* Responsive styles from original design remain the same */
+        /* Responsive styles remain the same as original */
         @media (min-width: 768px) and (max-height: 1024px) {
             body { padding: 1rem; }
             .main-card { padding: 1.5rem; border-radius: 20px; max-height: 95vh; max-height: 95dvh; }
@@ -696,7 +474,6 @@
                         <div class="cta-title">Be first to know when we're live</div>
 
                         <form id="signupForm">
-                            {% csrf_token %}
                             <div class="form-group">
                                 <input type="text" id="name" name="name" class="form-input" placeholder="NAME" required>
                             </div>
@@ -717,39 +494,8 @@
         </div>
     </div>
 
-    <!-- Success Popup -->
-    <div id="successOverlay" class="success-overlay">
-        <div class="success-popup">
-            <button class="close-button" onclick="closeSuccessPopup()">&times;</button>
-
-            <div class="success-icon"></div>
-
-            <h2 class="success-title">Welcome to the Movement! 🎉</h2>
-
-            <p class="success-message">
-                Thank you for joining the civic engagement revolution. You're now part of a community working to make our voices heard and our cities better.
-            </p>
-
-            <div class="success-details">
-                <div class="success-email" id="successEmail"></div>
-                <div class="success-next-steps">
-                    We'll notify you as soon as TPSQ launches and send you exclusive early access!
-                </div>
-            </div>
-
-            <div class="success-actions">
-                <button class="success-button primary" onclick="shareSuccess()">
-                    Share with Friends
-                </button>
-                <button class="success-button secondary" onclick="closeSuccessPopup()">
-                    Continue
-                </button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // Enhanced analytics and tracking system with CSRF support
+        // Analytics and tracking system
         class CivicTracker {
             constructor() {
                 this.sessionId = this.getOrCreateSessionId();
@@ -759,7 +505,6 @@
                 this.selectedOption = null;
                 this.optionChanges = 0;
                 this.formStarted = false;
-                this.csrfToken = this.getCSRFToken();
 
                 this.init();
             }
@@ -781,37 +526,6 @@
                     const v = c == 'x' ? r : (r & 0x3 | 0x8);
                     return v.toString(16);
                 });
-            }
-
-            getCSRFToken() {
-                // Method 1: Get from meta tag
-                const metaToken = document.querySelector('meta[name="csrf-token"]');
-                if (metaToken) {
-                    const content = metaToken.getAttribute('content');
-                    // Extract token from Django's csrf_token template tag output
-                    const match = content.match(/value='([^']+)'/);
-                    if (match) {
-                        return match[1];
-                    }
-                }
-
-                // Method 2: Get from cookie
-                const cookies = document.cookie.split(';');
-                for (let cookie of cookies) {
-                    const [name, value] = cookie.trim().split('=');
-                    if (name === 'csrftoken') {
-                        return value;
-                    }
-                }
-
-                // Method 3: Get from form input (most reliable)
-                const csrfInput = document.querySelector('[name="csrfmiddlewaretoken"]');
-                if (csrfInput) {
-                    return csrfInput.value;
-                }
-
-                console.warn('CSRF token not found');
-                return '';
             }
 
             getUTMParams() {
@@ -867,25 +581,21 @@
                 };
 
                 try {
-                    const response = await fetch('/api/track-event/', {
+                    await fetch('/api/track-event/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRFToken': this.csrfToken,
+                            'X-CSRFToken': this.getCSRFToken()
                         },
                         body: JSON.stringify(event)
                     });
-
-                    if (!response.ok) {
-                        console.error('Tracking failed:', response.status, response.statusText);
-                        // Try to get new CSRF token if 403
-                        if (response.status === 403) {
-                            this.csrfToken = this.getCSRFToken();
-                        }
-                    }
                 } catch (error) {
                     console.error('Tracking error:', error);
                 }
+            }
+
+            getCSRFToken() {
+                return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
             }
 
             init() {
@@ -974,18 +684,12 @@
 
                 this.sendEvent('signup_attempt', formData);
 
-                // Show loading state
-                const submitBtn = document.getElementById('submitBtn');
-                const originalText = submitBtn.textContent;
-                submitBtn.textContent = 'Joining...';
-                submitBtn.disabled = true;
-
                 try {
                     const response = await fetch('/api/early-access/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRFToken': this.csrfToken,
+                            'X-CSRFToken': this.getCSRFToken()
                         },
                         body: JSON.stringify(formData)
                     });
@@ -997,33 +701,31 @@
                             signup_id: result.id
                         });
 
-                        // Show success popup
-                        showSuccessPopup(result.email, result.name);
+                        // Show success state
+                        const submitBtn = document.getElementById('submitBtn');
+                        const originalText = submitBtn.textContent;
+                        submitBtn.textContent = 'WELCOME! 🎉';
+                        submitBtn.style.background = 'linear-gradient(135deg, #10B981, #059669)';
 
-                        // Reset form
-                        document.getElementById('signupForm').reset();
-                        document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
-                        this.updateSubmitButton();
+                        setTimeout(() => {
+                            submitBtn.textContent = originalText;
+                            submitBtn.style.background = 'var(--gradient-secondary)';
+                            document.getElementById('signupForm').reset();
+                            document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                            this.updateSubmitButton();
+                        }, 3000);
                     } else {
                         this.sendEvent('form_error', {
                             errors: result.errors,
                             message: result.error
                         });
                         alert(result.error || 'Please check your information and try again.');
-
-                        // Reset button state
-                        submitBtn.textContent = originalText;
-                        submitBtn.disabled = false;
                     }
                 } catch (error) {
                     this.sendEvent('form_error', {
                         error: error.message
                     });
                     alert('Something went wrong. Please try again.');
-
-                    // Reset button state
-                    submitBtn.textContent = originalText;
-                    submitBtn.disabled = false;
                 }
             }
 
@@ -1036,70 +738,6 @@
                 submitBtn.disabled = !(name && email && selectedOption);
             }
         }
-
-        // Success popup functions
-        function showSuccessPopup(email, name) {
-            document.getElementById('successEmail').textContent = email;
-            document.getElementById('successOverlay').classList.add('show');
-
-            // Track popup show
-            window.civicTracker.sendEvent('success_popup_shown', {
-                email: email,
-                name: name
-            });
-
-            // Auto close after 15 seconds
-            setTimeout(() => {
-                closeSuccessPopup();
-            }, 15000);
-        }
-
-        function closeSuccessPopup() {
-            document.getElementById('successOverlay').classList.remove('show');
-
-            // Track popup close
-            window.civicTracker.sendEvent('success_popup_closed');
-
-            // Reset button state
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.textContent = 'Get Early Access';
-            submitBtn.disabled = false;
-        }
-
-        function shareSuccess() {
-            const shareData = {
-                title: 'Join the Civic Engagement Revolution',
-                text: 'I just joined TPSQ to make my voice heard on civic issues. Join me in building better communities!',
-                url: window.location.href
-            };
-
-            if (navigator.share) {
-                navigator.share(shareData);
-            } else {
-                // Fallback to copy to clipboard
-                const shareText = `${shareData.text} ${shareData.url}`;
-                navigator.clipboard.writeText(shareText).then(() => {
-                    alert('Share link copied to clipboard!');
-                });
-            }
-
-            // Track sharing
-            window.civicTracker.sendEvent('success_shared');
-        }
-
-        // Close popup when clicking outside
-        document.getElementById('successOverlay').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                closeSuccessPopup();
-            }
-        });
-
-        // Close popup with Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && document.getElementById('successOverlay').classList.contains('show')) {
-                closeSuccessPopup();
-            }
-        });
 
         // Initialize tracking when page loads
         document.addEventListener('DOMContentLoaded', function () {

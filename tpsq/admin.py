@@ -110,9 +110,7 @@ class UserSessionAdmin(admin.ModelAdmin):
 
     def has_signup(self, obj):
         """Show if session resulted in signup"""
-        if hasattr(obj, "signup"):
-            return format_html('<span style="color: green;">✓</span>')
-        return format_html('<span style="color: red;">✗</span>')
+        return hasattr(obj, "signup")
 
     has_signup.short_description = "Converted"
     has_signup.boolean = True

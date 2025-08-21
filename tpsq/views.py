@@ -6,10 +6,11 @@ from datetime import datetime, timedelta
 from django.db import transaction
 from django.db.models import Avg, Count, Q
 from django.http import HttpResponse, JsonResponse
+from django.middleware.csrf import get_token
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
 from django.views.generic import TemplateView
 from rest_framework import status
@@ -30,10 +31,17 @@ from .models import (
 logger = logging.getLogger(__name__)
 
 
+@method_decorator(ensure_csrf_cookie, name="dispatch")
 class LandingPageView(TemplateView):
-    """Serve the landing page with tracking enabled"""
+    """Serve the landing page with tracking enabled and CSRF token"""
 
     template_name = "tpsq/intervention.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Ensure CSRF token is available in template context
+        context["csrf_token"] = get_token(self.request)
+        return context
 
 
 class DashboardView(TemplateView):
@@ -52,6 +60,7 @@ class DashboardView(TemplateView):
             {
                 "start_date": start_date,
                 "end_date": end_date,
+                "csrf_token": get_token(self.request),
             }
         )
 
@@ -142,11 +151,10 @@ def get_or_create_session(session_id, request_data, request):
     return session
 
 
-@csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def track_event(request):
-    """Handle event tracking from frontend"""
+    """Handle event tracking from frontend with CSRF protection"""
     try:
         data = request.data
 
@@ -208,11 +216,10 @@ def track_event(request):
         )
 
 
-@csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def submit_early_access(request):
-    """Handle early access form submissions with full tracking"""
+    """Handle early access form submissions with full tracking and CSRF protection"""
 
     try:
         data = request.data
@@ -237,16 +244,58 @@ def submit_early_access(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Check for duplicate email
-        if EarlyAccessSignup.objects.filter(email__iexact=email).exists():
-            logger.warning(f"[DUPLICATE-EMAIL] {email}")
+        # Get or create session first to check for existing registration
+        session = get_or_create_session(session_id, data, request)
+
+        # Check for duplicate registration by session (same session already registered)
+        existing_session_signup = EarlyAccessSignup.objects.filter(
+            session=session
+        ).first()
+        if existing_session_signup:
+            logger.warning(
+                f"[DUPLICATE-SESSION] Session {session_id} already registered with email: {existing_session_signup.email}"
+            )
             return Response(
                 {
                     "success": False,
                     "duplicate": True,
-                    "error": f"The email '{email}' is already registered.",
+                    "duplicate_type": "session",
+                    "error": "You have already registered for early access in this session.",
+                    "existing_email": existing_session_signup.email,
+                    "existing_name": existing_session_signup.name,
+                    "registration_date": existing_session_signup.created_at.strftime(
+                        "%B %d, %Y at %I:%M %p"
+                    ),
                     "errors": {
-                        "email": [f"The email '{email}' is already registered."]
+                        "general": [
+                            "You have already registered for early access. Check your email for confirmation."
+                        ]
+                    },
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check for duplicate email (different session, same email)
+        existing_email_signup = EarlyAccessSignup.objects.filter(
+            email__iexact=email
+        ).first()
+        if existing_email_signup:
+            logger.warning(
+                f"[DUPLICATE-EMAIL] {email} already registered from session: {existing_email_signup.session.session_id if existing_email_signup.session else 'unknown'}"
+            )
+            return Response(
+                {
+                    "success": False,
+                    "duplicate": True,
+                    "duplicate_type": "email",
+                    "error": f"The email '{email}' is already registered for early access.",
+                    "registration_date": existing_email_signup.created_at.strftime(
+                        "%B %d, %Y at %I:%M %p"
+                    ),
+                    "errors": {
+                        "email": [
+                            f"The email '{email}' is already registered. Check your email for confirmation."
+                        ]
                     },
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -254,8 +303,7 @@ def submit_early_access(request):
 
         # Use database transaction for consistency
         with transaction.atomic():
-            # Get or create session
-            session = get_or_create_session(session_id, data, request)
+            # Session already retrieved above for duplicate checking
 
             # Create survey response if preference provided
             if preference:
@@ -310,6 +358,13 @@ def submit_early_access(request):
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def csrf_token(request):
+    """API endpoint to get CSRF token"""
+    return Response({"csrf_token": get_token(request)})
 
 
 @api_view(["GET"])

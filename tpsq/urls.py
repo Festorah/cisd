@@ -11,6 +11,7 @@ urlpatterns = [
     path("api/stats/", views.stats_summary, name="stats_summary"),
     # Frontend Pages
     path("", views.LandingPageView.as_view(), name="landing_page"),
+    path("api/csrf-token/", views.csrf_token, name="csrf_token"),
     path("intervention/", views.LandingPageView.as_view(), name="intervention"),
     path("speakup/", views.LandingPageView.as_view(), name="speakup"),
     path("accountability/", views.LandingPageView.as_view(), name="accountability"),
