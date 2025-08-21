@@ -175,13 +175,21 @@ class SurveyResponseAdmin(admin.ModelAdmin):
         "created_at",
         "session_short",
         "preference",
+        "question_type_display",
         "engagement_level",
         "time_to_select",
         "changed_mind_count",
     ]
-    list_filter = ["preference", "created_at"]
+    list_filter = [
+        "preference",
+        "created_at",
+        (
+            "preference",
+            admin.ChoicesFieldListFilter,
+        ),  # Better filtering for preferences
+    ]
     search_fields = ["session__session_id"]
-    readonly_fields = ["created_at", "engagement_level"]
+    readonly_fields = ["created_at", "engagement_level", "question_type"]
     date_hierarchy = "created_at"
     ordering = ["-created_at"]
 
@@ -192,6 +200,87 @@ class SurveyResponseAdmin(admin.ModelAdmin):
         return format_html('<a href="{}">{}</a>', url, session_id)
 
     session_short.short_description = "Session"
+
+    def question_type_display(self, obj):
+        """Show which question type this response belongs to"""
+        question_type = obj.question_type
+        colors = {
+            "engagement_followup": "blue",
+            "app_usage_intent": "green",
+            "unknown": "gray",
+        }
+        labels = {
+            "engagement_followup": "Follow-up",
+            "app_usage_intent": "App Intent",
+            "unknown": "Unknown",
+        }
+
+        color = colors.get(question_type, "gray")
+        label = labels.get(question_type, "Unknown")
+
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>', color, label
+        )
+
+    question_type_display.short_description = "Question Type"
+
+    # Add custom list filter for question types
+    def get_list_filter(self, request):
+        list_filter = list(super().get_list_filter(request))
+        list_filter.append(QuestionTypeFilter)
+        return list_filter
+
+
+# Custom admin filter for question types
+class QuestionTypeFilter(admin.SimpleListFilter):
+    title = "Question Type"
+    parameter_name = "question_type"
+
+    def lookups(self, request, model_admin):
+        return [
+            ("engagement_followup", "Follow-up Engagement"),
+            ("app_usage_intent", "App Usage Intent"),
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value() == "engagement_followup":
+            return queryset.filter(
+                preference__in=["nothing", "notification", "updates"]
+            )
+        elif self.value() == "app_usage_intent":
+            return queryset.filter(
+                preference__in=["yes_would_use", "no_wouldnt_use", "not_sure"]
+            )
+        return queryset
+
+
+class PreferenceTypeFilter(admin.SimpleListFilter):
+    title = "Preference Type"
+    parameter_name = "preference_type"
+
+    def lookups(self, request, model_admin):
+        return [
+            ("engagement_followup", "Follow-up Engagement"),
+            ("app_usage_intent", "App Usage Intent"),
+            ("no_survey", "No Survey Response"),
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value() == "engagement_followup":
+            return queryset.filter(
+                session__survey__preference__in=["nothing", "notification", "updates"]
+            )
+        elif self.value() == "app_usage_intent":
+            return queryset.filter(
+                session__survey__preference__in=[
+                    "yes_would_use",
+                    "no_wouldnt_use",
+                    "not_sure",
+                ]
+            )
+        elif self.value() == "no_survey":
+            return queryset.filter(session__survey__isnull=True)
+        return queryset
 
 
 @admin.register(EarlyAccessSignup)
@@ -211,6 +300,7 @@ class EarlyAccessSignupAdmin(admin.ModelAdmin):
         "session__utm_source",
         "session__device_type",
         "session__survey__preference",
+        PreferenceTypeFilter,
     ]
     search_fields = ["email", "name", "session__session_id"]
     readonly_fields = [
@@ -264,6 +354,18 @@ class EarlyAccessSignupAdmin(admin.ModelAdmin):
         return (
             super().get_queryset(request).select_related("session", "session__survey")
         )
+
+    def preference_type_display(self, obj):
+        """Show which type of preference question the user answered"""
+        if obj.has_survey_response:
+            question_type = obj.session.survey.question_type
+            if question_type == "engagement_followup":
+                return format_html('<span style="color: blue;">Follow-up</span>')
+            elif question_type == "app_usage_intent":
+                return format_html('<span style="color: green;">App Intent</span>')
+        return "-"
+
+    preference_type_display.short_description = "Preference Type"
 
 
 @admin.register(DailyStats)
