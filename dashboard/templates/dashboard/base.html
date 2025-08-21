@@ -181,7 +181,7 @@
                 </div>
                 <div class="nav-item">
                     <a href="{% url 'dashboard:article_create' %}"
-                        class="nav-link {% if 'article' in request.resolver_match.url_name %}active{% endif %}">
+                        class="nav-link {% if 'article_create' in request.resolver_match.url_name %}active{% endif %}">
                         <i class="fas fa-edit"></i>
                         Create Article
                     </a>

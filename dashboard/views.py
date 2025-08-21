@@ -21,6 +21,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
+from django.core.validators import validate_email
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponseForbidden, JsonResponse
@@ -31,7 +32,13 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DetailView,
+    ListView,
+    TemplateView,
+    UpdateView,
+)
 
 # Import dashboard utilities
 from .managers import ArticleManager, DashboardStatsManager
@@ -177,53 +184,99 @@ class DashboardHomeView(AdminRequiredMixin, ListView):
         return context
 
 
-class ArticleCreateView(AdminRequiredMixin, CreateView):
+@ajax_admin_required
+@require_http_methods(["GET"])
+def get_article_data(request, article_id):
+    """Get article data for editing - Protected"""
+    try:
+        article = get_object_or_404(Article, id=article_id)
+
+        # Get content sections
+        content_sections = []
+        for section in article.content_sections.all().order_by("order"):
+            section_data = {
+                "id": str(section.id),
+                "type": section.section_type,
+                "content": section.content or "",
+                "title": section.title or "",
+                "order": section.order,
+                "media_file_id": (
+                    str(section.media_file.id) if section.media_file else ""
+                ),
+                "caption": section.caption or "",
+                "alt_text": section.alt_text or "",
+                "question": section.question or "",
+                "answer": section.answer or "",
+            }
+            content_sections.append(section_data)
+
+        article_data = {
+            "id": str(article.id),
+            "title": article.title,
+            "excerpt": article.excerpt,
+            "category_id": str(article.category.id) if article.category else "",
+            "author_id": str(article.author.id) if article.author else "",
+            "featured_image_id": (
+                str(article.featured_image.id) if article.featured_image else ""
+            ),
+            "status": article.status,
+            "published_date": (
+                article.published_date.isoformat() if article.published_date else ""
+            ),
+            "content_sections": content_sections,
+            "meta_title": article.meta_title or "",
+            "meta_description": article.meta_description or "",
+            "meta_keywords": article.meta_keywords or "",
+            "tags": [tag.name for tag in article.tags.all()],
+            "is_featured": article.is_featured,
+            "is_breaking": article.is_breaking,
+            "allow_comments": article.allow_comments,
+        }
+
+        return JsonResponse({"success": True, "article": article_data})
+
+    except Article.DoesNotExist:
+        return JsonResponse(
+            {"success": False, "error": "Article not found"}, status=404
+        )
+    except Exception as e:
+        logger.error(f"Error getting article data: {str(e)}")
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
+class ArticleCreateView(AdminRequiredMixin, TemplateView):
     """Create new article with enhanced functionality - Protected"""
 
-    model = Article
-    form_class = ArticleForm
+    # template_name = "dashboard/enhanced_article_create.html"
     template_name = "dashboard/article_create.html"
-    success_url = reverse_lazy("dashboard:home")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        # Get categories and authors for dropdowns
+        categories = Category.objects.filter(is_active=True).order_by(
+            "sort_order", "display_name"
+        )
+        authors = Author.objects.filter(is_active=True).order_by("name")
+
+        # Get media files for the media library
+        recent_media = CloudinaryMedia.objects.filter(file_type="image").order_by(
+            "-created_at"
+        )[:20]
+
+        all_media = CloudinaryMedia.objects.order_by("-created_at")[:50]
+
         context.update(
             {
-                "formset": (
-                    ContentSectionFormSet() if self.request.method == "GET" else None
-                ),
-                "categories": Category.objects.filter(is_active=True),
-                "authors": Author.objects.filter(is_active=True),
-                "tags": Tag.objects.all().order_by("name"),
-                "recent_media": CloudinaryMedia.objects.order_by("-created_at")[:20],
-                "default_structure": ContentGenerator.get_default_structure(),
+                "categories": categories,
+                "authors": authors,
+                "recent_media": recent_media,
+                "all_media": all_media,
+                "csrf_token": self.request.META.get("CSRF_COOKIE"),
             }
         )
+
         return context
-
-    def form_valid(self, form):
-        """Handle form submission with content sections"""
-        formset = ContentSectionFormSet(self.request.POST, instance=form.instance)
-
-        if formset.is_valid():
-            with transaction.atomic():
-                form.instance.created_by = self.request.user
-                form.instance.last_modified_by = self.request.user
-                article = form.save()
-
-                formset.instance = article
-                formset.save()
-
-                messages.success(
-                    self.request, f'Article "{article.title}" created successfully!'
-                )
-                logger.info(
-                    f"Article '{article.title}' created by {self.request.user.username}"
-                )
-
-            return redirect(self.success_url)
-        else:
-            return self.form_invalid(form)
 
 
 # Protected Function-Based Views
@@ -330,33 +383,83 @@ def articles_list_view(request):
     return render(request, "dashboard/articles_list.html", context)
 
 
-@admin_required()
+# @admin_required()
+# def article_edit_view(request, article_id):
+#     """Edit an existing article with properly loaded content - Protected"""
+#     article = get_object_or_404(Article, id=article_id)
+
+#     # Get content sections ordered properly
+#     content_sections = article.content_sections.all().order_by("order")
+
+#     # Serialize content sections for JavaScript with proper handling of None values
+#     sections_data = []
+#     for section in content_sections:
+#         section_data = {
+#             "id": str(section.id) if section.id else "",
+#             "type": section.section_type or "paragraph",
+#             "content": section.content or "",
+#             "title": section.title or "",
+#             "order": section.order if section.order is not None else 0,
+#             "media_file_id": str(section.media_file.id) if section.media_file else "",
+#             "caption": section.caption or "",
+#             "alt_text": section.alt_text or "",
+#             "question": section.question or "",
+#             "answer": section.answer or "",
+#             "interviewer": section.interviewer or "",
+#             "interviewee": section.interviewee or "",
+#             "attribution": getattr(section, "attribution", "") or "",  # For quotes
+#         }
+#         sections_data.append(section_data)
+
+#     # Get dropdown options
+#     categories = Category.objects.filter(is_active=True).order_by(
+#         "sort_order", "display_name"
+#     )
+#     authors = Author.objects.filter(is_active=True).order_by("name")
+#     recent_media = CloudinaryMedia.objects.order_by("-created_at")[:50]
+
+#     # Prepare article data for JavaScript with proper None handling
+#     article_data = {
+#         "id": str(article.id),
+#         "title": article.title or "",
+#         "excerpt": article.excerpt or "",
+#         "category_id": str(article.category.id) if article.category else "",
+#         "author_id": str(article.author.id) if article.author else "",
+#         "featured_image_id": (
+#             str(article.featured_image.id) if article.featured_image else ""
+#         ),
+#         "status": article.status or "draft",
+#         "published_date": (
+#             article.published_date.isoformat() if article.published_date else ""
+#         ),
+#         "content_sections": sections_data,
+#         "meta_title": article.meta_title or "",
+#         "meta_description": article.meta_description or "",
+#         "social_title": article.social_title or "",
+#         "social_description": article.social_description or "",
+#         "is_featured": article.is_featured,
+#         "is_breaking": article.is_breaking,
+#         "allow_comments": article.allow_comments,
+#     }
+
+#     context = {
+#         "article": article,
+#         "article_data_json": json.dumps(article_data),  # Properly serialized data
+#         "categories": categories,
+#         "authors": authors,
+#         "recent_media": recent_media,
+#     }
+
+#     return render(request, "dashboard/article_edit.html", context)
+
+
+@admin_required(message="Please sign in to access the article editor.")
 def article_edit_view(request, article_id):
-    """Edit an existing article with properly loaded content - Protected"""
+    """Enhanced article editor view for editing existing articles - Protected"""
     article = get_object_or_404(Article, id=article_id)
 
     # Get content sections ordered properly
     content_sections = article.content_sections.all().order_by("order")
-
-    # Serialize content sections for JavaScript with proper handling of None values
-    sections_data = []
-    for section in content_sections:
-        section_data = {
-            "id": str(section.id) if section.id else "",
-            "type": section.section_type or "paragraph",
-            "content": section.content or "",
-            "title": section.title or "",
-            "order": section.order if section.order is not None else 0,
-            "media_file_id": str(section.media_file.id) if section.media_file else "",
-            "caption": section.caption or "",
-            "alt_text": section.alt_text or "",
-            "question": section.question or "",
-            "answer": section.answer or "",
-            "interviewer": section.interviewer or "",
-            "interviewee": section.interviewee or "",
-            "attribution": getattr(section, "attribution", "") or "",  # For quotes
-        }
-        sections_data.append(section_data)
 
     # Get dropdown options
     categories = Category.objects.filter(is_active=True).order_by(
@@ -365,36 +468,13 @@ def article_edit_view(request, article_id):
     authors = Author.objects.filter(is_active=True).order_by("name")
     recent_media = CloudinaryMedia.objects.order_by("-created_at")[:50]
 
-    # Prepare article data for JavaScript with proper None handling
-    article_data = {
-        "id": str(article.id),
-        "title": article.title or "",
-        "excerpt": article.excerpt or "",
-        "category_id": str(article.category.id) if article.category else "",
-        "author_id": str(article.author.id) if article.author else "",
-        "featured_image_id": (
-            str(article.featured_image.id) if article.featured_image else ""
-        ),
-        "status": article.status or "draft",
-        "published_date": (
-            article.published_date.isoformat() if article.published_date else ""
-        ),
-        "content_sections": sections_data,
-        "meta_title": article.meta_title or "",
-        "meta_description": article.meta_description or "",
-        "social_title": article.social_title or "",
-        "social_description": article.social_description or "",
-        "is_featured": article.is_featured,
-        "is_breaking": article.is_breaking,
-        "allow_comments": article.allow_comments,
-    }
-
     context = {
         "article": article,
-        "article_data_json": json.dumps(article_data),  # Properly serialized data
+        "content_sections": content_sections,
         "categories": categories,
         "authors": authors,
         "recent_media": recent_media,
+        "is_edit_mode": True,
     }
 
     return render(request, "dashboard/article_edit.html", context)
@@ -595,10 +675,11 @@ def get_dashboard_stats_ajax(request):
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
+@csrf_exempt
 @ajax_admin_required
 @require_http_methods(["POST"])
 def upload_file_view(request):
-    """Enhanced file upload with proper auth - Protected"""
+    """Enhanced file upload with proper response format"""
     try:
         # Validate file upload
         if "file" not in request.FILES:
@@ -607,23 +688,70 @@ def upload_file_view(request):
             )
 
         file_obj = request.FILES["file"]
+
+        # Validate file size (10MB limit)
+        if file_obj.size > 10 * 1024 * 1024:
+            return JsonResponse(
+                {"success": False, "error": "File too large. Maximum size is 10MB."},
+                status=400,
+            )
+
+        # Validate file type
+        allowed_types = [
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/gif",
+            "image/webp",
+            "video/mp4",
+            "application/pdf",
+        ]
+        if file_obj.content_type not in allowed_types:
+            return JsonResponse(
+                {"success": False, "error": "File type not allowed"}, status=400
+            )
+
+        # Extract title and metadata
         title = request.POST.get("title", file_obj.name.split(".")[0])
 
-        # Use the serializer for validation and processing
-        serializer = MediaUploadSerializer(
-            data={
-                "file": file_obj,
-                "title": title,
-                "alt_text": request.POST.get("alt_text", ""),
-                "caption": request.POST.get("caption", ""),
-                "tags": request.POST.get("tags", ""),
-                "folder": request.POST.get("folder", "cisd/uploads"),
-            },
-            context={"request": request},
-        )
+        # Determine file type based on content type
+        if file_obj.content_type.startswith("image/"):
+            file_type = "image"
+        elif file_obj.content_type.startswith("video/"):
+            file_type = "video"
+        elif file_obj.content_type == "application/pdf":
+            file_type = "document"
+        else:
+            file_type = "other"
 
-        if serializer.is_valid():
-            media = serializer.save()
+        # Upload to Cloudinary
+        try:
+            # Use CloudinaryManager to upload
+            upload_result = CloudinaryManager.upload_file(
+                file_obj,
+                folder="cisd/uploads",
+            )
+
+            if not upload_result["success"]:
+                return JsonResponse(
+                    {"success": False, "error": upload_result["error"]}, status=500
+                )
+
+            # Create CloudinaryMedia instance
+            media = CloudinaryMedia.objects.create(
+                title=title,
+                cloudinary_url=upload_result["url"],
+                cloudinary_public_id=upload_result["public_id"],
+                file_type=file_type,
+                file_format=upload_result.get("format", ""),
+                file_size=file_obj.size,
+                width=upload_result.get("width"),
+                height=upload_result.get("height"),
+                alt_text=request.POST.get("alt_text", ""),
+                caption=request.POST.get("caption", ""),
+                tags=request.POST.get("tags", ""),
+                uploaded_by=request.user,
+            )
 
             logger.info(f"File uploaded by {request.user.username}: {media.title}")
 
@@ -631,20 +759,21 @@ def upload_file_view(request):
                 {
                     "success": True,
                     "message": "File uploaded successfully",
-                    "media_id": str(media.id),
-                    "cloudinary_url": media.cloudinary_url,
-                    "file_type": media.file_type,
-                    "file_size": media.file_size_formatted,
+                    "media": {
+                        "id": str(media.id),
+                        "title": media.title,
+                        "cloudinary_url": media.cloudinary_url,
+                        "file_type": media.file_type,
+                        "file_size": media.file_size_formatted,
+                    },
                 }
             )
-        else:
+
+        except Exception as cloudinary_error:
+            logger.error(f"Cloudinary upload failed: {str(cloudinary_error)}")
             return JsonResponse(
-                {
-                    "success": False,
-                    "error": "Validation failed",
-                    "details": serializer.errors,
-                },
-                status=400,
+                {"success": False, "error": f"Upload failed: {str(cloudinary_error)}"},
+                status=500,
             )
 
     except Exception as e:
@@ -742,21 +871,28 @@ def bulk_articles_view(request):
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
+@csrf_exempt
 @ajax_admin_required
 @require_http_methods(["POST"])
 def save_article_view(request):
-    """Save or update an article with content sections - Protected"""
+    """Enhanced save article view that handles both create and update - Protected"""
     try:
         data = json.loads(request.body)
 
-        article_id = data.get("id")
+        # Extract data with proper validation
+        article_id = data.get("id") or data.get("article_id")
         title = data.get("title", "").strip()
         excerpt = data.get("excerpt", "").strip()
         category_id = data.get("category_id")
         author_id = data.get("author_id")
         featured_image_id = data.get("featured_image_id")
         status = data.get("status", "draft")
-        content_sections = data.get("content_sections", [])
+        content = data.get("content", "")
+        meta_title = data.get("meta_title", "")
+        meta_description = data.get("meta_description", "")
+        meta_keywords = data.get("meta_keywords", "")
+        tags = data.get("tags", [])
+        publication_date = data.get("publication_date", "")
 
         # Basic validation
         if not title:
@@ -764,85 +900,137 @@ def save_article_view(request):
                 {"success": False, "error": "Article title is required"}, status=400
             )
 
-        # Get or create article
-        if article_id:
+        # Validate required foreign keys
+        if not author_id:
+            # Default to current user if no author specified and user has an author profile
             try:
-                article = Article.objects.get(id=article_id)
-                message = "Article updated successfully"
-            except Article.DoesNotExist:
+                default_author = Author.objects.filter(user=request.user).first()
+                if default_author:
+                    author_id = str(default_author.id)
+                else:
+                    return JsonResponse(
+                        {"success": False, "error": "Author is required"}, status=400
+                    )
+            except:
                 return JsonResponse(
-                    {"success": False, "error": "Article not found"}, status=404
+                    {"success": False, "error": "Author is required"}, status=400
                 )
-        else:
-            article = Article(created_by=request.user)
-            message = "Article created successfully"
 
-        # Update article fields
-        article.title = title
-        article.excerpt = excerpt
-        article.status = status
-        article.last_modified_by = request.user
+        if not category_id:
+            return JsonResponse(
+                {"success": False, "error": "Category is required"}, status=400
+            )
 
-        # Set foreign key relationships
-        if category_id:
+        # Get or create article
+        with transaction.atomic():
+            if article_id:
+                try:
+                    article = Article.objects.get(id=article_id)
+                    message = "Article updated successfully"
+                    is_update = True
+                except Article.DoesNotExist:
+                    return JsonResponse(
+                        {"success": False, "error": "Article not found"}, status=404
+                    )
+            else:
+                article = Article(created_by=request.user)
+                message = "Article created successfully"
+                is_update = False
+
+            # Update article fields
+            article.title = title
+            article.excerpt = excerpt
+            article.status = status
+            article.meta_title = meta_title
+            article.meta_description = meta_description
+            article.meta_keywords = meta_keywords
+            article.last_modified_by = request.user
+
+            # Handle foreign key relationships with proper validation
             try:
                 article.category = Category.objects.get(id=category_id)
-            except Category.DoesNotExist:
-                pass
+            except (Category.DoesNotExist, ValueError):
+                return JsonResponse(
+                    {"success": False, "error": "Invalid category selected"}, status=400
+                )
 
-        if author_id:
             try:
                 article.author = Author.objects.get(id=author_id)
-            except Author.DoesNotExist:
-                pass
-
-        if featured_image_id:
-            try:
-                article.featured_image = CloudinaryMedia.objects.get(
-                    id=featured_image_id
+            except (Author.DoesNotExist, ValueError):
+                return JsonResponse(
+                    {"success": False, "error": "Invalid author selected"}, status=400
                 )
-            except CloudinaryMedia.DoesNotExist:
+
+            # Handle featured image
+            if featured_image_id:
+                if featured_image_id.startswith("http"):
+                    # This is a URL, find the media by URL
+                    try:
+                        article.featured_image = CloudinaryMedia.objects.filter(
+                            cloudinary_url=featured_image_id
+                        ).first()
+                    except:
+                        article.featured_image = None
+                else:
+                    # This should be an ID
+                    try:
+                        article.featured_image = CloudinaryMedia.objects.get(
+                            id=featured_image_id
+                        )
+                    except (CloudinaryMedia.DoesNotExist, ValueError):
+                        article.featured_image = None
+            else:
                 article.featured_image = None
 
-        # Set published date if publishing
-        if status == "published" and not article.published_date:
-            article.published_date = timezone.now()
+            # Handle publication date
+            if publication_date:
+                try:
+                    from django.utils.dateparse import parse_datetime
 
-        # Save article
-        article.save()
+                    parsed_date = parse_datetime(publication_date)
+                    if parsed_date:
+                        if status == "published":
+                            article.published_date = parsed_date
+                        elif status == "scheduled":
+                            article.scheduled_publish_date = parsed_date
+                except:
+                    pass
 
-        # Update content sections
-        if content_sections:
-            # Delete existing sections for this article
-            ContentSection.objects.filter(article=article).delete()
+            # Set published date if publishing for the first time
+            if status == "published" and not article.published_date:
+                article.published_date = timezone.now()
 
-            # Create new sections
-            for index, section_data in enumerate(content_sections):
-                section = ContentSection(
+            # Save article
+            article.save()
+
+            # Handle content - store in a single ContentSection or update existing
+            if content and content.strip():
+                # Clear existing sections for updates, or create new one
+                if is_update:
+                    ContentSection.objects.filter(article=article).delete()
+
+                # Create a single content section with the HTML content
+                ContentSection.objects.create(
                     article=article,
-                    section_type=section_data.get("type", "paragraph"),
-                    order=index,
-                    content=section_data.get("content", ""),
-                    title=section_data.get("title", ""),
-                    caption=section_data.get("caption", ""),
-                    alt_text=section_data.get("alt_text", ""),
-                    question=section_data.get("question", ""),
-                    answer=section_data.get("answer", ""),
-                    interviewer=section_data.get("interviewer", ""),
-                    interviewee=section_data.get("interviewee", ""),
+                    section_type="paragraph",
+                    order=0,
+                    content=content,
+                    title="Main Content",
                 )
 
-                # Handle media file relationship
-                media_file_id = section_data.get("media_file_id")
-                if media_file_id:
-                    try:
-                        section.media_file = CloudinaryMedia.objects.get(
-                            id=media_file_id
-                        )
-                    except CloudinaryMedia.DoesNotExist:
-                        pass
+            # Handle tags
+            if tags and isinstance(tags, list):
+                article.tags.clear()
 
-                section.save()
+                for tag_name in tags:
+                    if tag_name.strip():
+                        tag, created = Tag.objects.get_or_create(
+                            name=tag_name.strip(),
+                            defaults={
+                                "slug": tag_name.strip().lower().replace(" ", "-")
+                            },
+                        )
+                        article.tags.add(tag)
 
         logger.info(f"Article '{title}' saved by {request.user.username}")
 
@@ -852,6 +1040,9 @@ def save_article_view(request):
                 "message": message,
                 "article_id": str(article.id),
                 "status": article.status,
+                "is_update": is_update,
+                "edit_url": f"/dashboard/article/{article.id}/edit/",
+                "view_url": f"/article/{article.slug}/",
             }
         )
 
@@ -1079,4 +1270,170 @@ def dashboard_stats_view(request):
         logger.error(f"Failed to get stats for {request.user.username}: {str(e)}")
         return JsonResponse(
             {"success": False, "error": f"Failed to get stats: {str(e)}"}, status=500
+        )
+
+
+@csrf_exempt
+@ajax_admin_required
+@require_http_methods(["POST"])
+def create_category_view(request):
+    """Create a new category via AJAX - Protected"""
+    try:
+        data = json.loads(request.body)
+
+        # Extract and validate data
+        name = data.get("name", "").strip().lower()
+        display_name = data.get("display_name", "").strip()
+        description = data.get("description", "").strip()
+        color_code = data.get("color_code", "#dc2626").strip()
+
+        # Validate required fields
+        if not name or not display_name:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": "Category name and display name are required",
+                },
+                status=400,
+            )
+
+        # Validate category name format (only lowercase letters, numbers, underscores)
+        import re
+
+        if not re.match(r"^[a-z0-9_]+$", name):
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": "Category name can only contain lowercase letters, numbers, and underscores",
+                },
+                status=400,
+            )
+
+        # Check if category already exists
+        if Category.objects.filter(name=name).exists():
+            return JsonResponse(
+                {"success": False, "error": "Category with this name already exists"},
+                status=400,
+            )
+
+        # Validate color code
+        if not re.match(r"^#[0-9a-fA-F]{6}$", color_code):
+            color_code = "#dc2626"  # Default color if invalid
+
+        # Create category
+        category = Category.objects.create(
+            name=name,
+            display_name=display_name,
+            description=description,
+            color_code=color_code,
+            is_active=True,
+            sort_order=Category.objects.count(),  # Add at end
+        )
+
+        logger.info(f"Category '{display_name}' created by {request.user.username}")
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Category created successfully",
+                "category": {
+                    "id": str(category.id),
+                    "name": category.name,
+                    "display_name": category.display_name,
+                    "color_code": category.color_code,
+                },
+            }
+        )
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"success": False, "error": "Invalid JSON data"}, status=400
+        )
+    except Exception as e:
+        logger.error(f"Error creating category by {request.user.username}: {str(e)}")
+        return JsonResponse(
+            {"success": False, "error": "An error occurred while creating category"},
+            status=500,
+        )
+
+
+@csrf_exempt
+@ajax_admin_required
+@require_http_methods(["POST"])
+def create_author_view(request):
+    """Create a new author via AJAX - Protected"""
+    try:
+        data = json.loads(request.body)
+
+        # Extract and validate data
+        name = data.get("name", "").strip()
+        title = data.get("title", "").strip()
+        email = data.get("email", "").strip()
+        bio = data.get("bio", "").strip()
+
+        # Validate required fields
+        if not name:
+            return JsonResponse(
+                {"success": False, "error": "Author name is required"}, status=400
+            )
+
+        # Check if author already exists
+        if Author.objects.filter(name=name).exists():
+            return JsonResponse(
+                {"success": False, "error": "Author with this name already exists"},
+                status=400,
+            )
+
+        # Validate email if provided
+        if email:
+            try:
+                validate_email(email)
+                # Check if email already exists
+                if Author.objects.filter(email=email).exists():
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "error": "Author with this email already exists",
+                        },
+                        status=400,
+                    )
+            except ValidationError:
+                return JsonResponse(
+                    {"success": False, "error": "Invalid email address"}, status=400
+                )
+
+        # Create author
+        author = Author.objects.create(
+            name=name,
+            title=title,
+            email=email,
+            bio=bio,
+            is_active=True,
+            sort_order=Author.objects.count(),  # Add at end
+        )
+
+        logger.info(f"Author '{name}' created by {request.user.username}")
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Author created successfully",
+                "author": {
+                    "id": str(author.id),
+                    "name": author.name,
+                    "title": author.title,
+                    "email": author.email,
+                },
+            }
+        )
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"success": False, "error": "Invalid JSON data"}, status=400
+        )
+    except Exception as e:
+        logger.error(f"Error creating author by {request.user.username}: {str(e)}")
+        return JsonResponse(
+            {"success": False, "error": "An error occurred while creating author"},
+            status=500,
         )

@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article Preview - Centre for Inclusive Social Development</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.7;
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc;
+        }
+
+        /* Breadcrumb */
+        .breadcrumb-section {
+            background: #fff;
+            padding: 1rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .breadcrumb {
+            margin: 0;
+            background: none;
+            padding: 0;
+        }
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: ">";
+            color: #6b7280;
+        }
+        .breadcrumb-item a {
+            color: #0EA5E9;
+            text-decoration: none;
+        }
+        .breadcrumb-item.active {
+            color: #6b7280;
+        }
+
+        /* Article Hero */
+        .article-hero {
+            background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
+            color: white;
+            padding: 3rem 0;
+        }
+        .article-hero-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+        .article-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            background: rgba(255,255,255,0.2);
+        }
+        .article-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+        .article-excerpt {
+            font-size: 1.125rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        .article-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .author-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .author-info {
+            flex-grow: 1;
+        }
+        .author-name {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .publish-date {
+            margin: 0;
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+        .article-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        .action-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        .action-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        .article-main-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* Article Body */
+        .article-body {
+            background: white;
+            padding: 3rem 0;
+        }
+        .article-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        .article-content p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #374151;
+        }
+        .article-content h1, .article-content h2, .article-content h3,
+        .article-content h4, .article-content h5, .article-content h6 {
+            margin-top: 2.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            line-height: 1.3;
+        }
+        .article-content h1 { font-size: 2rem; }
+        .article-content h2 { font-size: 1.75rem; }
+        .article-content h3 { font-size: 1.5rem; }
+        .article-content h4 { font-size: 1.25rem; }
+
+        /* Special Content Blocks */
+        .quote-block {
+            background: #f9fafb;
+            border-left: 4px solid #dc2626; /* RED sidebar */
+            padding: 2rem;
+            margin: 2rem 0;
+            font-style: italic;
+            font-size: 1.25rem;
+            border-radius: 0 8px 8px 0;
+            color: #374151;
+        }
+        .interview-block {
+            background: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .interview-question {
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        .interview-answer {
+            color: #374151;
+            margin: 0;
+        }
+        .callout-block {
+            background: #fffbeb;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .callout-title {
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        .image-block {
+            margin: 2.5rem 0;
+            text-align: center;
+            clear: both;
+            display: block;
+            width: 100%;
+        }
+        .image-block img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: block;
+            margin: 0 auto;
+        }
+        .image-caption {
+            font-size: 0.9rem;
+            color: #6b7280;
+            font-style: italic;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .back-to-editor {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #0EA5E9;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        .back-to-editor:hover {
+            background: #0284C7;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(14, 165, 233, 0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .article-hero-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            .article-title {
+                font-size: 2rem;
+            }
+            .article-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            .article-actions {
+                align-self: flex-start;
+            }
+            .back-to-editor {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin: 1rem;
+                display: block;
+                width: calc(100% - 2rem);
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Back to Editor Button -->
+    <button class="back-to-editor" onclick="goBackToEditor()">
+        <i class="bi bi-arrow-left"></i> Back to Editor
+    </button>
+
+    <!-- Breadcrumb -->
+    <section class="breadcrumb-section">
+        <div class="container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item"><a href="/articles/">News & Analysis</a></li>
+                    <li class="breadcrumb-item active" aria-current="page" id="breadcrumbTitle">Article Preview</li>
+                </ol>
+            </nav>
+        </div>
+    </section>
+
+    <!-- Article Hero -->
+    <section class="article-hero">
+        <div class="container">
+            <div class="article-hero-container">
+                <div class="article-content-side">
+                    <div class="article-badge" id="articleCategory">PREVIEW</div>
+                    <h1 class="article-title" id="articleTitle">Article Title Will Appear Here</h1>
+                    <p class="article-excerpt" id="articleExcerpt">Article excerpt will appear here...</p>
+
+                    <div class="article-meta">
+                        <div class="author-avatar" id="authorAvatar">AU</div>
+                        <div class="author-info">
+                            <p class="author-name" id="authorName">Author Name</p>
+                            <p class="publish-date" id="publishDate">PUBLISHED: TODAY</p>
+                        </div>
+                        <div class="article-actions">
+                            <button class="action-btn" title="Share Article" onclick="shareArticle()">
+                                <i class="fas fa-share"></i>
+                            </button>
+                            <button class="action-btn" title="Bookmark Article" onclick="bookmarkArticle()">
+                                <i class="fas fa-bookmark"></i>
+                            </button>
+                            <button class="action-btn" title="Download Article as PDF" onclick="downloadArticle()">
+                                <i class="fas fa-file-pdf"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="article-image-side">
+                    <img src="https://picsum.photos/800/600?random=5" alt="Article main image" class="article-main-image" id="featuredImage">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Article Body -->
+    <section class="article-body">
+        <div class="container">
+            <div class="article-content" id="articleContent">
+                <p>Article content will appear here once you preview from the editor...</p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Get article data from URL parameters or localStorage
+        function loadArticleData() {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Try to get data from URL parameters first
+            let articleData = {
+                title: urlParams.get('title') || 'Sample Article Title',
+                excerpt: urlParams.get('excerpt') || 'This is a sample excerpt for the article preview...',
+                category: urlParams.get('category') || 'news',
+                author: urlParams.get('author') || 'Sample Author',
+                content: urlParams.get('content') || '<p>Sample article content will appear here...</p>',
+                featured_image: urlParams.get('featured_image') || 'https://picsum.photos/800/600?random=5'
+            };
+
+            // If no URL data, try localStorage (for when data is passed from editor)
+            if (!urlParams.get('title')) {
+                const storedData = localStorage.getItem('previewArticleData');
+                if (storedData) {
+                    try {
+                        const stored = JSON.parse(storedData);
+                        articleData = { ...articleData, ...stored };
+                    } catch (e) {
+                        console.error('Error parsing stored article data:', e);
+                    }
+                }
+            }
+
+            return articleData;
+        }
+
+        // Get author initials
+        function getInitials(name) {
+            return name.split(' ').map(word => word[0]).join('').toUpperCase();
+        }
+
+        // Populate the preview with article data
+        function populatePreview() {
+            const articleData = loadArticleData();
+
+            // Update title in head
+            document.title = `${articleData.title} - Centre for Inclusive Social Development`;
+
+            // Update breadcrumb
+            const breadcrumbTitle = articleData.title.split(' ').slice(0, 5).join(' ');
+            document.getElementById('breadcrumbTitle').textContent = breadcrumbTitle + (articleData.title.split(' ').length > 5 ? '...' : '');
+
+            // Update hero section
+            document.getElementById('articleCategory').textContent = articleData.category.toUpperCase();
+            document.getElementById('articleTitle').textContent = articleData.title;
+            document.getElementById('articleExcerpt').textContent = articleData.excerpt;
+            document.getElementById('authorAvatar').textContent = getInitials(articleData.author);
+            document.getElementById('authorName').textContent = articleData.author;
+
+            // Update publish date
+            const publishDate = new Date().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('publishDate').textContent = `PUBLISHED: ${publishDate.toUpperCase()}`;
+
+            // Update featured image
+            if (articleData.featured_image) {
+                document.getElementById('featuredImage').src = articleData.featured_image;
+                document.getElementById('featuredImage').alt = articleData.title;
+            }
+
+            // Update content - THIS IS THE KEY FIX
+            const contentElement = document.getElementById('articleContent');
+            if (articleData.content) {
+                // Check if content is HTML or plain text
+                if (articleData.content.includes('<') && articleData.content.includes('>')) {
+                    // It's HTML content
+                    contentElement.innerHTML = articleData.content;
+                } else {
+                    // It's plain text, wrap in paragraph
+                    contentElement.innerHTML = `<p>${articleData.content}</p>`;
+                }
+            } else {
+                contentElement.innerHTML = '<p>No content available for preview.</p>';
+            }
+
+            // Apply proper styling to content elements
+            setTimeout(() => {
+                // Fix quote blocks
+                const quotes = contentElement.querySelectorAll('.quote-block');
+                quotes.forEach(quote => {
+                    quote.style.borderLeftColor = '#dc2626';
+                });
+
+                // Fix image blocks
+                const imageBlocks = contentElement.querySelectorAll('.image-block');
+                imageBlocks.forEach(block => {
+                    block.style.textAlign = 'center';
+                    block.style.clear = 'both';
+                    block.style.display = 'block';
+                    block.style.width = '100%';
+                    
+                    const img = block.querySelector('img');
+                    if (img) {
+                        img.style.display = 'block';
+                        img.style.margin = '0 auto';
+                        img.style.maxWidth = '100%';
+                    }
+                });
+
+                // Fix paragraphs that might have lost formatting
+                const paragraphs = contentElement.querySelectorAll('p');
+                paragraphs.forEach(p => {
+                    if (!p.style.marginBottom) {
+                        p.style.marginBottom = '1.5rem';
+                    }
+                });
+            }, 100);
+
+            // Store for other functions
+            window.currentArticle = articleData;
+        }
+
+        // Action functions
+        function shareArticle() {
+            const article = window.currentArticle;
+            if (navigator.share) {
+                navigator.share({
+                    title: article.title,
+                    text: article.excerpt,
+                    url: window.location.href
+                });
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert('Article link copied to clipboard!');
+                }).catch(() => {
+                    alert('Unable to copy link. Please copy manually: ' + window.location.href);
+                });
+            }
+        }
+
+        function bookmarkArticle() {
+            const article = window.currentArticle;
+            const bookmarks = JSON.parse(localStorage.getItem('bookmarkedArticles') || '[]');
+            const bookmark = {
+                title: article.title,
+                url: window.location.href,
+                date: new Date().toISOString()
+            };
+
+            if (!bookmarks.find(b => b.title === bookmark.title)) {
+                bookmarks.push(bookmark);
+                localStorage.setItem('bookmarkedArticles', JSON.stringify(bookmarks));
+                alert('Article bookmarked successfully!');
+            } else {
+                alert('Article already bookmarked!');
+            }
+        }
+
+        function downloadArticle() {
+            const article = window.currentArticle;
+            
+            // Extract plain text from HTML content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = article.content;
+            const plainText = tempDiv.textContent || tempDiv.innerText || '';
+            
+            const content = `
+${article.title}
+
+${article.excerpt}
+
+${plainText}
+
+---
+Published by ${article.author}
+Centre for Inclusive Social Development
+${window.location.href}
+`;
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${article.title.replace(/[^a-zA-Z0-9]/g, '_')}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function goBackToEditor() {
+            // Check if we came from the editor
+            if (document.referrer.includes('/dashboard/article/create/') ||
+                document.referrer.includes('/dashboard/article/') && document.referrer.includes('/edit/')) {
+                window.history.back();
+            } else if (window.opener) {
+                // If opened as popup from editor
+                window.close();
+            } else {
+                // Navigate to dashboard
+                window.location.href = '/dashboard/';
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            populatePreview();
+        });
+
+        // Handle message from editor window (if using postMessage)
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'articleData') {
+                localStorage.setItem('previewArticleData', JSON.stringify(event.data.article));
+                populatePreview();
+            }
+        });
+    </script>
+</body>
+</html>

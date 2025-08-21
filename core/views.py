@@ -13,12 +13,18 @@ from django.db.models import F, Prefetch, Q
 from django.http import HttpResponseRedirect, JsonResponse
 from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DetailView,
+    ListView,
+    TemplateView,
+    UpdateView,
+)
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
@@ -335,10 +341,10 @@ class ArticleListView(ListView):
 
 
 class ArticleDetailView(DetailView):
-    """Individual article detail page"""
+    """Individual article detail page with edit functionality for admins"""
 
     model = Article
-    template_name = "core/news_details.html"
+    template_name = "core/fixed_news_details.html"
     context_object_name = "article"
     slug_field = "slug"
     slug_url_kwarg = "slug"
@@ -383,6 +389,13 @@ class ArticleDetailView(DetailView):
                 "reading_time": self.object.reading_time,
                 "page_title": self.object.meta_title or self.object.title,
                 "page_description": self.object.meta_description or self.object.excerpt,
+                "edit_url": (
+                    reverse(
+                        "dashboard:article_edit", kwargs={"article_id": self.object.id}
+                    )
+                    if is_admin_user(self.request.user)
+                    else None
+                ),
             }
         )
 
@@ -390,6 +403,28 @@ class ArticleDetailView(DetailView):
         if not is_admin_user(self.request.user):
             self.object.increment_view_count()
 
+        return context
+
+
+class ArticlePreviewView(TemplateView):
+    """Preview view for articles being created/edited"""
+
+    template_name = "core/fixed_article_preview.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Get article data from query parameters if provided
+        article_data = {
+            "title": self.request.GET.get("title", "Article Preview"),
+            "excerpt": self.request.GET.get("excerpt", "Article excerpt..."),
+            "category": self.request.GET.get("category", "news"),
+            "author": self.request.GET.get("author", "Author Name"),
+            "content": self.request.GET.get("content", "<p>Article content...</p>"),
+            "featured_image": self.request.GET.get("featured_image", None),
+        }
+
+        context["article_data"] = article_data
         return context
 
 
@@ -789,46 +824,110 @@ class EventViewSet(viewsets.ModelViewSet):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def save_article_content(request):
-    """Save article content including sections"""
+    """Save article content including sections - Enhanced version"""
     try:
         data = request.data
         article_id = data.get("article_id")
 
         if article_id:
             article = get_object_or_404(Article, id=article_id)
-            serializer = ArticleDetailSerializer(article, data=data, partial=True)
-        else:
-            # Create new article
-            serializer = ArticleDetailSerializer(data=data)
 
-        if serializer.is_valid():
-            article = serializer.save(
-                created_by=request.user if not article_id else article.created_by,
-                last_modified_by=request.user,
-            )
+            # Check if user can edit this article
+            if not (
+                request.user.is_superuser
+                or article.created_by == request.user
+                or request.user.is_staff
+            ):
+                return Response(
+                    {"success": False, "error": "Permission denied"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
-            # Handle content sections if provided
-            if "content_sections" in data:
-                # Clear existing sections
-                article.content_sections.all().delete()
+            # Update basic fields manually to avoid serializer issues
+            with transaction.atomic():
+                # Update basic article fields
+                if "title" in data:
+                    article.title = data["title"]
+                if "excerpt" in data:
+                    article.excerpt = data["excerpt"]
 
-                # Create new sections
-                for i, section_data in enumerate(data["content_sections"]):
-                    ContentSection.objects.create(
-                        article=article,
-                        section_type=section_data.get("type"),
-                        order=i,
-                        content=section_data.get("content", ""),
-                        title=section_data.get("title", ""),
-                        question=section_data.get("question", ""),
-                        answer=section_data.get("answer", ""),
-                        caption=section_data.get("caption", ""),
-                        media_file_id=(
-                            section_data.get("media_file_id")
-                            if section_data.get("media_file_id")
-                            else None
-                        ),
-                    )
+                # Handle category - could be ID or name
+                if "category" in data:
+                    category_value = data["category"]
+                    if category_value:
+                        try:
+                            # Try to get by ID first
+                            category = Category.objects.get(id=category_value)
+                            article.category = category
+                        except (Category.DoesNotExist, ValueError):
+                            # Try to get by name
+                            try:
+                                category = Category.objects.get(name=category_value)
+                                article.category = category
+                            except Category.DoesNotExist:
+                                return Response(
+                                    {
+                                        "success": False,
+                                        "error": f"Category '{category_value}' not found",
+                                    },
+                                    status=status.HTTP_400_BAD_REQUEST,
+                                )
+
+                # Handle author - could be ID or name
+                if "author" in data:
+                    author_value = data["author"]
+                    if author_value:
+                        try:
+                            # Try to get by ID first
+                            author = Author.objects.get(id=author_value)
+                            article.author = author
+                        except (Author.DoesNotExist, ValueError):
+                            # Try to get by name
+                            try:
+                                author = Author.objects.get(name=author_value)
+                                article.author = author
+                            except Author.DoesNotExist:
+                                # If author doesn't exist by name, create it
+                                author, created = Author.objects.get_or_create(
+                                    name=author_value,
+                                    defaults={
+                                        "email": f"{author_value.lower().replace(' ', '.')}@example.com",
+                                        "bio": f"Author bio for {author_value}",
+                                        "is_active": True,
+                                    },
+                                )
+                                article.author = author
+
+                article.last_modified_by = request.user
+                article.save()
+
+                # Handle content sections if provided
+                if "content_sections" in data:
+                    # Clear existing sections
+                    article.content_sections.all().delete()
+
+                    # Create new sections
+                    for i, section_data in enumerate(data["content_sections"]):
+                        ContentSection.objects.create(
+                            article=article,
+                            section_type=section_data.get(
+                                "section_type", section_data.get("type", "paragraph")
+                            ),
+                            order=section_data.get("order", i),
+                            content=section_data.get(
+                                "content", section_data.get("text", "")
+                            ),
+                            title=section_data.get("title", ""),
+                            question=section_data.get("question", ""),
+                            answer=section_data.get("answer", ""),
+                            caption=section_data.get("caption", ""),
+                            alt_text=section_data.get("alt_text", ""),
+                            media_file_id=(
+                                section_data.get("media_file_id")
+                                if section_data.get("media_file_id")
+                                else None
+                            ),
+                        )
 
             logger.info(f"Article saved: {article.title} by {request.user.username}")
 
@@ -837,14 +936,38 @@ def save_article_content(request):
                     "success": True,
                     "article_id": str(article.id),
                     "message": "Article saved successfully",
-                    "article": ArticleDetailSerializer(article).data,
+                    "article": {
+                        "id": str(article.id),
+                        "title": article.title,
+                        "excerpt": article.excerpt,
+                        "status": article.status,
+                        "category": article.category.name if article.category else None,
+                        "author": article.author.name if article.author else None,
+                    },
                 }
             )
+        else:
+            # Create new article - use serializer for new articles
+            serializer = ArticleDetailSerializer(data=data)
+            if serializer.is_valid():
+                article = serializer.save(
+                    created_by=request.user,
+                    last_modified_by=request.user,
+                )
 
-        return Response(
-            {"success": False, "errors": serializer.errors},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+                return Response(
+                    {
+                        "success": True,
+                        "article_id": str(article.id),
+                        "message": "Article created successfully",
+                        "article": ArticleDetailSerializer(article).data,
+                    }
+                )
+            else:
+                return Response(
+                    {"success": False, "errors": serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
     except Exception as e:
         logger.error(f"Error saving article: {str(e)}")
