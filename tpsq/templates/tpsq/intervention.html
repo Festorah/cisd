@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Voice, Your Choice | tpsq</title>
     <!-- CSRF Token for AJAX requests -->
-    <meta name="csrf-token" content="{% csrf_token %}">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap"
         rel="stylesheet">
@@ -659,6 +659,7 @@
     <div class="container">
         <div class="main-card">
             <div class="content-wrapper">
+
                 <div class="left-section">
                     <div class="problem-statement">
                         No light, bad roads, rubbish everywhere!
@@ -669,28 +670,28 @@
                     </div>
 
                     <div class="main-question">
-                        If you could report it, make sure the right people see it, and see how many others have the
-                        same problem, what would you want to happen after?
+                        If you had a simple app to report these issues and make sure the right people see them, would you use it?
                     </div>
 
                     <div class="options-section">
                         <div class="option-group">
-                            <div class="option" data-value="nothing">
-                                <input type="radio" id="option1" name="preference" value="nothing">
-                                <label for="option1">Nothing</label>
+                            <div class="option" data-value="yes_would_use">
+                                <input type="radio" id="option1" name="preference" value="yes_would_use">
+                                <label for="option1">Yes, I would</label>
                             </div>
-                            <div class="option" data-value="notification">
-                                <input type="radio" id="option2" name="preference" value="notification">
-                                <label for="option2">Be notified when it is resolved</label>
+                            <div class="option" data-value="no_wouldnt_use">
+                                <input type="radio" id="option2" name="preference" value="no_wouldnt_use">
+                                <label for="option2">No, I wouldn't</label>
                             </div>
-                            <div class="option" data-value="updates">
-                                <input type="radio" id="option3" name="preference" value="updates">
-                                <label for="option3">Get updates as progress is made</label>
+                            <div class="option" data-value="not_sure">
+                                <input type="radio" id="option3" name="preference" value="not_sure">
+                                <label for="option3">Not sure</label>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- The right-section (CTA section) remains exactly the same -->
                 <div class="right-section">
                     <div class="cta-section">
                         <div class="cta-title">Be first to know when we're live</div>
@@ -701,8 +702,7 @@
                                 <input type="text" id="name" name="name" class="form-input" placeholder="NAME" required>
                             </div>
                             <div class="form-group">
-                                <input type="email" id="email" name="email" class="form-input" placeholder="EMAIL"
-                                    required>
+                                <input type="email" id="email" name="email" class="form-input" placeholder="EMAIL" required>
                             </div>
                             <button type="submit" class="submit-button" id="submitBtn">
                                 Get Early Access
@@ -713,6 +713,7 @@
                         </form>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>

@@ -95,6 +95,10 @@
             transition: width 0.5s ease;
         }
 
+        .preference-segment.yes-would-use { background-color: #10B981; }
+        .preference-segment.not-sure { background-color: #F59E0B; }
+        .preference-segment.no-wouldnt-use { background-color: #EF4444; }
+
         .preference-segment.nothing { background-color: #94a3b8; }
         .preference-segment.notification { background-color: var(--cisd-secondary); }
         .preference-segment.updates { background-color: var(--cisd-primary); }
@@ -338,53 +342,184 @@
 
             <!-- User Preferences -->
             <div class="col-lg-4 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="bi bi-pie-chart me-2"></i>
-                            User Preferences
-                        </h5>
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-pie-chart me-2"></i>
+                User Preferences
+            </h5>
+        </div>
+        <div class="card-body">
+            <!-- Check if we have mixed question types -->
+            <div x-show="hasMixedQuestions()" class="mb-3">
+                <div class="btn-group w-100" role="group">
+                    <button type="button" class="btn btn-outline-primary btn-sm"
+                            @click="preferenceView = 'all'"
+                            :class="{'active': preferenceView === 'all'}">
+                        All Responses
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-sm"
+                            @click="preferenceView = 'engagement'"
+                            :class="{'active': preferenceView === 'engagement'}">
+                        Follow-up
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-sm"
+                            @click="preferenceView = 'app_intent'"
+                            :class="{'active': preferenceView === 'app_intent'}">
+                        App Usage
+                    </button>
+                </div>
+            </div>
+
+            <!-- All Preferences View -->
+            <div x-show="preferenceView === 'all' || !hasMixedQuestions()">
+                <!-- Original Engagement Preferences -->
+                <div x-show="getPreferenceCount('nothing') > 0 || getPreferenceCount('notification') > 0 || getPreferenceCount('updates') > 0" class="mb-4">
+                    <h6 class="text-muted mb-2">Follow-up Engagement</h6>
+
+                    <div class="mb-3" x-show="getPreferenceCount('nothing') > 0">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small">Nothing</span>
+                            <span class="badge bg-secondary" x-text="getPreferenceCount('nothing')"></span>
+                        </div>
+                        <div class="preference-bar mb-2">
+                            <div class="preference-segment nothing" :style="'width: ' + getPreferencePercentage('nothing') + '%'"></div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="small">Nothing</span>
-                                <span class="badge bg-secondary" x-text="stats.preferences?.nothing || 0"></span>
-                            </div>
-                            <div class="preference-bar mb-3">
-                                <div class="preference-segment nothing" :style="'width: ' + getPreferencePercentage('nothing') + '%'"></div>
-                            </div>
-                        </div>
 
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="small">Notification Only</span>
-                                <span class="badge bg-info" x-text="stats.preferences?.notification || 0"></span>
-                            </div>
-                            <div class="preference-bar mb-3">
-                                <div class="preference-segment notification" :style="'width: ' + getPreferencePercentage('notification') + '%'"></div>
-                            </div>
+                    <div class="mb-3" x-show="getPreferenceCount('notification') > 0">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small">Notification Only</span>
+                            <span class="badge bg-info" x-text="getPreferenceCount('notification')"></span>
                         </div>
-
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="small">Progress Updates</span>
-                                <span class="badge bg-primary" x-text="stats.preferences?.updates || 0"></span>
-                            </div>
-                            <div class="preference-bar">
-                                <div class="preference-segment updates" :style="'width: ' + getPreferencePercentage('updates') + '%'"></div>
-                            </div>
+                        <div class="preference-bar mb-2">
+                            <div class="preference-segment notification" :style="'width: ' + getPreferencePercentage('notification') + '%'"></div>
                         </div>
+                    </div>
 
-                        <div class="mt-4 pt-3 border-top">
-                            <div class="small text-muted">
-                                <strong>Key Insight:</strong>
-                                <span x-text="getPreferenceInsight()"></span>
-                            </div>
+                    <div class="mb-3" x-show="getPreferenceCount('updates') > 0">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small">Progress Updates</span>
+                            <span class="badge bg-primary" x-text="getPreferenceCount('updates')"></span>
+                        </div>
+                        <div class="preference-bar mb-2">
+                            <div class="preference-segment updates" :style="'width: ' + getPreferencePercentage('updates') + '%'"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- New App Usage Intent Preferences -->
+                <div x-show="getPreferenceCount('yes_would_use') > 0 || getPreferenceCount('no_wouldnt_use') > 0 || getPreferenceCount('not_sure') > 0" class="mb-4">
+                    <h6 class="text-muted mb-2">App Usage Intent</h6>
+
+                    <div class="mb-3" x-show="getPreferenceCount('yes_would_use') > 0">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small">Yes, I would use</span>
+                            <span class="badge bg-success" x-text="getPreferenceCount('yes_would_use')"></span>
+                        </div>
+                        <div class="preference-bar mb-2">
+                            <div class="preference-segment yes-would-use" :style="'width: ' + getPreferencePercentage('yes_would_use') + '%'"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3" x-show="getPreferenceCount('not_sure') > 0">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small">Not sure</span>
+                            <span class="badge bg-warning" x-text="getPreferenceCount('not_sure')"></span>
+                        </div>
+                        <div class="preference-bar mb-2">
+                            <div class="preference-segment not-sure" :style="'width: ' + getPreferencePercentage('not_sure') + '%'"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3" x-show="getPreferenceCount('no_wouldnt_use') > 0">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small">No, I wouldn't</span>
+                            <span class="badge bg-danger" x-text="getPreferenceCount('no_wouldnt_use')"></span>
+                        </div>
+                        <div class="preference-bar mb-2">
+                            <div class="preference-segment no-wouldnt-use" :style="'width: ' + getPreferencePercentage('no_wouldnt_use') + '%'"></div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Engagement Follow-up Only View -->
+            <div x-show="preferenceView === 'engagement'">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small">Nothing</span>
+                        <span class="badge bg-secondary" x-text="getPreferenceCount('nothing')"></span>
+                    </div>
+                    <div class="preference-bar mb-3">
+                        <div class="preference-segment nothing" :style="'width: ' + getEngagementPreferencePercentage('nothing') + '%'"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small">Notification Only</span>
+                        <span class="badge bg-info" x-text="getPreferenceCount('notification')"></span>
+                    </div>
+                    <div class="preference-bar mb-3">
+                        <div class="preference-segment notification" :style="'width: ' + getEngagementPreferencePercentage('notification') + '%'"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small">Progress Updates</span>
+                        <span class="badge bg-primary" x-text="getPreferenceCount('updates')"></span>
+                    </div>
+                    <div class="preference-bar">
+                        <div class="preference-segment updates" :style="'width: ' + getEngagementPreferencePercentage('updates') + '%'"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- App Usage Intent Only View -->
+            <div x-show="preferenceView === 'app_intent'">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small">Yes, I would use</span>
+                        <span class="badge bg-success" x-text="getPreferenceCount('yes_would_use')"></span>
+                    </div>
+                    <div class="preference-bar mb-3">
+                        <div class="preference-segment yes-would-use" :style="'width: ' + getAppIntentPercentage('yes_would_use') + '%'"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small">Not sure</span>
+                        <span class="badge bg-warning" x-text="getPreferenceCount('not_sure')"></span>
+                    </div>
+                    <div class="preference-bar mb-3">
+                        <div class="preference-segment not-sure" :style="'width: ' + getAppIntentPercentage('not_sure') + '%'"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small">No, I wouldn't</span>
+                        <span class="badge bg-danger" x-text="getPreferenceCount('no_wouldnt_use')"></span>
+                    </div>
+                    <div class="preference-bar">
+                        <div class="preference-segment no-wouldnt-use" :style="'width: ' + getAppIntentPercentage('no_wouldnt_use') + '%'"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insights Section -->
+            <div class="mt-4 pt-3 border-top">
+                <div class="small text-muted">
+                    <strong>Key Insight:</strong>
+                    <span x-text="getPreferenceInsight()"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
         </div>
 
         <!-- Data Tables Row -->
@@ -483,6 +618,7 @@
                 loading: true,
                 dateRange: 30,
                 trendsChart: null,
+                preferenceView: 'all', // 'all', 'engagement', 'app_intent'
 
                 async init() {
                     await this.loadStats();
@@ -553,6 +689,115 @@
                     if (updatesPct > 50) return 'Users want active engagement!';
                     if (notificationPct > 40) return 'Users prefer simple notifications';
                     return 'Mixed engagement preferences';
+                },
+
+                // Updated preference handling functions
+                getPreferenceCount(type) {
+                    return this.stats.preferences?.[type] || 0;
+                },
+
+                getPreferencePercentage(type) {
+                    const total = this.getTotalPreferences();
+                    if (total === 0) return 0;
+                    return ((this.stats.preferences?.[type] || 0) / total * 100).toFixed(1);
+                },
+
+                getEngagementPreferencePercentage(type) {
+                    const engagementTypes = ['nothing', 'notification', 'updates'];
+                    const total = engagementTypes.reduce((sum, pref) =>
+                        sum + (this.stats.preferences?.[pref] || 0), 0);
+                    if (total === 0) return 0;
+                    return ((this.stats.preferences?.[type] || 0) / total * 100).toFixed(1);
+                },
+
+                getAppIntentPercentage(type) {
+                    const appIntentTypes = ['yes_would_use', 'not_sure', 'no_wouldnt_use'];
+                    const total = appIntentTypes.reduce((sum, pref) =>
+                        sum + (this.stats.preferences?.[pref] || 0), 0);
+                    if (total === 0) return 0;
+                    return ((this.stats.preferences?.[type] || 0) / total * 100).toFixed(1);
+                },
+
+                getTotalPreferences() {
+                    const prefs = this.stats.preferences;
+                    if (!prefs) return 0;
+
+                    return (prefs.nothing || 0) +
+                           (prefs.notification || 0) +
+                           (prefs.updates || 0) +
+                           (prefs.yes_would_use || 0) +
+                           (prefs.not_sure || 0) +
+                           (prefs.no_wouldnt_use || 0);
+                },
+
+                hasMixedQuestions() {
+                    const prefs = this.stats.preferences;
+                    if (!prefs) return false;
+
+                    const hasEngagement = (prefs.nothing || 0) + (prefs.notification || 0) + (prefs.updates || 0) > 0;
+                    const hasAppIntent = (prefs.yes_would_use || 0) + (prefs.not_sure || 0) + (prefs.no_wouldnt_use || 0) > 0;
+
+                    return hasEngagement && hasAppIntent;
+                },
+
+                getPreferenceInsight() {
+                    const prefs = this.stats.preferences;
+                    if (!prefs) return 'Loading insights...';
+
+                    const total = this.getTotalPreferences();
+                    if (total === 0) return 'No survey data yet';
+
+                    // Check what type of data we have
+                    const engagementTypes = ['nothing', 'notification', 'updates'];
+                    const appIntentTypes = ['yes_would_use', 'not_sure', 'no_wouldnt_use'];
+
+                    const engagementTotal = engagementTypes.reduce((sum, pref) =>
+                        sum + (prefs[pref] || 0), 0);
+                    const appIntentTotal = appIntentTypes.reduce((sum, pref) =>
+                        sum + (prefs[pref] || 0), 0);
+
+                    // If we have both types of responses
+                    if (engagementTotal > 0 && appIntentTotal > 0) {
+                        const yesWouldUse = ((prefs.yes_would_use || 0) / appIntentTotal * 100);
+                        const updatesPreference = ((prefs.updates || 0) / engagementTotal * 100);
+
+                        if (yesWouldUse > 60 && updatesPreference > 40) {
+                            return 'High app interest + strong engagement preference';
+                        } else if (yesWouldUse > 60) {
+                            return 'Strong interest in using reporting app';
+                        } else if (updatesPreference > 50) {
+                            return 'Users want active engagement after reporting';
+                        } else {
+                            return 'Mixed responses across question types';
+                        }
+                    }
+
+                    // If we only have app intent responses
+                    if (appIntentTotal > 0 && engagementTotal === 0) {
+                        const yesWouldUse = ((prefs.yes_would_use || 0) / appIntentTotal * 100);
+                        const notSure = ((prefs.not_sure || 0) / appIntentTotal * 100);
+                        const noWouldntUse = ((prefs.no_wouldnt_use || 0) / appIntentTotal * 100);
+
+                        if (yesWouldUse > 70) return 'Strong market validation - high app adoption intent';
+                        if (yesWouldUse > 50) return 'Positive market signal - good app interest';
+                        if (notSure > 40) return 'High uncertainty - need clearer value prop';
+                        if (noWouldntUse > 50) return 'Low adoption intent - address barriers';
+                        return 'Mixed app usage interest';
+                    }
+
+                    // If we only have engagement responses (original question)
+                    if (engagementTotal > 0 && appIntentTotal === 0) {
+                        const updatesPct = ((prefs.updates || 0) / engagementTotal * 100);
+                        const notificationPct = ((prefs.notification || 0) / engagementTotal * 100);
+                        const nothingPct = ((prefs.nothing || 0) / engagementTotal * 100);
+
+                        if (updatesPct > 50) return 'Users want active engagement!';
+                        if (notificationPct > 40) return 'Users prefer simple notifications';
+                        if (nothingPct > 60) return 'Low engagement - review value proposition';
+                        return 'Mixed engagement preferences';
+                    }
+
+                    return 'Analyzing user preferences...';
                 },
 
                 initCharts() {

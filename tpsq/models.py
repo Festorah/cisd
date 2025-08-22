@@ -224,9 +224,14 @@ class SurveyResponse(models.Model):
     """
 
     PREFERENCE_CHOICES = [
+        # Original preferences (kept for historical data)
         ("nothing", "Nothing - Just report and move on"),
         ("notification", "Be notified when resolved"),
         ("updates", "Get progress updates throughout"),
+        # New app usage preferences
+        ("yes_would_use", "Yes, I would"),
+        ("no_wouldnt_use", "No, I wouldn't"),
+        ("not_sure", "Not sure"),
     ]
 
     # Relationships
@@ -267,8 +272,31 @@ class SurveyResponse(models.Model):
     @property
     def engagement_level(self):
         """Categorize engagement preference"""
-        mapping = {"nothing": "low", "notification": "medium", "updates": "high"}
+        mapping = {
+            # Original mappings
+            "nothing": "low",
+            "notification": "medium",
+            "updates": "high",
+            # New mappings
+            "yes_would_use": "high",
+            "not_sure": "medium",
+            "no_wouldnt_use": "low",
+        }
         return mapping.get(self.preference, "unknown")
+
+    @property
+    def question_type(self):
+        """Determine which question set this response belongs to"""
+        original_preferences = ["nothing", "notification", "updates"]
+        new_preferences = ["yes_would_use", "no_wouldnt_use", "not_sure"]
+
+        if self.preference in original_preferences:
+            return (
+                "engagement_followup"  # Original question about follow-up preferences
+            )
+        elif self.preference in new_preferences:
+            return "app_usage_intent"  # New question about app usage intent
+        return "unknown"
 
 
 class EarlyAccessSignup(models.Model):

@@ -110,7 +110,7 @@ class AnalyticsCalculator:
         return {k: round(v, 2) for k, v in rates.items()}
 
     def get_user_preferences_breakdown(self) -> Dict[str, Any]:
-        """Analyze user engagement preferences"""
+        """Analyze user engagement preferences with support for multiple question types"""
         surveys = SurveyResponse.objects.filter(
             created_at__date__range=[self.start_date, self.end_date]
         )
@@ -124,71 +124,206 @@ class AnalyticsCalculator:
 
         total_responses = sum(preference_counts.values())
 
-        # Calculate percentages and insights
+        # Separate old and new preferences
+        original_prefs = ["nothing", "notification", "updates"]
+        new_prefs = ["yes_would_use", "no_wouldnt_use", "not_sure"]
+
+        original_counts = {
+            k: v for k, v in preference_counts.items() if k in original_prefs
+        }
+        new_counts = {k: v for k, v in preference_counts.items() if k in new_prefs}
+
+        original_total = sum(original_counts.values())
+        new_total = sum(new_counts.values())
+
+        # Calculate engagement scores
+        original_score = self._calculate_engagement_score(original_counts, "original")
+        new_score = self._calculate_engagement_score(new_counts, "new")
+        overall_score = self._calculate_engagement_score(preference_counts, "combined")
+
+        # Calculate percentages
         breakdown = {
             "total_responses": total_responses,
             "counts": preference_counts,
             "percentages": {},
-            "engagement_score": 0,
+            "engagement_score": overall_score,
             "insights": [],
+            # Segmented data
+            "original_question": {
+                "total": original_total,
+                "counts": original_counts,
+                "percentages": {},
+                "engagement_score": original_score,
+            },
+            "new_question": {
+                "total": new_total,
+                "counts": new_counts,
+                "percentages": {},
+                "engagement_score": new_score,
+            },
         }
 
+        # Calculate overall percentages
         if total_responses > 0:
             for pref, count in preference_counts.items():
                 breakdown["percentages"][pref] = round(
                     (count / total_responses) * 100, 1
                 )
 
-            # Calculate engagement score (higher for more engaged preferences)
-            engagement_weights = {"nothing": 0, "notification": 1, "updates": 2}
-            weighted_sum = sum(
-                preference_counts.get(pref, 0) * weight
-                for pref, weight in engagement_weights.items()
-            )
-            breakdown["engagement_score"] = round((weighted_sum / total_responses), 2)
+        # Calculate segmented percentages
+        if original_total > 0:
+            for pref, count in original_counts.items():
+                breakdown["original_question"]["percentages"][pref] = round(
+                    (count / original_total) * 100, 1
+                )
 
-            # Generate insights
-            breakdown["insights"] = self._generate_preference_insights(breakdown)
+        if new_total > 0:
+            for pref, count in new_counts.items():
+                breakdown["new_question"]["percentages"][pref] = round(
+                    (count / new_total) * 100, 1
+                )
+
+        # Generate insights
+        breakdown["insights"] = self._generate_preference_insights(breakdown)
 
         return breakdown
 
+    def _calculate_engagement_score(
+        self, preference_counts: Dict, question_type: str
+    ) -> float:
+        """Calculate engagement score based on preference weights"""
+
+        # Define engagement weights for different question types
+        engagement_weights = {
+            # Original engagement follow-up preferences
+            "nothing": 0,
+            "notification": 1,
+            "updates": 2,
+            # New app usage intent preferences
+            "yes_would_use": 2,
+            "not_sure": 1,
+            "no_wouldnt_use": 0,
+        }
+
+        total_responses = sum(preference_counts.values())
+        if total_responses == 0:
+            return 0
+
+        weighted_sum = sum(
+            preference_counts.get(pref, 0) * weight
+            for pref, weight in engagement_weights.items()
+            if pref in preference_counts
+        )
+
+        return round((weighted_sum / total_responses), 2)
+
     def _generate_preference_insights(self, breakdown: Dict) -> List[str]:
-        """Generate insights based on preference data"""
+        """Generate insights based on preference data from both question types"""
         insights = []
-        percentages = breakdown["percentages"]
 
-        # High engagement insight
-        updates_pct = percentages.get("updates", 0)
-        if updates_pct > 50:
-            insights.append(
-                "Users strongly prefer active engagement with progress updates"
-            )
-        elif updates_pct > 30:
-            insights.append("Significant interest in receiving progress updates")
+        # Overall insights
+        total_responses = breakdown["total_responses"]
+        if total_responses == 0:
+            return ["No survey data available yet"]
 
-        # Notification preference
-        notification_pct = percentages.get("notification", 0)
-        if notification_pct > 40:
-            insights.append(
-                "Users prefer simple resolution notifications over detailed updates"
-            )
+        overall_score = breakdown["engagement_score"]
 
-        # Low engagement concern
-        nothing_pct = percentages.get("nothing", 0)
-        if nothing_pct > 60:
+        # Insights about question mix
+        original_total = breakdown["original_question"]["total"]
+        new_total = breakdown["new_question"]["total"]
+
+        if original_total > 0 and new_total > 0:
             insights.append(
-                "High percentage of users prefer no follow-up - consider value proposition"
+                f"Responses split: {original_total} engagement preferences, {new_total} app usage intent"
             )
 
-        # Overall engagement level
-        engagement_score = breakdown["engagement_score"]
-        if engagement_score > 1.5:
+        # Original question insights (engagement follow-up)
+        if original_total > 0:
+            original_percentages = breakdown["original_question"]["percentages"]
+            original_score = breakdown["original_question"]["engagement_score"]
+
+            updates_pct = original_percentages.get("updates", 0)
+            notification_pct = original_percentages.get("notification", 0)
+            nothing_pct = original_percentages.get("nothing", 0)
+
+            if updates_pct > 50:
+                insights.append(
+                    "Follow-up engagement: Users strongly prefer active progress updates"
+                )
+            elif notification_pct > 40:
+                insights.append(
+                    "Follow-up engagement: Users prefer simple resolution notifications"
+                )
+            elif nothing_pct > 60:
+                insights.append(
+                    "Follow-up engagement: High percentage prefer no follow-up - consider value proposition"
+                )
+
+            if original_score > 1.5:
+                insights.append(
+                    "High engagement level - users want to stay involved after reporting"
+                )
+            elif original_score < 0.5:
+                insights.append(
+                    "Low engagement level - users prefer fire-and-forget reporting"
+                )
+
+        # New question insights (app usage intent)
+        if new_total > 0:
+            new_percentages = breakdown["new_question"]["percentages"]
+            new_score = breakdown["new_question"]["engagement_score"]
+
+            yes_pct = new_percentages.get("yes_would_use", 0)
+            no_pct = new_percentages.get("no_wouldnt_use", 0)
+            unsure_pct = new_percentages.get("not_sure", 0)
+
+            if yes_pct > 70:
+                insights.append(
+                    "Strong app adoption intent - high market demand signal"
+                )
+            elif yes_pct > 50:
+                insights.append("Positive app adoption intent - good market validation")
+            elif no_pct > 50:
+                insights.append(
+                    "Low app adoption intent - may need to refine value proposition"
+                )
+            elif unsure_pct > 40:
+                insights.append(
+                    "High uncertainty about app usage - need clearer benefit communication"
+                )
+
+            if new_score > 1.5:
+                insights.append("High willingness to use reporting app")
+            elif new_score < 0.8:
+                insights.append(
+                    "Low willingness to use app - consider addressing barriers"
+                )
+
+        # Combined insights
+        if original_total > 0 and new_total > 0:
+            # Compare engagement patterns
+            original_score = breakdown["original_question"]["engagement_score"]
+            new_score = breakdown["new_question"]["engagement_score"]
+
+            if abs(original_score - new_score) < 0.3:
+                insights.append(
+                    "Consistent engagement levels across both question types"
+                )
+            elif new_score > original_score + 0.5:
+                insights.append(
+                    "Higher app usage intent than follow-up engagement preference"
+                )
+            elif original_score > new_score + 0.5:
+                insights.append("Higher follow-up engagement than app usage intent")
+
+        # Overall engagement insight
+        if overall_score > 1.5:
+            insights.append("Overall: High civic engagement and platform interest")
+        elif overall_score > 1.0:
+            insights.append("Overall: Moderate civic engagement and platform interest")
+        elif overall_score < 0.7:
             insights.append(
-                "High overall engagement level - users want to stay involved"
-            )
-        elif engagement_score < 0.5:
-            insights.append(
-                "Low engagement level - users prefer fire-and-forget reporting"
+                "Overall: Low engagement - focus on value proposition and barriers"
             )
 
         return insights
