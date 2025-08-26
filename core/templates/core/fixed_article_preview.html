@@ -371,6 +371,11 @@
                 }
             }
 
+            // Ensure we have a featured image - use default if none provided
+            if (!articleData.featured_image) {
+                articleData.featured_image = 'https://picsum.photos/800/600?random=5';
+            }
+
             return articleData;
         }
 
@@ -406,9 +411,15 @@
             document.getElementById('publishDate').textContent = `PUBLISHED: ${publishDate.toUpperCase()}`;
 
             // Update featured image
-            if (articleData.featured_image) {
-                document.getElementById('featuredImage').src = articleData.featured_image;
-                document.getElementById('featuredImage').alt = articleData.title;
+            const featuredImageElement = document.getElementById('featuredImage');
+            if (articleData.featured_image && articleData.featured_image !== 'https://picsum.photos/800/600?random=5') {
+                console.log('Setting featured image to:', articleData.featured_image);
+                featuredImageElement.src = articleData.featured_image;
+                featuredImageElement.alt = articleData.title;
+            } else {
+                console.log('Using default featured image');
+                featuredImageElement.src = 'https://picsum.photos/800/600?random=5';
+                featuredImageElement.alt = 'Default article image';
             }
 
             // Update content - THIS IS THE KEY FIX

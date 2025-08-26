@@ -6,6 +6,29 @@
 {% block extra_css %}
 <link href="{% static 'css/article_details.css' %}" rel="stylesheet">
 <style>
+
+    /* Hide any editor controls that might slip through from saved content */
+    .image-controls,
+    .image-control-btn,
+    .cursor-indicator {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    /* Ensure images don't have editor behaviors */
+    .article-content img {
+        cursor: auto !important;
+        user-select: auto !important;
+    }
+
+    /* Remove any contenteditable styling that might remain */
+    .article-content [contenteditable],
+    .article-content [contenteditable="true"] {
+        outline: none !important;
+        cursor: auto !important;
+    }
+
+
     /* FIXED: Enhanced Article Actions with better visibility */
     .article-actions {
         display: flex;
@@ -147,6 +170,205 @@
         margin-bottom: 1rem;
         font-weight: 600;
         color: #1f2937;
+    }
+
+    .editor-image-block {
+        margin: 2rem 0;
+        text-align: center;
+        position: relative;
+        clear: both;
+        display: block;
+        width: 100%;
+        overflow: hidden; /* Prevent any overflow issues */
+    }
+
+    .editor-image-block img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        display: block;
+        margin: 0 auto;
+        /* Remove any potential conflicts */
+        float: none !important;
+        position: static !important;
+        transform: none !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+    }
+
+    .editor-image-caption {
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-style: italic;
+        margin-top: 0.75rem;
+        text-align: center;
+        padding: 0;
+        border: none;
+        background: none;
+        display: block;
+        width: 100%;
+    }
+
+    /* Override any Bootstrap conflicts */
+    .article-content .editor-image-block img.img-fluid,
+    .article-content .editor-image-block img {
+        display: block !important;
+        margin: 0 auto !important;
+        float: none !important;
+        position: static !important;
+        transform: none !important;
+        width: auto !important;
+        max-width: 100% !important;
+    }
+
+    /* Ensure proper paragraph display around images */
+    .article-content p {
+        margin-bottom: 1.2rem;
+        line-height: 1.6;
+        clear: both;
+    }
+
+    .article-content div[x-html] p {
+        margin-bottom: 1.2rem;
+        line-height: 1.6;
+        clear: both;
+    }
+
+    /* Remove any conflicting image styles from parent elements */
+    .article-content *[class*="image"],
+    .article-content *[class*="img"] {
+        float: none !important;
+        position: static !important;
+        transform: none !important;
+    }
+
+    /* Enhanced Quote Block - Consistent with Editor */
+    .quote-block {
+        background: #f9fafb !important;
+        border-left: 4px solid #dc2626 !important;
+        padding: 1.5rem !important;
+        margin: 1.5rem 0 !important;
+        font-style: italic !important;
+        font-size: 1.125rem !important;
+        border-radius: 0 8px 8px 0 !important;
+        clear: both;
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Interview Sections */
+    .interview-section {
+        background: #f0f9ff;
+        border-left: 4px solid #0ea5e9;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border-radius: 0 8px 8px 0;
+        clear: both;
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .interview-question {
+        font-weight: 600;
+        color: #1e40af;
+        margin-bottom: 0.5rem;
+    }
+
+    .interview-question::before {
+        content: "Q: ";
+        font-weight: 700;
+    }
+
+    .interview-answer {
+        margin-bottom: 0;
+        line-height: 1.6;
+    }
+
+    .interview-answer::before {
+        content: "A: ";
+        font-weight: 700;
+        color: #1e40af;
+    }
+
+    /* Callout Blocks */
+    .callout-block {
+        background: #fffbeb;
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        clear: both;
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .callout-block h4 {
+        font-weight: 600;
+        color: #92400e;
+        margin-bottom: 0.75rem;
+        margin-top: 0;
+    }
+
+    /* Ensure content doesn't break layout */
+    .article-content {
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        position: relative;
+    }
+
+    /* Fix any floating issues */
+    .article-content::after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+
+    /* Content paragraphs */
+    .content-paragraph {
+        margin-bottom: 1.2rem;
+        line-height: 1.6;
+        clear: both;
+    }
+
+    .content-paragraph p {
+        margin-bottom: 1.2rem;
+    }
+
+    /* Fallback content styling */
+    .article-body-fallback {
+        max-width: none;
+        width: 100%;
+    }
+
+    .article-body-fallback .editor-image-block {
+        margin: 2rem 0;
+    }
+
+
+    /* Responsive adjustments for images */
+    @media (max-width: 768px) {
+        .editor-image-block {
+            margin: 1.5rem 0;
+        }
+
+        .editor-image-block img {
+            max-width: 100%;
+            width: auto;
+            height: auto;
+        }
+
+        .quote-block,
+        .interview-section,
+        .callout-block {
+            margin: 1rem 0;
+            padding: 1rem;
+        }
     }
 
     /* Toast notification for actions */
@@ -500,23 +722,20 @@
                             <h3 x-text="section.text" @click="isAdmin && editContent(index)"></h3>
                         </template>
 
+                        <!-- FIXED: Consistent Image Display -->
                         <template x-if="section.type === 'image'">
-                            <div class="image-block" style="margin: 2rem 0; text-align: center; clear: both; display: block; width: 100%;">
+                            <div class="editor-image-block">
                                 <template x-if="section.src">
-                                    <img :src="section.src" :alt="section.alt || section.caption || 'Article image'"
-                                         class="img-fluid rounded"
-                                         style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); display: block; margin: 0 auto;">
+                                    <img :src="section.src" :alt="section.alt || section.caption || 'Article image'">
                                 </template>
                                 <template x-if="section.caption">
-                                    <div class="image-caption" style="font-size: 0.875rem; color: #6b7280; font-style: italic; margin-top: 0.75rem; text-align: center;"
-                                         x-text="section.caption"></div>
+                                    <div class="editor-image-caption" x-text="section.caption"></div>
                                 </template>
                             </div>
                         </template>
 
                         <template x-if="section.type === 'quote'">
-                            <div class="quote-block" style="background: #f9fafb; border-left: 4px solid #dc2626; padding: 1.5rem; margin: 1.5rem 0; font-style: italic; font-size: 1.125rem; border-radius: 0 8px 8px 0;"
-                                 x-text="section.text" @click="isAdmin && editContent(index)"></div>
+                            <div class="quote-block" x-text="section.text" @click="isAdmin && editContent(index)"></div>
                         </template>
 
                         <template x-if="section.type === 'interview'">
@@ -535,7 +754,7 @@
                         </template>
 
                         <template x-if="section.type === 'callout'">
-                            <div class="quote-block" @click="isAdmin && editContent(index)">
+                            <div class="callout-block" @click="isAdmin && editContent(index)">
                                 <h4 x-text="section.title" x-show="section.title"></h4>
                                 <div x-html="section.text"></div>
                             </div>
@@ -543,10 +762,27 @@
                     </div>
                 </template>
 
-                <!-- If content_sections is empty or doesn't exist, show the raw content -->
+                <!-- Fallback for articles without structured content -->
                 {% if not content_sections or content_sections|length == 0 %}
-                <div class="main-editor">
-                    {{ article.content_sections.first.content|safe|default:"<p>No content available.</p>" }}
+                <div class="article-body-fallback">
+                    {% for section in article.content_sections.all %}
+                        {% if section.section_type == 'paragraph' %}
+                            <div class="content-paragraph">{{ section.content|safe }}</div>
+                        {% elif section.section_type == 'image' and section.media_file %}
+                            <div class="editor-image-block">
+                                <img src="{{ section.media_file.cloudinary_url }}" alt="{{ section.alt_text|default:section.caption }}">
+                                {% if section.caption %}
+                                    <div class="editor-image-caption">{{ section.caption }}</div>
+                                {% endif %}
+                            </div>
+                        {% elif section.section_type == 'quote' %}
+                            <div class="quote-block">{{ section.content|safe }}</div>
+                        {% endif %}
+                    {% empty %}
+                        <div class="content-paragraph">
+                            <p>No content available.</p>
+                        </div>
+                    {% endfor %}
                 </div>
                 {% endif %}
             </div>
