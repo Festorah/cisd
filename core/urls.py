@@ -20,6 +20,9 @@ urlpatterns = [
     path("", views.HomePageView.as_view(), name="home"),
     path("articles/", views.ArticleListView.as_view(), name="articles"),
     path(
+        "article/preview/", views.ArticlePreviewView.as_view(), name="article_preview"
+    ),
+    path(
         "article/<slug:slug>/", views.ArticleDetailView.as_view(), name="article_detail"
     ),
     path("events/", views.EventListView.as_view(), name="events"),

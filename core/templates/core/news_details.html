@@ -116,6 +116,46 @@
         color: white;
     }
 
+    /* Article Actions */
+    .article-actions {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    .action-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+
+    .action-btn:hover {
+        background: rgba(255,255,255,0.3);
+        transform: translateY(-2px);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .article-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .article-actions {
+            align-self: flex-start;
+        }
+    }
+
     /* Responsive adjustments */
     @media (max-width: 1024px) {
         .related-articles-container {
@@ -192,6 +232,20 @@
                             <p class="author-name" x-text="article.author"></p>
                             <p class="publish-date" x-text="'PUBLISHED: ' + article.publishDate"></p>
                         </div>
+
+                        <!-- Add Article Actions -->
+                        <div class="article-actions">
+                            <button class="action-btn" title="Share Article" @click="shareArticle()">
+                                <i class="fas fa-share"></i>
+                            </button>
+                            <button class="action-btn" title="Bookmark Article" @click="bookmarkArticle()">
+                                <i class="fas fa-bookmark"></i>
+                            </button>
+                            <button class="action-btn" title="Download Article as PDF" @click="downloadArticle()">
+                                <i class="fas fa-file-pdf"></i>
+                            </button>
+                        </div>
+
                     </div>
                 </div>
 
@@ -221,9 +275,16 @@
                         </template>
 
                         <template x-if="section.type === 'image'">
-                            <div>
-                                <img :src="section.src" :alt="section.alt" class="content-image">
-                                <p class="image-caption" x-text="section.caption"></p>
+                            <div class="image-block" style="margin: 2rem 0; text-align: center;">
+                                <template x-if="section.src">
+                                    <img :src="section.src" :alt="section.alt || section.caption || 'Article image'"
+                                         class="img-fluid rounded"
+                                         style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+                                </template>
+                                <template x-if="section.caption">
+                                    <div class="image-caption" style="font-size: 0.875rem; color: #6b7280; font-style: italic; margin-top: 0.75rem;"
+                                         x-text="section.caption"></div>
+                                </template>
                             </div>
                         </template>
 
@@ -530,6 +591,126 @@
                     }
 
                     this.article.content.push(newSection);
+                },
+
+                shareArticle() {
+                    const articleUrl = window.location.href;
+                    const title = this.article.title;
+                    const text = this.article.excerpt;
+
+                    if (navigator.share) {
+                        navigator.share({
+                            title: title,
+                            text: text,
+                            url: articleUrl
+                        }).catch(err => console.log('Error sharing:', err));
+                    } else {
+                        // Fallback: copy to clipboard
+                        navigator.clipboard.writeText(articleUrl).then(() => {
+                            alert('Article link copied to clipboard!');
+                        }).catch(() => {
+                            // Manual fallback
+                            const textArea = document.createElement('textarea');
+                            textArea.value = articleUrl;
+                            document.body.appendChild(textArea);
+                            textArea.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(textArea);
+                            alert('Article link copied to clipboard!');
+                        });
+                    }
+                },
+
+                bookmarkArticle() {
+                    const bookmark = {
+                        title: this.article.title,
+                        url: window.location.href,
+                        excerpt: this.article.excerpt,
+                        date: new Date().toISOString(),
+                        category: this.article.category
+                    };
+
+                    let bookmarks = JSON.parse(localStorage.getItem('cisd_bookmarks') || '[]');
+
+                    // Check if already bookmarked
+                    const existingIndex = bookmarks.findIndex(b => b.url === bookmark.url);
+
+                    if (existingIndex === -1) {
+                        bookmarks.unshift(bookmark); // Add to beginning
+                        localStorage.setItem('cisd_bookmarks', JSON.stringify(bookmarks));
+                        alert('Article bookmarked successfully!');
+                    } else {
+                        // Remove bookmark
+                        bookmarks.splice(existingIndex, 1);
+                        localStorage.setItem('cisd_bookmarks', JSON.stringify(bookmarks));
+                        alert('Bookmark removed!');
+                    }
+                },
+
+
+                async downloadArticle() {
+                    try {
+                        // Check if jsPDF is available (you'd need to include it)
+                        if (typeof window.jsPDF !== 'undefined') {
+                            await this.generatePDF();
+                        } else {
+                            // Fallback to text download
+                            this.downloadAsText();
+                        }
+                    } catch (error) {
+                        console.error('Download failed:', error);
+                        this.downloadAsText(); // Fallback
+                    }
+                },
+
+                downloadAsText() {
+                    // The existing text download code from above
+                    const articleContent = `
+                ${this.article.title}
+
+                ${this.article.excerpt}
+
+                ${this.getPlainTextContent()}
+
+                ---
+                Published by ${this.article.author}
+                Category: ${this.article.category}
+                Published: ${this.article.publishDate}
+
+                Centre for Inclusive Social Development
+                ${window.location.href}
+                    `.trim();
+
+                    const blob = new Blob([articleContent], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `${this.article.title.replace(/[^a-zA-Z0-9]/g, '_')}.txt`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                },
+
+                getPlainTextContent() {
+                    // Extract plain text from article content sections
+                    let content = '';
+                    this.article.content.forEach(section => {
+                        if (section.type === 'paragraph' || section.type === 'heading' || section.type === 'subheading') {
+                            // Strip HTML tags and add text
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = section.text || '';
+                            content += tempDiv.textContent || tempDiv.innerText || '';
+                            content += '\n\n';
+                        } else if (section.type === 'quote') {
+                            content += `"${section.text}"\n\n`;
+                        } else if (section.type === 'interview') {
+                            content += `Q: ${section.question}\nA: ${section.answer}\n\n`;
+                        } else if (section.type === 'image' && section.caption) {
+                            content += `[Image: ${section.caption}]\n\n`;
+                        }
+                    });
+                    return content;
                 },
 
                 saveArticle() {

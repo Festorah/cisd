@@ -1,0 +1,1348 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}{{ article.title }} - Centre for Inclusive Social Development{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/article_details.css' %}" rel="stylesheet">
+<style>
+
+    /* Hide any editor controls that might slip through from saved content */
+    .image-controls,
+    .image-control-btn,
+    .cursor-indicator {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    /* Ensure images don't have editor behaviors */
+    .article-content img {
+        cursor: auto !important;
+        user-select: auto !important;
+    }
+
+    /* Remove any contenteditable styling that might remain */
+    .article-content [contenteditable],
+    .article-content [contenteditable="true"] {
+        outline: none !important;
+        cursor: auto !important;
+    }
+
+
+    /* FIXED: Enhanced Article Actions with better visibility */
+    .article-actions {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        margin-top: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        /* FIXED: Better contrast and visibility */
+        background: #1f2937;
+        border: 2px solid #374151;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        text-decoration: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        position: relative;
+        z-index: 10;
+    }
+
+    .action-btn:hover {
+        background: #0EA5E9;
+        border-color: #0284c7;
+        color: white;
+        transform: translateY(-2px);
+        text-decoration: none;
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+    }
+
+    .action-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.3);
+    }
+
+    .action-btn:active {
+        transform: translateY(0);
+    }
+
+    .action-btn i {
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    /* Enhanced tooltips */
+    .action-btn::after {
+        content: attr(title);
+        position: absolute;
+        bottom: -35px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+        z-index: 1000;
+    }
+
+    .action-btn:hover::after {
+        opacity: 1;
+    }
+
+    /* Alternative light theme for hero sections with light backgrounds */
+    .article-hero.light-theme .action-btn {
+        background: #ffffff;
+        border-color: #e5e7eb;
+        color: #374151;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .article-hero.light-theme .action-btn:hover {
+        background: #0EA5E9;
+        border-color: #0284c7;
+        color: white;
+    }
+
+    /* Quote blocks with RED sidebar */
+    .quote-block {
+        background: #f9fafb;
+        border-left: 4px solid #dc2626 !important;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        font-style: italic;
+        font-size: 1.125rem;
+        border-radius: 0 8px 8px 0;
+    }
+
+    /* Image blocks - centered */
+    .image-block {
+        margin: 2rem 0;
+        text-align: center;
+        clear: both;
+        display: block;
+        width: 100%;
+    }
+
+    .image-block img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        display: block;
+        margin: 0 auto;
+    }
+
+    .image-caption {
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-style: italic;
+        margin-top: 0.75rem;
+        text-align: center;
+    }
+
+    /* Ensure proper content display */
+    .main-editor p {
+        margin-bottom: 1.2rem;
+    }
+
+    .main-editor h1,
+    .main-editor h2,
+    .main-editor h3,
+    .main-editor h4,
+    .main-editor h5,
+    .main-editor h6 {
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .editor-image-block {
+        margin: 2rem 0;
+        text-align: center;
+        position: relative;
+        clear: both;
+        display: block;
+        width: 100%;
+        overflow: hidden; /* Prevent any overflow issues */
+    }
+
+    .editor-image-block img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        display: block;
+        margin: 0 auto;
+        /* Remove any potential conflicts */
+        float: none !important;
+        position: static !important;
+        transform: none !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+    }
+
+    .editor-image-caption {
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-style: italic;
+        margin-top: 0.75rem;
+        text-align: center;
+        padding: 0;
+        border: none;
+        background: none;
+        display: block;
+        width: 100%;
+    }
+
+    /* Override any Bootstrap conflicts */
+    .article-content .editor-image-block img.img-fluid,
+    .article-content .editor-image-block img {
+        display: block !important;
+        margin: 0 auto !important;
+        float: none !important;
+        position: static !important;
+        transform: none !important;
+        width: auto !important;
+        max-width: 100% !important;
+    }
+
+    /* Ensure proper paragraph display around images */
+    .article-content p {
+        margin-bottom: 1.2rem;
+        line-height: 1.6;
+        clear: both;
+    }
+
+    .article-content div[x-html] p {
+        margin-bottom: 1.2rem;
+        line-height: 1.6;
+        clear: both;
+    }
+
+    /* Remove any conflicting image styles from parent elements */
+    .article-content *[class*="image"],
+    .article-content *[class*="img"] {
+        float: none !important;
+        position: static !important;
+        transform: none !important;
+    }
+
+    /* Enhanced Quote Block - Consistent with Editor */
+    .quote-block {
+        background: #f9fafb !important;
+        border-left: 4px solid #dc2626 !important;
+        padding: 1.5rem !important;
+        margin: 1.5rem 0 !important;
+        font-style: italic !important;
+        font-size: 1.125rem !important;
+        border-radius: 0 8px 8px 0 !important;
+        clear: both;
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Interview Sections */
+    .interview-section {
+        background: #f0f9ff;
+        border-left: 4px solid #0ea5e9;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border-radius: 0 8px 8px 0;
+        clear: both;
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .interview-question {
+        font-weight: 600;
+        color: #1e40af;
+        margin-bottom: 0.5rem;
+    }
+
+    .interview-question::before {
+        content: "Q: ";
+        font-weight: 700;
+    }
+
+    .interview-answer {
+        margin-bottom: 0;
+        line-height: 1.6;
+    }
+
+    .interview-answer::before {
+        content: "A: ";
+        font-weight: 700;
+        color: #1e40af;
+    }
+
+    /* Callout Blocks */
+    .callout-block {
+        background: #fffbeb;
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        clear: both;
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .callout-block h4 {
+        font-weight: 600;
+        color: #92400e;
+        margin-bottom: 0.75rem;
+        margin-top: 0;
+    }
+
+    /* Ensure content doesn't break layout */
+    .article-content {
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        position: relative;
+    }
+
+    /* Fix any floating issues */
+    .article-content::after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+
+    /* Content paragraphs */
+    .content-paragraph {
+        margin-bottom: 1.2rem;
+        line-height: 1.6;
+        clear: both;
+    }
+
+    .content-paragraph p {
+        margin-bottom: 1.2rem;
+    }
+
+    /* Fallback content styling */
+    .article-body-fallback {
+        max-width: none;
+        width: 100%;
+    }
+
+    .article-body-fallback .editor-image-block {
+        margin: 2rem 0;
+    }
+
+
+    /* Responsive adjustments for images */
+    @media (max-width: 768px) {
+        .editor-image-block {
+            margin: 1.5rem 0;
+        }
+
+        .editor-image-block img {
+            max-width: 100%;
+            width: auto;
+            height: auto;
+        }
+
+        .quote-block,
+        .interview-section,
+        .callout-block {
+            margin: 1rem 0;
+            padding: 1rem;
+        }
+    }
+
+    /* Toast notification for actions */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+    }
+
+    .toast {
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .toast.show {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .toast.success {
+        background: rgba(16, 185, 129, 0.95);
+    }
+
+    .toast.error {
+        background: rgba(239, 68, 68, 0.95);
+    }
+
+    /* Related Articles Three Column Layout */
+    .related-articles-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .related-card-column {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .related-articles-list {
+        background: white;
+        padding: 0;
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        height: fit-content;
+    }
+
+    .related-articles-list-header {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-bottom: 3px solid #0EA5E9;
+        margin-bottom: 0;
+    }
+
+    .related-articles-list-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #333;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .related-articles-list-content {
+        padding: 0;
+    }
+
+    .related-article-item {
+        padding: 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        transition: background-color 0.3s ease;
+    }
+
+    .related-article-item:last-child {
+        border-bottom: none;
+    }
+
+    .related-article-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .related-article-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #333;
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+        text-decoration: none;
+    }
+
+    .related-article-title:hover {
+        color: #0EA5E9;
+    }
+
+    .related-article-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: #666;
+    }
+
+    .related-article-date {
+        color: #666;
+    }
+
+    .related-article-author {
+        color: #0EA5E9;
+        font-weight: 500;
+    }
+
+    .meta-separator {
+        color: #0EA5E9;
+        font-weight: 700;
+    }
+
+    .more-news-link {
+        display: block;
+        padding: 1.5rem;
+        text-align: center;
+        background: #f8f9fa;
+        color: #0EA5E9;
+        font-weight: 700;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-decoration: none;
+        border-top: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .more-news-link:hover {
+        background: #0EA5E9;
+        color: white;
+    }
+
+    /* Admin floating button */
+    .admin-floating-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #dc2626;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+
+    .admin-floating-btn:hover {
+        background: #b91c1c;
+        transform: scale(1.1);
+    }
+
+    .admin-edit-overlay {
+        position: fixed;
+        top: 0;
+        right: -400px;
+        width: 400px;
+        height: 100vh;
+        background: white;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+        transition: right 0.3s ease;
+        z-index: 1001;
+        overflow-y: auto;
+    }
+
+    .admin-edit-overlay.show {
+        right: 0;
+    }
+
+    .admin-edit-header {
+        background: #1f2937;
+        color: white;
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .admin-edit-content {
+        padding: 1rem;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .article-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .article-actions {
+            align-self: flex-start;
+            margin-top: 1rem;
+        }
+
+        .action-btn {
+            width: 40px;
+            height: 40px;
+        }
+
+        .action-btn::after {
+            display: none; /* Hide tooltips on mobile */
+        }
+    }
+
+    @media (max-width: 1024px) {
+        .related-articles-container {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .related-card {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .related-articles-list {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .related-articles-container {
+            gap: 1.5rem;
+        }
+
+        .related-article-item {
+            padding: 1rem;
+        }
+
+        .related-articles-list-header {
+            padding: 1rem;
+        }
+
+        .admin-edit-overlay {
+            width: 100%;
+            right: -100%;
+        }
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div x-data="articleApp()" x-init="init()">
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Breadcrumb -->
+    <section class="breadcrumb-section">
+        <div class="container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'articles' %}">Our Work</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'articles' %}">News & Analysis</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ article.title|truncatewords:5 }}</li>
+                </ol>
+            </nav>
+        </div>
+    </section>
+
+    <!-- Article Hero -->
+    <section class="article-hero">
+        <div class="container">
+            <div class="article-hero-container">
+                <div class="article-content-side" x-data="{ editMode: false }">
+                    <div class="article-badge" x-text="article.category.toUpperCase()"></div>
+
+                    <template x-if="!editMode">
+                        <h1 class="article-title" x-text="article.title" @click="isAdmin && (editMode = true)"></h1>
+                    </template>
+
+                    <template x-if="editMode">
+                        <div class="mb-3">
+                            <input type="text" class="form-control-custom" x-model="article.title"
+                                @blur="editMode = false; saveField('title', article.title)" @keyup.enter="editMode = false; saveField('title', article.title)">
+                        </div>
+                    </template>
+
+                    <p class="article-excerpt" x-text="article.excerpt" @click="isAdmin && editExcerpt()"></p>
+
+                    <div class="article-meta">
+                        <div class="author-avatar" x-text="getInitials(article.author)"></div>
+                        <div class="author-info">
+                            <p class="author-name" x-text="article.author"></p>
+                            <p class="publish-date" x-text="'PUBLISHED: ' + article.publishDate"></p>
+                        </div>
+                    </div>
+
+                    <!-- FIXED: Article Actions - Now with better visibility and structure -->
+                    <div class="article-actions">
+                        <button class="action-btn" title="Share Article" @click="shareArticle()">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                        <button class="action-btn" title="Bookmark Article" @click="bookmarkArticle()">
+                            <i class="fas fa-bookmark"></i>
+                        </button>
+                        <button class="action-btn" title="Download Article" @click="downloadArticle()">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="action-btn" title="Print Article" @click="printArticle()">
+                            <i class="fas fa-print"></i>
+                        </button>
+                        {% if is_admin %}
+                        <a href="{% url 'dashboard:article_edit' article.id %}" class="action-btn" title="Edit Article">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="article-image-side">
+                    <img :src="article.mainImage" alt="Article main image" class="article-main-image">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Article Body -->
+    <section class="article-body">
+        <div class="container">
+            <div class="article-content">
+                <template x-for="(section, index) in article.content" :key="index">
+                    <div>
+                        <template x-if="section.type === 'paragraph'">
+                            <div x-html="section.text" @click="isAdmin && editContent(index)"></div>
+                        </template>
+
+                        <template x-if="section.type === 'heading'">
+                            <h2 x-text="section.text" @click="isAdmin && editContent(index)"></h2>
+                        </template>
+
+                        <template x-if="section.type === 'subheading'">
+                            <h3 x-text="section.text" @click="isAdmin && editContent(index)"></h3>
+                        </template>
+
+                        <!-- FIXED: Consistent Image Display -->
+                        <template x-if="section.type === 'image'">
+                            <div class="editor-image-block">
+                                <template x-if="section.src">
+                                    <img :src="section.src" :alt="section.alt || section.caption || 'Article image'">
+                                </template>
+                                <template x-if="section.caption">
+                                    <div class="editor-image-caption" x-text="section.caption"></div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <template x-if="section.type === 'quote'">
+                            <div class="quote-block" x-text="section.text" @click="isAdmin && editContent(index)"></div>
+                        </template>
+
+                        <template x-if="section.type === 'interview'">
+                            <div class="interview-section" @click="isAdmin && editContent(index)">
+                                <p class="interview-question" x-text="section.question"></p>
+                                <p class="interview-answer" x-text="section.answer"></p>
+                            </div>
+                        </template>
+
+                        <template x-if="section.type === 'list'">
+                            <ul @click="isAdmin && editContent(index)">
+                                <template x-for="item in section.items" :key="item">
+                                    <li x-text="item"></li>
+                                </template>
+                            </ul>
+                        </template>
+
+                        <template x-if="section.type === 'callout'">
+                            <div class="callout-block" @click="isAdmin && editContent(index)">
+                                <h4 x-text="section.title" x-show="section.title"></h4>
+                                <div x-html="section.text"></div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Fallback for articles without structured content -->
+                {% if not content_sections or content_sections|length == 0 %}
+                <div class="article-body-fallback">
+                    {% for section in article.content_sections.all %}
+                        {% if section.section_type == 'paragraph' %}
+                            <div class="content-paragraph">{{ section.content|safe }}</div>
+                        {% elif section.section_type == 'image' and section.media_file %}
+                            <div class="editor-image-block">
+                                <img src="{{ section.media_file.cloudinary_url }}" alt="{{ section.alt_text|default:section.caption }}">
+                                {% if section.caption %}
+                                    <div class="editor-image-caption">{{ section.caption }}</div>
+                                {% endif %}
+                            </div>
+                        {% elif section.section_type == 'quote' %}
+                            <div class="quote-block">{{ section.content|safe }}</div>
+                        {% endif %}
+                    {% empty %}
+                        <div class="content-paragraph">
+                            <p>No content available.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Related Articles -->
+    <section class="related-articles">
+        <div class="container">
+            <h2 class="section-title">Related Articles</h2>
+
+            <div class="related-articles-container">
+                {% if related_articles %}
+                    <!-- First Two Related Articles as Cards -->
+                    <template x-for="(relatedArticle, index) in relatedArticles.slice(0, 2)" :key="index">
+                        <div class="related-card-column">
+                            <div class="related-card">
+                                <img :src="relatedArticle.image" :alt="relatedArticle.title" class="related-image">
+                                <div class="related-content">
+                                    <span class="related-tag" :class="relatedArticle.category"
+                                        x-text="relatedArticle.category.toUpperCase()"></span>
+                                    <h3 class="related-title">
+                                        <a :href="relatedArticle.url" style="text-decoration: none; color: inherit;" x-text="relatedArticle.title"></a>
+                                    </h3>
+                                    <p class="related-excerpt" x-text="relatedArticle.excerpt"></p>
+                                    <div class="related-meta">
+                                        <span x-text="relatedArticle.author"></span>
+                                        <span x-text="relatedArticle.date"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Third Column - Related Articles List -->
+                    <div class="related-articles-list">
+                        <div class="related-articles-list-header">
+                            <h3 class="related-articles-list-title">More Articles</h3>
+                        </div>
+                        <div class="related-articles-list-content">
+                            <template x-for="relatedArticle in relatedArticles.slice(2)" :key="relatedArticle.id">
+                                <div class="related-article-item">
+                                    <a :href="relatedArticle.url" class="related-article-title" x-text="relatedArticle.title"></a>
+                                    <div class="related-article-meta">
+                                        <span class="related-article-date" x-text="relatedArticle.date"></span>
+                                        <span class="meta-separator">//</span>
+                                        <span class="related-article-author" x-text="relatedArticle.author"></span>
+                                    </div>
+                                </div>
+                            </template>
+                            <a href="{% url 'articles' %}" class="more-news-link">MORE NEWS & ANALYSIS</a>
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- Fallback if no related articles -->
+                    <div class="col-12">
+                        <p class="text-center">No related articles found.</p>
+                        <div class="text-center">
+                            <a href="{% url 'articles' %}" class="btn btn-primary">Browse All Articles</a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Admin Floating Button -->
+    <button class="admin-floating-btn" x-show="isAdmin" @click="showAdminPanel = !showAdminPanel">
+        <i class="fas fa-edit"></i>
+    </button>
+
+    <!-- Admin Edit Overlay -->
+    <div class="admin-edit-overlay" :class="{ 'show': showAdminPanel }">
+        <div class="admin-edit-header">
+            <h4>Edit Article</h4>
+            <button @click="showAdminPanel = false" style="background: none; border: none; color: white;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="admin-edit-content">
+            <div class="form-group">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-control-custom" x-model="article.title">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Category</label>
+                <select class="form-control-custom" x-model="article.category">
+                    <option value="analysis">Analysis</option>
+                    <option value="campaign">Campaign</option>
+                    <option value="explainer">Explainer</option>
+                    <option value="qna">Q&A</option>
+                    <option value="news">News</option>
+                    <option value="research">Research</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Excerpt</label>
+                <textarea class="form-control-custom" rows="3" x-model="article.excerpt"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Author</label>
+                <input type="text" class="form-control-custom" x-model="article.author">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Main Image URL</label>
+                <input type="url" class="form-control-custom" x-model="article.mainImage" placeholder="https://...">
+            </div>
+
+            <div class="form-group">
+                <button class="btn btn-newsletter w-100" @click="saveArticle()">
+                    Save Changes
+                </button>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="form-group">
+                <label class="form-label">Add Content Section</label>
+                <select class="form-control-custom" x-model="newSectionType">
+                    <option value="paragraph">Paragraph</option>
+                    <option value="heading">Heading</option>
+                    <option value="subheading">Subheading</option>
+                    <option value="image">Image</option>
+                    <option value="quote">Quote</option>
+                    <option value="interview">Interview</option>
+                    <option value="list">List</option>
+                    <option value="callout">Callout</option>
+                </select>
+                <button class="btn btn-newsletter mt-2" @click="addContentSection()">Add Section</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function articleApp() {
+            return {
+                isAdmin: {{ user.is_staff|yesno:"true,false" }},
+                showAdminPanel: false,
+                newSectionType: 'paragraph',
+
+                article: {
+                    id: '{{ article.id }}',
+                    title: '{{ article.title|escapejs }}',
+                    category: '{{ article.category.name }}',
+                    categoryId: '{{ article.category.id }}',
+                    excerpt: '{{ article.excerpt|escapejs }}',
+                    author: '{{ article.author.name|escapejs }}',
+                    authorId: '{{ article.author.id }}',
+                    publishDate: '{{ article.published_date|date:"F j, Y" }}',
+                    mainImage: {% if article.featured_image %}'{{ article.featured_image.cloudinary_url }}'{% else %}'{% static "images/hero 1.png" %}'{% endif %},
+                    content: [
+                        {% for section in content_sections %}
+                        {
+                            type: '{{ section.section_type }}',
+                            {% if section.section_type == 'paragraph' or section.section_type == 'quote' or section.section_type == 'callout' %}
+                            text: '{{ section.content|escapejs|safe }}',
+                            {% endif %}
+                            {% if section.section_type == 'heading' or section.section_type == 'subheading' %}
+                            text: '{{ section.content|default:section.title|escapejs }}',
+                            {% endif %}
+                            {% if section.section_type == 'image' and section.media_file %}
+                            src: '{{ section.media_file.cloudinary_url }}',
+                            alt: '{{ section.alt_text|default:section.caption|escapejs }}',
+                            caption: '{{ section.caption|escapejs }}',
+                            {% endif %}
+                            {% if section.section_type == 'interview' %}
+                            question: '{{ section.question|escapejs }}',
+                            answer: '{{ section.answer|escapejs }}',
+                            {% endif %}
+                            {% if section.section_type == 'list' %}
+                            items: {{ section.list_items|safe }},
+                            {% endif %}
+                            {% if section.section_type == 'callout' %}
+                            title: '{{ section.title|escapejs }}',
+                            {% endif %}
+                        }{% if not forloop.last %},{% endif %}
+                        {% endfor %}
+                    ]
+                },
+
+                relatedArticles: [
+                    {% for article_item in related_articles %}
+                    {
+                        id: '{{ article_item.id }}',
+                        title: '{{ article_item.title|escapejs }}',
+                        excerpt: '{{ article_item.excerpt|truncatewords:20|escapejs }}',
+                        category: '{{ article_item.category.name }}',
+                        author: '{{ article_item.author.name|escapejs }}',
+                        date: '{{ article_item.published_date|date:"M j, Y" }}',
+                        url: '{% url "article_detail" slug=article_item.slug %}',
+                        image: {% if article_item.featured_image %}'{{ article_item.featured_image.cloudinary_url }}'{% else %}'{% static "images/hero 1.png" %}'{% endif %}
+                    }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+
+                init() {
+                    console.log('Article app initialized');
+                    // Force button visibility check
+                    this.$nextTick(() => {
+                        const buttons = document.querySelectorAll('.action-btn');
+                        console.log('Found action buttons:', buttons.length);
+                        buttons.forEach(btn => {
+                            console.log('Button:', btn.title, 'Visible:', getComputedStyle(btn).display !== 'none');
+                        });
+                    });
+                },
+
+                getInitials(name) {
+                    return name.split(' ').map(word => word[0]).join('').toUpperCase();
+                },
+
+                showToast(message, type = 'success') {
+                    const toastContainer = document.getElementById('toastContainer');
+                    const toast = document.createElement('div');
+                    toast.className = `toast ${type}`;
+                    toast.textContent = message;
+
+                    toastContainer.appendChild(toast);
+
+                    // Show toast
+                    setTimeout(() => toast.classList.add('show'), 100);
+
+                    // Hide and remove toast
+                    setTimeout(() => {
+                        toast.classList.remove('show');
+                        setTimeout(() => toast.remove(), 300);
+                    }, 3000);
+                },
+
+                async shareArticle() {
+                    const articleUrl = window.location.href;
+                    const title = this.article.title;
+                    const text = this.article.excerpt;
+
+                    console.log('Share button clicked');
+
+                    if (navigator.share) {
+                        try {
+                            await navigator.share({
+                                title: title,
+                                text: text,
+                                url: articleUrl
+                            });
+                            this.showToast('Article shared successfully!');
+                        } catch (error) {
+                            if (error.name !== 'AbortError') {
+                                console.log('Error sharing:', error);
+                                this.fallbackShare(articleUrl);
+                            }
+                        }
+                    } else {
+                        this.fallbackShare(articleUrl);
+                    }
+                },
+
+                fallbackShare(url) {
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(url).then(() => {
+                            this.showToast('Article link copied to clipboard!');
+                        }).catch(() => {
+                            this.manualCopy(url);
+                        });
+                    } else {
+                        this.manualCopy(url);
+                    }
+                },
+
+                manualCopy(url) {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = url;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+
+                    try {
+                        document.execCommand('copy');
+                        this.showToast('Article link copied to clipboard!');
+                    } catch (err) {
+                        this.showToast('Unable to copy link', 'error');
+                    }
+
+                    document.body.removeChild(textArea);
+                },
+
+                bookmarkArticle() {
+                    console.log('Bookmark button clicked');
+                    const bookmark = {
+                        id: this.article.id,
+                        title: this.article.title,
+                        url: window.location.href,
+                        excerpt: this.article.excerpt,
+                        date: new Date().toISOString(),
+                        category: this.article.category,
+                        author: this.article.author,
+                        image: this.article.mainImage
+                    };
+
+                    let bookmarks = JSON.parse(localStorage.getItem('cisd_bookmarks') || '[]');
+
+                    // Check if already bookmarked
+                    const existingIndex = bookmarks.findIndex(b => b.id === bookmark.id);
+
+                    if (existingIndex === -1) {
+                        bookmarks.unshift(bookmark);
+                        localStorage.setItem('cisd_bookmarks', JSON.stringify(bookmarks));
+                        this.showToast('Article bookmarked successfully!');
+                    } else {
+                        // Remove bookmark
+                        bookmarks.splice(existingIndex, 1);
+                        localStorage.setItem('cisd_bookmarks', JSON.stringify(bookmarks));
+                        this.showToast('Bookmark removed!');
+                    }
+                },
+
+                async downloadArticle() {
+                    console.log('Download button clicked');
+                    try {
+                        const articleContent = this.getArticleText();
+
+                        const blob = new Blob([articleContent], { type: 'text/plain;charset=utf-8' });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `${this.article.title.replace(/[^a-zA-Z0-9]/g, '_')}.txt`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+
+                        this.showToast('Article downloaded successfully!');
+                    } catch (error) {
+                        console.error('Download failed:', error);
+                        this.showToast('Download failed. Please try again.', 'error');
+                    }
+                },
+
+                printArticle() {
+                    console.log('Print button clicked');
+                    const printWindow = window.open('', '_blank');
+                    const printContent = `
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>${this.article.title}</title>
+                            <style>
+                                body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+                                h1 { color: #333; border-bottom: 2px solid #0EA5E9; padding-bottom: 10px; }
+                                .meta { color: #666; margin-bottom: 20px; }
+                                .content { line-height: 1.6; }
+                                .quote-block { border-left: 4px solid #dc2626; padding-left: 20px; font-style: italic; margin: 20px 0; }
+                                img { max-width: 100%; height: auto; }
+                                @media print { body { margin: 0; } }
+                            </style>
+                        </head>
+                        <body>
+                            <h1>${this.article.title}</h1>
+                            <div class="meta">
+                                <p><strong>Author:</strong> ${this.article.author}</p>
+                                <p><strong>Published:</strong> ${this.article.publishDate}</p>
+                                <p><strong>Category:</strong> ${this.article.category}</p>
+                            </div>
+                            <div class="content">
+                                <p><em>${this.article.excerpt}</em></p>
+                                ${this.getArticleHTML()}
+                            </div>
+                            <hr>
+                            <p><small>Printed from: ${window.location.href}</small></p>
+                        </body>
+                        </html>
+                    `;
+
+                    printWindow.document.write(printContent);
+                    printWindow.document.close();
+                    printWindow.focus();
+
+                    setTimeout(() => {
+                        printWindow.print();
+                        printWindow.close();
+                    }, 1000);
+                },
+
+                getArticleText() {
+                    let content = `${this.article.title}\n\n`;
+                    content += `Author: ${this.article.author}\n`;
+                    content += `Published: ${this.article.publishDate}\n`;
+                    content += `Category: ${this.article.category}\n\n`;
+                    content += `${this.article.excerpt}\n\n`;
+
+                    this.article.content.forEach(section => {
+                        if (section.type === 'paragraph' || section.type === 'heading' || section.type === 'subheading') {
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = section.text || '';
+                            content += (tempDiv.textContent || tempDiv.innerText || '') + '\n\n';
+                        } else if (section.type === 'quote') {
+                            content += `"${section.text}"\n\n`;
+                        } else if (section.type === 'interview') {
+                            content += `Q: ${section.question}\nA: ${section.answer}\n\n`;
+                        } else if (section.type === 'image' && section.caption) {
+                            content += `[Image: ${section.caption}]\n\n`;
+                        }
+                    });
+
+                    content += `\n---\nCentre for Inclusive Social Development\n${window.location.href}`;
+                    return content;
+                },
+
+                getArticleHTML() {
+                    let html = '';
+                    this.article.content.forEach(section => {
+                        if (section.type === 'paragraph') {
+                            html += `<p>${section.text}</p>`;
+                        } else if (section.type === 'heading') {
+                            html += `<h2>${section.text}</h2>`;
+                        } else if (section.type === 'subheading') {
+                            html += `<h3>${section.text}</h3>`;
+                        } else if (section.type === 'quote') {
+                            html += `<div class="quote-block">${section.text}</div>`;
+                        } else if (section.type === 'interview') {
+                            html += `<div><strong>Q:</strong> ${section.question}</div><div><strong>A:</strong> ${section.answer}</div>`;
+                        } else if (section.type === 'image' && section.src) {
+                            html += `<div style="text-align: center; margin: 20px 0;"><img src="${section.src}" alt="${section.alt || ''}" style="max-width: 100%;"><br><em>${section.caption || ''}</em></div>`;
+                        }
+                    });
+                    return html;
+                },
+
+                editExcerpt() {
+                    if (!this.isAdmin) return;
+                    const newExcerpt = prompt('Edit excerpt:', this.article.excerpt);
+                    if (newExcerpt !== null) {
+                        this.article.excerpt = newExcerpt;
+                        this.saveField('excerpt', newExcerpt);
+                    }
+                },
+
+                editContent(index) {
+                    if (!this.isAdmin) return;
+                    const section = this.article.content[index];
+
+                    if (section.type === 'interview') {
+                        const newQuestion = prompt('Edit question:', section.question);
+                        const newAnswer = prompt('Edit answer:', section.answer);
+                        if (newQuestion !== null) section.question = newQuestion;
+                        if (newAnswer !== null) section.answer = newAnswer;
+                    } else {
+                        const newText = prompt('Edit content:', section.text);
+                        if (newText !== null) {
+                            section.text = newText;
+                        }
+                    }
+                },
+
+                saveField(field, value) {
+                    if (!this.isAdmin) return;
+
+                    fetch(`/api/update-article-field/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value || '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            article_id: this.article.id,
+                            field: field,
+                            value: value
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log(`${field} saved successfully`);
+                            this.showToast(`${field} updated successfully!`);
+                        } else {
+                            console.error('Save failed:', data.error);
+                            this.showToast('Failed to save changes', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        this.showToast('Error saving changes', 'error');
+                    });
+                },
+
+                addContentSection() {
+                    const newSection = {
+                        type: this.newSectionType,
+                        text: 'New content section... Click to edit.'
+                    };
+
+                    if (this.newSectionType === 'image') {
+                        newSection.src = '{% static "images/hero 1.png" %}';
+                        newSection.alt = 'New image';
+                        newSection.caption = 'Image caption';
+                    } else if (this.newSectionType === 'interview') {
+                        newSection.question = 'New question?';
+                        newSection.answer = 'New answer...';
+                    } else if (this.newSectionType === 'list') {
+                        newSection.items = ['List item 1', 'List item 2'];
+                    } else if (this.newSectionType === 'callout') {
+                        newSection.title = 'Callout Title';
+                    }
+
+                    this.article.content.push(newSection);
+                },
+
+                saveArticle() {
+                    if (!this.isAdmin) return;
+
+                    const articleData = {
+                        article_id: this.article.id,
+                        title: this.article.title,
+                        category: this.article.categoryId || this.article.category,
+                        excerpt: this.article.excerpt,
+                        author: this.article.authorId || this.article.author,
+                        content_sections: this.article.content.map(section => ({
+                            section_type: section.type,
+                            content: section.text || '',
+                            title: section.title || '',
+                            question: section.question || '',
+                            answer: section.answer || '',
+                            caption: section.caption || '',
+                            alt_text: section.alt || '',
+                            order: this.article.content.indexOf(section)
+                        }))
+                    };
+
+                    fetch(`/api/save-article/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value || '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify(articleData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.showToast('Article saved successfully!');
+                            this.showAdminPanel = false;
+                            setTimeout(() => window.location.reload(), 1000);
+                        } else {
+                            this.showToast('Failed to save article: ' + (data.error || 'Unknown error'), 'error');
+                            console.error('Save failed:', data);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        this.showToast('Error saving article', 'error');
+                    });
+                }
+            }
+        }
+    </script>
+</div>
+
+{% endblock content %}
