@@ -240,7 +240,10 @@ class PretotypeIssue(models.Model):
         help_text="Optional photo of the issue",
     )
     image_url = models.URLField(
-        blank=True, help_text="URL to uploaded image if using external storage"
+        blank=True,
+        null=True,
+        default="",
+        help_text="URL to uploaded image if using external storage",
     )
 
     # Quality metrics
