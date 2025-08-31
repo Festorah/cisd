@@ -8,8 +8,7 @@ from typing import Any, Dict, List, Optional
 from django.core.cache import cache
 from django.db.models import Avg, Count, F, Q
 from django.utils import timezone
-
-from .models import (
+from tpsq.models import (
     DailyStats,
     EarlyAccessSignup,
     FunnelEvent,

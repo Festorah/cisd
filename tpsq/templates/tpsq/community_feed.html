@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Issues | Public Square</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            /* CISD Brand Colors */
+            --primary-blue: #2B5CE6;
+            --primary-green: #0EA5E9;
+            --accent-orange: #F97316;
+            --accent-red: #EF4444;
+            --dark-blue: #1E40AF;
+            --light-blue: #DBEAFE;
+            --success-green: #10B981;
+            --success-light: #D1FAE5;
+
+            /* Social Feed Colors */
+            --bg-primary: #F8FAFC;
+            --bg-secondary: #FFFFFF;
+            --bg-accent: #F1F5F9;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --border-color: #E2E8F0;
+            --hover-color: #F8FAFC;
+
+            /* Typography */
+            --font-heading: 'Space Grotesk', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-green));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: var(--font-heading);
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* MAIN LAYOUT */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 2rem;
+        }
+
+        .feed-column {
+            min-width: 0;
+        }
+
+        .sidebar-column {
+            position: sticky;
+            top: 100px;
+            height: fit-content;
+        }
+
+        /* FILTERS */
+        .filters-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .filters-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-family: var(--font-heading);
+        }
+
+        .filter-group {
+            margin-bottom: 1rem;
+        }
+
+        .filter-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .filter-tag {
+            padding: 0.5rem 1rem;
+            background: var(--bg-accent);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: var(--text-secondary);
+        }
+
+        .filter-tag:hover {
+            background: var(--light-blue);
+            border-color: var(--primary-blue);
+        }
+
+        .filter-tag.active {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        /* ISSUE CARDS */
+        .issue-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .issue-card:hover {
+            box-shadow: 0 4px 12px rgba(43, 92, 230, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .issue-header {
+            padding: 1.5rem 1.5rem 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .issue-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-green));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .issue-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .issue-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .issue-type {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .issue-type.light { background: #FEF3E2; color: #F97316; }
+        .issue-type.roads { background: #F3E8FF; color: #8B5CF6; }
+        .issue-type.waste { background: #ECFDF5; color: #059669; }
+        .issue-type.water { background: #DBEAFE; color: #0EA5E9; }
+        .issue-type.security { background: #FEE2E2; color: #DC2626; }
+        .issue-type.healthcare { background: #F0F9FF; color: #0284C7; }
+        .issue-type.education { background: #FDF4FF; color: #C026D3; }
+        .issue-type.others { background: #F8FAFC; color: #475569; }
+
+        .issue-status {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-reported .status-dot { background: #3B82F6; }
+        .status-acknowledged .status-dot { background: #F59E0B; }
+        .status-investigating .status-dot { background: #F97316; }
+        .status-in_progress .status-dot { background: #8B5CF6; }
+        .status-resolved .status-dot { background: #10B981; }
+        .status-rejected .status-dot { background: #EF4444; }
+
+        .issue-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+
+        .issue-content {
+            padding: 0 1.5rem 1rem;
+        }
+
+        .issue-details {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .issue-image {
+            width: 100%;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        /* ENGAGEMENT SECTION */
+        .engagement-section {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .engagement-stats {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .reactions-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .reaction-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem 0.75rem;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+
+        .reaction-btn:hover {
+            background: var(--hover-color);
+            border-color: var(--primary-blue);
+        }
+
+        .reaction-btn.active {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        .reaction-count {
+            font-weight: 600;
+            margin-left: 0.25rem;
+        }
+
+        /* COMMENTS SECTION */
+        .comments-section {
+            margin-top: 1rem;
+        }
+
+        .comments-header {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            margin-bottom: 1rem;
+        }
+
+        .comments-count {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .view-all-btn {
+            color: var(--primary-blue);
+            font-size: 0.8rem;
+            text-decoration: none;
+            font-weight: 500;
+            margin-left: auto;
+        }
+
+        .comment {
+            margin-bottom: 1rem;
+        }
+
+        .comment-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .comment-avatar {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-red));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: var(--text-primary);
+        }
+
+        .comment-author.government {
+            color: var(--success-green);
+        }
+
+        .comment-author.government::after {
+            content: "✓";
+            margin-left: 0.25rem;
+            color: var(--success-green);
+        }
+
+        .comment-time {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+
+        .comment-content {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: var(--text-secondary);
+            margin-left: 2rem;
+        }
+
+        /* COMMENT FORM */
+        .comment-form {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .comment-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .comment-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(43, 92, 230, 0.1);
+        }
+
+        .comment-actions {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-top: 0.75rem;
+        }
+
+        .comment-submit {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: auto;
+        }
+
+        .comment-submit:hover {
+            background: var(--dark-blue);
+        }
+
+        .comment-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* SIDEBAR */
+        .sidebar-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            font-family: var(--font-heading);
+        }
+
+        .issue-type-stat {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .issue-type-stat:last-child {
+            border-bottom: none;
+        }
+
+        .type-name {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: capitalize;
+        }
+
+        .type-count {
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+
+            .sidebar-column {
+                position: static;
+                order: -1;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .header-stats {
+                gap: 1rem;
+            }
+
+            .issue-header {
+                padding: 1rem;
+            }
+
+            .issue-content {
+                padding: 0 1rem 1rem;
+            }
+
+            .engagement-section {
+                padding: 1rem;
+            }
+
+            .filter-options {
+                justify-content: center;
+            }
+        }
+
+        /* ANIMATIONS */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .issue-card {
+            animation: slideIn 0.5s ease-out;
+        }
+
+        /* LOADING STATES */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-top-color: var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* IMAGE MODAL */
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 2rem;
+        }
+
+        .modal-image {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">Public Square</div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.total_issues }}</div>
+                    <div class="stat-label">Issues Reported</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.resolved_issues }}</div>
+                    <div class="stat-label">Resolved</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.total_engagement }}</div>
+                    <div class="stat-label">Community Responses</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-container">
+        <!-- FEED COLUMN -->
+        <div class="feed-column">
+            <!-- FILTERS -->
+            <div class="filters-section">
+                <div class="filters-title">Filter Issues</div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Issue Type</label>
+                    <div class="filter-options">
+                        <a href="?sort={{ current_filters.sort }}&status={{ current_filters.status }}"
+                           class="filter-tag {% if not current_filters.type %}active{% endif %}">All</a>
+                        {% for type_data in issue_type_counts %}
+                            <a href="?type={{ type_data.issue_type }}&sort={{ current_filters.sort }}&status={{ current_filters.status }}"
+                               class="filter-tag {% if current_filters.type == type_data.issue_type %}active{% endif %}">
+                                {{ type_data.issue_type|title }} ({{ type_data.count }})
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Status</label>
+                    <div class="filter-options">
+                        <a href="?type={{ current_filters.type }}&sort={{ current_filters.sort }}"
+                           class="filter-tag {% if not current_filters.status %}active{% endif %}">All</a>
+                        <a href="?type={{ current_filters.type }}&status=new&sort={{ current_filters.sort }}"
+                           class="filter-tag {% if current_filters.status == 'new' %}active{% endif %}">New</a>
+                        <a href="?type={{ current_filters.type }}&status=in_progress&sort={{ current_filters.sort }}"
+                           class="filter-tag {% if current_filters.status == 'in_progress' %}active{% endif %}">In Progress</a>
+                        <a href="?type={{ current_filters.type }}&status=resolved&sort={{ current_filters.sort }}"
+                           class="filter-tag {% if current_filters.status == 'resolved' %}active{% endif %}">Resolved</a>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Sort By</label>
+                    <div class="filter-options">
+                        <a href="?type={{ current_filters.type }}&status={{ current_filters.status }}&sort=recent"
+                           class="filter-tag {% if current_filters.sort == 'recent' %}active{% endif %}">Recent</a>
+                        <a href="?type={{ current_filters.type }}&status={{ current_filters.status }}&sort=popular"
+                           class="filter-tag {% if current_filters.sort == 'popular' %}active{% endif %}">Popular</a>
+                        <a href="?type={{ current_filters.type }}&status={{ current_filters.status }}&sort=needs_attention"
+                           class="filter-tag {% if current_filters.sort == 'needs_attention' %}active{% endif %}">Needs Attention</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ISSUE FEED -->
+            <div id="issuesFeed">
+                {% for issue in issues %}
+                    <div class="issue-card" data-issue-id="{{ issue.id }}">
+                        <!-- ISSUE HEADER -->
+                        <div class="issue-header">
+                            <div class="issue-avatar">{{ issue.session.session_id|slice:":2"|upper }}</div>
+                            <div class="issue-info">
+                                <div class="issue-meta">
+                                    <span class="issue-type {{ issue.issue_type }}">{{ issue.get_issue_type_display }}</span>
+                                    <div class="issue-status status-{{ issue.get_current_status }}">
+                                        <span class="status-dot"></span>
+                                        <span>{{ issue.get_status_display_info.text }}</span>
+                                    </div>
+                                    <div class="issue-time">{{ issue.submitted_at|timesince }} ago</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ISSUE CONTENT -->
+                        <div class="issue-content">
+                            {% if issue.issue_details %}
+                                <div class="issue-details">{{ issue.issue_details }}</div>
+                            {% endif %}
+
+                            {% if issue.image_url %}
+                                <img src="{{ issue.image_url }}" alt="Issue photo" class="issue-image" onclick="openImageModal('{{ issue.image_url }}')">
+                            {% endif %}
+                        </div>
+
+                        <!-- ENGAGEMENT SECTION -->
+                        <div class="engagement-section">
+                            <div class="engagement-stats">
+                                <span>{{ issue.get_reaction_counts|length }} reactions</span>
+                                <span>{{ issue.get_approved_comments_count }} comments</span>
+                            </div>
+
+                            <!-- REACTIONS -->
+                            <div class="reactions-bar">
+                                <button class="reaction-btn" data-reaction="like" onclick="addReaction('{{ issue.id }}', 'like')">
+                                    👍 <span class="reaction-count">{{ issue.get_reaction_counts.like|default:0 }}</span>
+                                </button>
+                                <button class="reaction-btn" data-reaction="support" onclick="addReaction('{{ issue.id }}', 'support')">
+                                    🤝 <span class="reaction-count">{{ issue.get_reaction_counts.support|default:0 }}</span>
+                                </button>
+                                <button class="reaction-btn" data-reaction="me_too" onclick="addReaction('{{ issue.id }}', 'me_too')">
+                                    🙋 <span class="reaction-count">{{ issue.get_reaction_counts.me_too|default:0 }}</span>
+                                </button>
+                                <button class="reaction-btn" data-reaction="heart" onclick="addReaction('{{ issue.id }}', 'heart')">
+                                    ❤️ <span class="reaction-count">{{ issue.get_reaction_counts.heart|default:0 }}</span>
+                                </button>
+                            </div>
+
+                            <!-- COMMENTS -->
+                            <div class="comments-section">
+                                <div class="comments-header">
+                                    <div class="comments-count">Comments ({{ issue.get_approved_comments_count }})</div>
+                                    {% if issue.get_approved_comments_count > 3 %}
+                                        <a href="#" class="view-all-btn" onclick="loadAllComments('{{ issue.id }}')">View all</a>
+                                    {% endif %}
+                                </div>
+
+                                <div class="comments-list" id="comments-{{ issue.id }}">
+                                    {% for comment in issue.comments.all|slice:":3" %}
+                                        <div class="comment">
+                                            <div class="comment-header">
+                                                <div class="comment-avatar">{{ comment.commenter_name|slice:":1"|upper }}</div>
+                                                <div class="comment-author {% if comment.is_government_response %}government{% endif %}">
+                                                    {{ comment.commenter_name }}
+                                                </div>
+                                                <div class="comment-time">{{ comment.created_at|timesince }} ago</div>
+                                            </div>
+                                            <div class="comment-content">{{ comment.content }}</div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                <!-- COMMENT FORM -->
+                                <div class="comment-form">
+                                    <textarea
+                                        class="comment-input"
+                                        placeholder="Share your experience or thoughts..."
+                                        id="comment-input-{{ issue.id }}"
+                                        maxlength="1000"></textarea>
+                                    <div class="comment-actions">
+                                        <button
+                                            class="comment-submit"
+                                            onclick="addComment('{{ issue.id }}')">
+                                            Post Comment
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="loading">No issues found matching your filters.</div>
+                {% endfor %}
+            </div>
+
+            <!-- PAGINATION -->
+            {% if page_obj.has_other_pages %}
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}&type={{ current_filters.type }}&status={{ current_filters.status }}&sort={{ current_filters.sort }}">Previous</a>
+                    {% endif %}
+
+                    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}&type={{ current_filters.type }}&status={{ current_filters.status }}&sort={{ current_filters.sort }}">Next</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="sidebar-column">
+            <!-- ISSUE TYPES BREAKDOWN -->
+            <div class="sidebar-card">
+                <div class="sidebar-title">Issue Types</div>
+                {% for type_data in issue_type_counts %}
+                    <div class="issue-type-stat">
+                        <span class="type-name">{{ type_data.issue_type|title }}</span>
+                        <span class="type-count">{{ type_data.count }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- CALL TO ACTION -->
+            <div class="sidebar-card">
+                <div class="sidebar-title">Report an Issue</div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    Experiencing a similar problem? Report it to help prioritize solutions.
+                </p>
+                <a href="/report/" style="display: block; background: var(--gradient-primary); color: white; text-align: center; padding: 0.75rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                    Report Issue
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- IMAGE MODAL -->
+    <div class="image-modal" id="imageModal">
+        <button class="modal-close" onclick="closeImageModal()">&times;</button>
+        <img class="modal-image" id="modalImage" alt="Issue photo">
+    </div>
+
+    <script>
+        // Feed JavaScript functionality
+        class FeedManager {
+            constructor() {
+                this.sessionId = this.getOrCreateSessionId();
+                this.csrfToken = this.getCSRFToken();
+            }
+
+            getOrCreateSessionId() {
+                let sessionId = sessionStorage.getItem('pretotype_session_id');
+                if (!sessionId) {
+                    sessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                        const r = Math.random() * 16 | 0;
+                        const v = c == 'x' ? r : (r & 0x3 | 0x8);
+                        return v.toString(16);
+                    });
+                    sessionStorage.setItem('pretotype_session_id', sessionId);
+                }
+                return sessionId;
+            }
+
+            getCSRFToken() {
+                const metaToken = document.querySelector('meta[name="csrf-token"]');
+                if (metaToken) {
+                    return metaToken.getAttribute('content');
+                }
+
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === 'csrftoken') {
+                        return value;
+                    }
+                }
+                return '';
+            }
+
+            async makeRequest(url, data) {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                return await response.json();
+            }
+        }
+
+        const feedManager = new FeedManager();
+
+        // Reaction functionality
+        async function addReaction(issueId, reactionType) {
+            try {
+                const btn = document.querySelector(`[data-issue-id="${issueId}"] [data-reaction="${reactionType}"]`);
+                const countSpan = btn.querySelector('.reaction-count');
+
+                btn.disabled = true;
+
+                const result = await feedManager.makeRequest('/api/pretotype-reaction/', {
+                    issue_id: issueId,
+                    reaction_type: reactionType,
+                    session_id: feedManager.sessionId
+                });
+
+                if (result.success) {
+                    // Update reaction counts
+                    const card = document.querySelector(`[data-issue-id="${issueId}"]`);
+                    const reactionCounts = result.reaction_counts;
+
+                    card.querySelectorAll('.reaction-btn').forEach(reactionBtn => {
+                        const type = reactionBtn.dataset.reaction;
+                        const count = reactionCounts[type] || 0;
+                        reactionBtn.querySelector('.reaction-count').textContent = count;
+
+                        // Update active state
+                        if (type === reactionType) {
+                            reactionBtn.classList.add('active');
+                        }
+                    });
+                }
+
+                btn.disabled = false;
+            } catch (error) {
+                console.error('Failed to add reaction:', error);
+                alert('Failed to add reaction. Please try again.');
+                btn.disabled = false;
+            }
+        }
+
+        // Comment functionality
+        async function addComment(issueId) {
+            try {
+                const input = document.getElementById(`comment-input-${issueId}`);
+                const content = input.value.trim();
+
+                if (!content) {
+                    alert('Please enter a comment.');
+                    return;
+                }
+
+                if (content.length > 1000) {
+                    alert('Comment is too long (max 1000 characters).');
+                    return;
+                }
+
+                const submitBtn = input.parentElement.querySelector('.comment-submit');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Posting...';
+
+                const result = await feedManager.makeRequest('/api/pretotype-comment/', {
+                    issue_id: issueId,
+                    content: content,
+                    session_id: feedManager.sessionId,
+                    commenter_name: `Citizen ${feedManager.sessionId.slice(0, 6)}`
+                });
+
+                if (result.success) {
+                    // Add comment to UI
+                    const commentsList = document.getElementById(`comments-${issueId}`);
+                    const newComment = createCommentElement(result.comment);
+                    commentsList.appendChild(newComment);
+
+                    // Clear input
+                    input.value = '';
+
+                    // Update comments count
+                    const countElement = commentsList.parentElement.querySelector('.comments-count');
+                    const currentCount = parseInt(countElement.textContent.match(/\d+/)[0]) || 0;
+                    countElement.textContent = `Comments (${currentCount + 1})`;
+                }
+
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Post Comment';
+            } catch (error) {
+                console.error('Failed to add comment:', error);
+                alert('Failed to post comment. Please try again.');
+
+                const submitBtn = document.querySelector(`#comment-input-${issueId}`).parentElement.querySelector('.comment-submit');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Post Comment';
+            }
+        }
+
+        function createCommentElement(comment) {
+            const div = document.createElement('div');
+            div.className = 'comment';
+            div.innerHTML = `
+                <div class="comment-header">
+                    <div class="comment-avatar">${comment.commenter_name.slice(0, 1).toUpperCase()}</div>
+                    <div class="comment-author">${comment.commenter_name}</div>
+                    <div class="comment-time">just now</div>
+                </div>
+                <div class="comment-content">${comment.content}</div>
+            `;
+            return div;
+        }
+
+        // Image modal functionality
+        function openImageModal(imageSrc) {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            modalImage.src = imageSrc;
+            modal.style.display = 'flex';
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            modal.style.display = 'none';
+        }
+
+        // Close modal when clicking background
+        document.getElementById('imageModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeImageModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeImageModal();
+            }
+        });
+
+        // Load all comments functionality
+        async function loadAllComments(issueId) {
+            try {
+                const response = await fetch(`/api/pretotype-comments/${issueId}/`, {
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load comments');
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const commentsList = document.getElementById(`comments-${issueId}`);
+                    commentsList.innerHTML = '';
+
+                    result.comments.forEach(comment => {
+                        const commentElement = createCommentElement(comment);
+                        commentsList.appendChild(commentElement);
+
+                        // Add replies
+                        comment.replies.forEach(reply => {
+                            const replyElement = createCommentElement(reply);
+                            replyElement.style.marginLeft = '2rem';
+                            replyElement.classList.add('reply');
+                            commentsList.appendChild(replyElement);
+                        });
+                    });
+
+                    // Hide "View all" button
+                    const viewAllBtn = commentsList.parentElement.querySelector('.view-all-btn');
+                    if (viewAllBtn) {
+                        viewAllBtn.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load all comments:', error);
+            }
+        }
+    </script>
+</body>
+</html>

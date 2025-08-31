@@ -5,11 +5,14 @@ from django.db.models import Avg, Count
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
-
-from .models import (
+from tpsq.models import (
     DailyStats,
     EarlyAccessSignup,
     FunnelEvent,
+    PretotypeComment,
+    PretotypeIssue,
+    PretotypeIssueStatus,
+    PretotypeReaction,
     SurveyResponse,
     UserSession,
 )
@@ -461,6 +464,52 @@ class DailyStatsAdmin(admin.ModelAdmin):
         )
 
     recalculate_rates.short_description = "Recalculate conversion rates"
+
+
+@admin.register(PretotypeComment)
+class PretotypeCommentAdmin(admin.ModelAdmin):
+    list_display = [
+        "issue",
+        "commenter_name",
+        "commenter_type",
+        "is_approved",
+        "is_government_response",
+        "created_at",
+    ]
+    list_filter = [
+        "commenter_type",
+        "is_approved",
+        "is_government_response",
+        "is_flagged",
+    ]
+    search_fields = ["content", "commenter_name", "issue__issue_type"]
+    readonly_fields = ["created_at", "updated_at"]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("issue", "session")
+
+
+@admin.register(PretotypeReaction)
+class PretotypeReactionAdmin(admin.ModelAdmin):
+    list_display = ["issue", "reaction_type", "created_at"]
+    list_filter = ["reaction_type", "created_at"]
+    readonly_fields = ["created_at"]
+
+
+@admin.register(PretotypeIssueStatus)
+class PretotypeIssueStatusAdmin(admin.ModelAdmin):
+    list_display = ["issue", "status", "updated_by", "created_at"]
+    list_filter = ["status", "created_at"]
+    search_fields = ["message", "updated_by"]
+    readonly_fields = ["created_at"]
+
+
+@admin.register(PretotypeIssue)
+class PretotypeIssueAdmin(admin.ModelAdmin):
+    list_display = ["issue_type", "issue_details", "has_image"]
+    list_filter = ["issue_type", "has_image"]
+    search_fields = ["issue_type", "issue_details"]
+    readonly_fields = ["submitted_at"]
 
 
 # Custom admin site configuration

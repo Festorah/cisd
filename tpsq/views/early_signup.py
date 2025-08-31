@@ -17,15 +17,14 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from user_agents import parse
-
-from .models import (
+from tpsq.models import (
     DailyStats,
     EarlyAccessSignup,
     FunnelEvent,
     SurveyResponse,
     UserSession,
 )
+from user_agents import parse
 
 # Set up logging
 logger = logging.getLogger(__name__)
