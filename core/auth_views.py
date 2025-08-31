@@ -144,7 +144,7 @@ class CustomLogoutView(auth_views.LogoutView):
 
     def get_next_page(self):
         """Redirect to home page after logout"""
-        return reverse_lazy("home")
+        return reverse_lazy("dashboard:home")
 
 
 class CustomPasswordResetView(auth_views.PasswordResetView):
