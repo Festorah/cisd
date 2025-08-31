@@ -1,0 +1,886 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}User Manual - CISD Dashboard{% endblock %}
+{% block breadcrumb %}User Manual{% endblock %}
+
+{% block extra_css %}
+<style>
+    .manual-section {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .manual-nav {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 20px;
+    }
+
+    .manual-nav ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .manual-nav li {
+        margin-bottom: 0.5rem;
+    }
+
+    .manual-nav a {
+        color: #374151;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        display: block;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+
+    .manual-nav a:hover {
+        background: #f3f4f6;
+        color: var(--cisd-blue);
+    }
+
+    .manual-nav a.active {
+        background: var(--cisd-blue);
+        color: white;
+    }
+
+    .shortcut-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .shortcut-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border-left: 4px solid var(--cisd-blue);
+    }
+
+    .shortcut-keys {
+        background: #e9ecef;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .feature-highlight {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border: 1px solid #0ea5e9;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+
+    .feature-highlight .feature-icon {
+        color: var(--cisd-blue);
+        font-size: 1.2rem;
+        margin-right: 0.5rem;
+    }
+
+    .step-list {
+        counter-reset: step-counter;
+        list-style: none;
+        padding: 0;
+    }
+
+    .step-list li {
+        counter-increment: step-counter;
+        margin-bottom: 1.5rem;
+        position: relative;
+        padding-left: 3rem;
+    }
+
+    .step-list li::before {
+        content: counter(step-counter);
+        position: absolute;
+        left: 0;
+        top: 0;
+        background: var(--cisd-blue);
+        color: white;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .warning-box {
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+
+    .warning-box .warning-icon {
+        color: #d97706;
+        margin-right: 0.5rem;
+    }
+
+    .tip-box {
+        background: #d1fae5;
+        border: 1px solid #10b981;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+
+    .tip-box .tip-icon {
+        color: #059669;
+        margin-right: 0.5rem;
+    }
+
+    .screenshot-placeholder {
+        background: #f8f9fa;
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        margin: 1rem 0;
+        color: #6b7280;
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .feature-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: transform 0.2s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .feature-card .feature-icon {
+        font-size: 2rem;
+        color: var(--cisd-blue);
+        margin-bottom: 1rem;
+    }
+
+    .table-responsive {
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Table of Contents Sidebar -->
+    <div class="col-lg-3">
+        <div class="manual-nav">
+            <h5 class="mb-3">Table of Contents</h5>
+            <ul>
+                <li><a href="#getting-started">Getting Started</a></li>
+                <li><a href="#dashboard-overview">Dashboard Overview</a></li>
+                <li><a href="#creating-articles">Creating Articles</a></li>
+                <li><a href="#editing-articles">Editing Articles</a></li>
+                <li><a href="#rich-text-editor">Rich Text Editor</a></li>
+                <li><a href="#media-management">Media Management</a></li>
+                <li><a href="#keyboard-shortcuts">Keyboard Shortcuts</a></li>
+                <li><a href="#categories-authors">Categories & Authors</a></li>
+                <li><a href="#seo-settings">SEO Settings</a></li>
+                <li><a href="#publishing-workflow">Publishing Workflow</a></li>
+                <li><a href="#troubleshooting">Troubleshooting</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-lg-9">
+        <!-- Header -->
+        <div class="manual-section">
+            <div class="text-center">
+                <h1 class="display-4 mb-3">CISD Dashboard User Manual</h1>
+                <p class="lead text-muted">Your complete guide to creating, editing, and managing content efficiently</p>
+                <div class="feature-highlight">
+                    <i class="fas fa-lightbulb feature-icon"></i>
+                    <strong>Quick Tip:</strong> Use Ctrl+F to search for specific topics in this manual.
+                </div>
+            </div>
+        </div>
+
+        <!-- Getting Started -->
+        <div id="getting-started" class="manual-section">
+            <h2><i class="fas fa-rocket me-2"></i>Getting Started</h2>
+            <p>Welcome to the CISD Dashboard! This comprehensive content management system allows you to create, edit, and manage articles with powerful features and an intuitive interface.</p>
+            
+            <h4>System Requirements</h4>
+            <ul>
+                <li>Modern web browser (Chrome, Firefox, Safari, Edge)</li>
+                <li>JavaScript enabled</li>
+                <li>Stable internet connection</li>
+                <li>Admin or staff user account</li>
+            </ul>
+
+            <div class="tip-box">
+                <i class="fas fa-info-circle tip-icon"></i>
+                <strong>Pro Tip:</strong> For the best experience, use the latest version of Chrome or Firefox with a screen resolution of at least 1024x768.
+            </div>
+        </div>
+
+        <!-- Dashboard Overview -->
+        <div id="dashboard-overview" class="manual-section">
+            <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard Overview</h2>
+            <p>The dashboard provides a comprehensive overview of your website's content and performance.</p>
+
+            <h4>Key Components</h4>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <i class="fas fa-chart-bar feature-icon"></i>
+                    <h5>Statistics</h5>
+                    <p>View article counts, views, and performance metrics</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-file-alt feature-icon"></i>
+                    <h5>Recent Articles</h5>
+                    <p>Quick access to your latest articles with status indicators</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-tasks feature-icon"></i>
+                    <h5>Quick Actions</h5>
+                    <p>One-click access to common tasks like creating articles</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-chart-pie feature-icon"></i>
+                    <h5>Content Status</h5>
+                    <p>Visual breakdown of published vs. draft content</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Creating Articles -->
+        <div id="creating-articles" class="manual-section">
+            <h2><i class="fas fa-plus-circle me-2"></i>Creating Articles</h2>
+            <p>Creating a new article is straightforward with our enhanced editor.</p>
+
+            <h4>Step-by-Step Guide</h4>
+            <ol class="step-list">
+                <li>
+                    <strong>Navigate to Article Creation</strong>
+                    <p>Click "Create Article" in the sidebar or use the quick action button on the dashboard.</p>
+                </li>
+                <li>
+                    <strong>Enter Article Title</strong>
+                    <p>Type your article title in the large input field at the top. This will automatically generate the URL slug.</p>
+                </li>
+                <li>
+                    <strong>Set Publication Date</strong>
+                    <p>Choose when to publish your article using the date/time picker.</p>
+                </li>
+                <li>
+                    <strong>Select Category and Author</strong>
+                    <p>Choose from existing categories and authors, or create new ones using the "+" buttons.</p>
+                </li>
+                <li>
+                    <strong>Write Article Excerpt</strong>
+                    <p>Add a compelling summary (up to 500 characters) that will appear in article previews.</p>
+                </li>
+                <li>
+                    <strong>Create Content</strong>
+                    <p>Use the rich text editor to write your article with formatting, images, and special elements.</p>
+                </li>
+                <li>
+                    <strong>Set Featured Image</strong>
+                    <p>Upload and select a featured image from the media library in the sidebar.</p>
+                </li>
+                <li>
+                    <strong>Configure SEO Settings</strong>
+                    <p>Add meta title, description, and keywords for search engine optimization.</p>
+                </li>
+                <li>
+                    <strong>Add Tags</strong>
+                    <p>Include relevant tags to help categorize and organize your content.</p>
+                </li>
+                <li>
+                    <strong>Save and Publish</strong>
+                    <p>Save as draft or publish immediately. The system auto-saves every 30 seconds.</p>
+                </li>
+            </ol>
+
+            <div class="warning-box">
+                <i class="fas fa-exclamation-triangle warning-icon"></i>
+                <strong>Important:</strong> Always fill out the title, excerpt, category, and author fields - these are required for publishing.
+            </div>
+        </div>
+
+        <!-- Editing Articles -->
+        <div id="editing-articles" class="manual-section">
+            <h2><i class="fas fa-edit me-2"></i>Editing Articles</h2>
+            <p>Edit existing articles with full access to all creation features plus additional editing tools.</p>
+
+            <h4>Accessing Articles for Editing</h4>
+            <ul>
+                <li>From the Dashboard: Click the edit icon next to any recent article</li>
+                <li>From Articles List: Navigate to "All Articles" and click the edit button</li>
+                <li>From Article View: Click "Edit Article" when viewing a published article</li>
+            </ul>
+
+            <h4>Editing Features</h4>
+            <div class="feature-highlight">
+                <i class="fas fa-save feature-icon"></i>
+                <strong>Auto-Save:</strong> Your changes are automatically saved every 2 seconds as you type, and every 30 seconds in the background.
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Description</th>
+                            <th>Access Method</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Live Preview</td>
+                            <td>See how your article will look before publishing</td>
+                            <td>Click "Preview" button</td>
+                        </tr>
+                        <tr>
+                            <td>Version History</td>
+                            <td>Track when articles were last modified</td>
+                            <td>View in article stats sidebar</td>
+                        </tr>
+                        <tr>
+                            <td>Bulk Operations</td>
+                            <td>Edit multiple articles at once</td>
+                            <td>All Articles page</td>
+                        </tr>
+                        <tr>
+                            <td>Duplicate Article</td>
+                            <td>Create a copy of an existing article</td>
+                            <td>Article actions menu</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Rich Text Editor -->
+        <div id="rich-text-editor" class="manual-section">
+            <h2><i class="fas fa-font me-2"></i>Rich Text Editor</h2>
+            <p>The rich text editor provides powerful formatting and content insertion capabilities.</p>
+
+            <h4>Toolbar Features</h4>
+            
+            <h5>Basic Formatting</h5>
+            <div class="shortcut-grid">
+                <div class="shortcut-item">
+                    <span>Bold Text</span>
+                    <span class="shortcut-keys">Ctrl+B</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Italic Text</span>
+                    <span class="shortcut-keys">Ctrl+I</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Underline Text</span>
+                    <span class="shortcut-keys">Ctrl+U</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Strikethrough</span>
+                    <span class="shortcut-keys">Click icon</span>
+                </div>
+            </div>
+
+            <h5>Text Styling</h5>
+            <ul>
+                <li><strong>Font Size:</strong> Choose from 10px to 32px</li>
+                <li><strong>Line Spacing:</strong> Adjust from 1.0 to 3.0</li>
+                <li><strong>Text Color:</strong> Use color picker for text color</li>
+                <li><strong>Background Color:</strong> Highlight text with background colors</li>
+            </ul>
+
+            <h5>Special Content Blocks</h5>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <i class="fas fa-quote-left feature-icon"></i>
+                    <h6>Quote Blocks</h6>
+                    <p>Highlighted quotations with optional attribution</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-comments feature-icon"></i>
+                    <h6>Interview Q&A</h6>
+                    <p>Question and answer format blocks</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-info-circle feature-icon"></i>
+                    <h6>Callout Boxes</h6>
+                    <p>Important notes and tips with custom styling</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-table feature-icon"></i>
+                    <h6>Tables</h6>
+                    <p>Data tables with customizable rows and columns</p>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <i class="fas fa-lightbulb tip-icon"></i>
+                <strong>Pro Tip:</strong> Select text before applying formatting for best results. Use Ctrl+Q to quickly create a quote from selected text.
+            </div>
+        </div>
+
+        <!-- Media Management -->
+        <div id="media-management" class="manual-section">
+            <h2><i class="fas fa-images me-2"></i>Media Management</h2>
+            <p>Upload, organize, and insert media files with automatic optimization.</p>
+
+            <h4>Uploading Media</h4>
+            <ol class="step-list">
+                <li>
+                    <strong>Access Media Library</strong>
+                    <p>Click "Media Library" in the sidebar or use the image button in the article editor.</p>
+                </li>
+                <li>
+                    <strong>Upload Files</strong>
+                    <p>Click "Upload Files" button or drag and drop files directly onto the page.</p>
+                </li>
+                <li>
+                    <strong>Automatic Processing</strong>
+                    <p>Images are automatically optimized to WebP format and resized for web performance.</p>
+                </li>
+            </ol>
+
+            <h4>Supported File Types</h4>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Formats</th>
+                            <th>Max Size</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Images</td>
+                            <td>JPG, PNG, GIF, WebP</td>
+                            <td>10MB</td>
+                            <td>Auto-optimized to WebP</td>
+                        </tr>
+                        <tr>
+                            <td>Videos</td>
+                            <td>MP4, WebM, OGG</td>
+                            <td>100MB</td>
+                            <td>Use for short clips</td>
+                        </tr>
+                        <tr>
+                            <td>Documents</td>
+                            <td>PDF, DOC, DOCX, TXT</td>
+                            <td>25MB</td>
+                            <td>For downloadable resources</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4>Inserting Images into Articles</h4>
+            <ol class="step-list">
+                <li>
+                    <strong>Position Cursor</strong>
+                    <p>Click where you want to insert the image in your article.</p>
+                </li>
+                <li>
+                    <strong>Open Media Library</strong>
+                    <p>Click the image icon in the toolbar or use the Insert menu.</p>
+                </li>
+                <li>
+                    <strong>Select Image</strong>
+                    <p>Click on an image to select it, then click "Insert Selected".</p>
+                </li>
+                <li>
+                    <strong>Add Caption</strong>
+                    <p>Click below the inserted image to add an optional caption.</p>
+                </li>
+            </ol>
+
+            <div class="feature-highlight">
+                <i class="fas fa-magic feature-icon"></i>
+                <strong>Auto-Optimization:</strong> All images are automatically compressed and converted to WebP format for faster loading times.
+            </div>
+        </div>
+
+        <!-- Keyboard Shortcuts -->
+        <div id="keyboard-shortcuts" class="manual-section">
+            <h2><i class="fas fa-keyboard me-2"></i>Keyboard Shortcuts</h2>
+            <p>Speed up your workflow with these keyboard shortcuts.</p>
+
+            <h4>Text Formatting</h4>
+            <div class="shortcut-grid">
+                <div class="shortcut-item">
+                    <span>Bold</span>
+                    <span class="shortcut-keys">Ctrl+B</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Italic</span>
+                    <span class="shortcut-keys">Ctrl+I</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Underline</span>
+                    <span class="shortcut-keys">Ctrl+U</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Insert Link</span>
+                    <span class="shortcut-keys">Ctrl+K</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Quote Block</span>
+                    <span class="shortcut-keys">Ctrl+Q</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Clear Formatting</span>
+                    <span class="shortcut-keys">Ctrl+Space</span>
+                </div>
+            </div>
+
+            <h4>Editor Actions</h4>
+            <div class="shortcut-grid">
+                <div class="shortcut-item">
+                    <span>Undo</span>
+                    <span class="shortcut-keys">Ctrl+Z</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Redo</span>
+                    <span class="shortcut-keys">Ctrl+Y</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Save Draft</span>
+                    <span class="shortcut-keys">Ctrl+S</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Cycle Headings</span>
+                    <span class="shortcut-keys">Ctrl+Shift+H</span>
+                </div>
+            </div>
+
+            <h4>Text Alignment</h4>
+            <div class="shortcut-grid">
+                <div class="shortcut-item">
+                    <span>Align Left</span>
+                    <span class="shortcut-keys">Ctrl+Shift+L</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Align Center</span>
+                    <span class="shortcut-keys">Ctrl+Shift+E</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Align Right</span>
+                    <span class="shortcut-keys">Ctrl+Shift+R</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Justify</span>
+                    <span class="shortcut-keys">Ctrl+Shift+J</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories & Authors -->
+        <div id="categories-authors" class="manual-section">
+            <h2><i class="fas fa-tags me-2"></i>Categories & Authors</h2>
+            <p>Organize your content with categories and manage author information.</p>
+
+            <h4>Creating Categories</h4>
+            <ol class="step-list">
+                <li>
+                    <strong>Access Category Creation</strong>
+                    <p>Click the "+" button next to the category dropdown when creating/editing articles.</p>
+                </li>
+                <li>
+                    <strong>Enter Category Details</strong>
+                    <p>Provide a name (URL-friendly), display name, description, and color.</p>
+                </li>
+                <li>
+                    <strong>Save and Use</strong>
+                    <p>The new category becomes immediately available for selection.</p>
+                </li>
+            </ol>
+
+            <h4>Managing Authors</h4>
+            <ol class="step-list">
+                <li>
+                    <strong>Create New Author</strong>
+                    <p>Use the "+" button next to the author dropdown.</p>
+                </li>
+                <li>
+                    <strong>Author Information</strong>
+                    <p>Enter name, professional title, email, and biography.</p>
+                </li>
+                <li>
+                    <strong>Author Profiles</strong>
+                    <p>Authors can have detailed profiles with photos and social links.</p>
+                </li>
+            </ol>
+
+            <div class="tip-box">
+                <i class="fas fa-users tip-icon"></i>
+                <strong>Best Practice:</strong> Create author profiles for all regular contributors to maintain consistency and professionalism.
+            </div>
+        </div>
+
+        <!-- SEO Settings -->
+        <div id="seo-settings" class="manual-section">
+            <h2><i class="fas fa-search me-2"></i>SEO Settings</h2>
+            <p>Optimize your articles for search engines with comprehensive SEO tools.</p>
+
+            <h4>SEO Checklist</h4>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Element</th>
+                            <th>Recommended Length</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Meta Title</td>
+                            <td>50-60 characters</td>
+                            <td>Appears in search results and browser tabs</td>
+                        </tr>
+                        <tr>
+                            <td>Meta Description</td>
+                            <td>150-160 characters</td>
+                            <td>Snippet shown in search results</td>
+                        </tr>
+                        <tr>
+                            <td>Focus Keywords</td>
+                            <td>3-5 keywords</td>
+                            <td>Main terms you want to rank for</td>
+                        </tr>
+                        <tr>
+                            <td>Alt Text (Images)</td>
+                            <td>125 characters max</td>
+                            <td>Accessibility and image SEO</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4>SEO Best Practices</h4>
+            <ul>
+                <li>Use your focus keyword in the title and first paragraph</li>
+                <li>Write compelling meta descriptions that encourage clicks</li>
+                <li>Use header tags (H1, H2, H3) to structure content</li>
+                <li>Add alt text to all images</li>
+                <li>Keep URLs short and descriptive</li>
+                <li>Internal linking to related articles</li>
+            </ul>
+        </div>
+
+        <!-- Publishing Workflow -->
+        <div id="publishing-workflow" class="manual-section">
+            <h2><i class="fas fa-rocket me-2"></i>Publishing Workflow</h2>
+            <p>Understand the publishing process and content lifecycle.</p>
+
+            <h4>Article Status Stages</h4>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <i class="fas fa-edit feature-icon" style="color: #f59e0b;"></i>
+                    <h6>Draft</h6>
+                    <p>Work in progress, visible only to editors</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-eye feature-icon" style="color: #8b5cf6;"></i>
+                    <h6>Under Review</h6>
+                    <p>Submitted for editorial review</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-clock feature-icon" style="color: #3b82f6;"></i>
+                    <h6>Scheduled</h6>
+                    <p>Set to publish at a specific date/time</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-globe feature-icon" style="color: #10b981;"></i>
+                    <h6>Published</h6>
+                    <p>Live on the website and visible to visitors</p>
+                </div>
+            </div>
+
+            <h4>Pre-Publication Checklist</h4>
+            <ol class="step-list">
+                <li>
+                    <strong>Content Review</strong>
+                    <p>Check spelling, grammar, and factual accuracy.</p>
+                </li>
+                <li>
+                    <strong>Image Verification</strong>
+                    <p>Ensure all images have alt text and appropriate captions.</p>
+                </li>
+                <li>
+                    <strong>SEO Optimization</strong>
+                    <p>Complete meta title, description, and focus keywords.</p>
+                </li>
+                <li>
+                    <strong>Preview Article</strong>
+                    <p>Use the preview function to see how it will appear to readers.</p>
+                </li>
+                <li>
+                    <strong>Final Formatting</strong>
+                    <p>Check heading hierarchy and overall layout.</p>
+                </li>
+            </ol>
+        </div>
+
+        <!-- Troubleshooting -->
+        <div id="troubleshooting" class="manual-section">
+            <h2><i class="fas fa-wrench me-2"></i>Troubleshooting</h2>
+            <p>Solutions to common issues and how to get help.</p>
+
+            <h4>Common Issues</h4>
+            
+            <h5>Editor Not Loading</h5>
+            <ul>
+                <li>Refresh the page (F5 or Ctrl+R)</li>
+                <li>Clear browser cache and cookies</li>
+                <li>Try a different browser</li>
+                <li>Check internet connection</li>
+            </ul>
+
+            <h5>Auto-Save Not Working</h5>
+            <ul>
+                <li>Check if you're still logged in</li>
+                <li>Verify internet connection</li>
+                <li>Look for error messages in the browser console</li>
+                <li>Manual save with Ctrl+S</li>
+            </ul>
+
+            <h5>Images Not Uploading</h5>
+            <ul>
+                <li>Check file size (max 10MB for images)</li>
+                <li>Verify file format is supported</li>
+                <li>Try uploading one file at a time</li>
+                <li>Check internet connection stability</li>
+            </ul>
+
+            <h5>Formatting Issues</h5>
+            <ul>
+                <li>Use the "Clear Formatting" button (Ctrl+Space)</li>
+                <li>Copy content to plain text editor and back</li>
+                <li>Check for conflicting CSS styles</li>
+                <li>Refresh the editor</li>
+            </ul>
+
+            <div class="warning-box">
+                <i class="fas fa-life-ring warning-icon"></i>
+                <strong>Need Help?</strong> If you encounter persistent issues, contact your system administrator or technical support team with specific details about the problem and steps you've tried.
+            </div>
+
+            <h4>Browser Compatibility</h4>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Browser</th>
+                            <th>Minimum Version</th>
+                            <th>Recommended</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Chrome</td>
+                            <td>Version 90+</td>
+                            <td>Latest version</td>
+                        </tr>
+                        <tr>
+                            <td>Firefox</td>
+                            <td>Version 88+</td>
+                            <td>Latest version</td>
+                        </tr>
+                        <tr>
+                            <td>Safari</td>
+                            <td>Version 14+</td>
+                            <td>Latest version</td>
+                        </tr>
+                        <tr>
+                            <td>Edge</td>
+                            <td>Version 90+</td>
+                            <td>Latest version</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="manual-section">
+            <div class="text-center">
+                <h4>Need Additional Help?</h4>
+                <p class="text-muted">This manual covers the most common tasks and features. For advanced features or specific questions, contact your system administrator.</p>
+                <div class="feature-highlight">
+                    <i class="fas fa-book feature-icon"></i>
+                    <strong>Remember:</strong> The system auto-saves your work frequently, so don't worry about losing content while you learn!
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Smooth scrolling for navigation links
+    document.querySelectorAll('.manual-nav a').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    });
+
+    // Update active navigation item on scroll
+    const sections = document.querySelectorAll('.manual-section[id]');
+    const navLinks = document.querySelectorAll('.manual-nav a');
+
+    window.addEventListener('scroll', function() {
+        let current = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.clientHeight;
+            if (scrollY >= (sectionTop - 200)) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${current}`) {
+                link.classList.add('active');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
