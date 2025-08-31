@@ -480,6 +480,32 @@ def article_edit_view(request, article_id):
     return render(request, "dashboard/article_edit.html", context)
 
 
+# Add this function to your views.py file
+
+
+@admin_required(message="Please sign in to access the user manual.")
+def user_manual_view(request):
+    """
+    Display the comprehensive user manual for the dashboard.
+    This view provides detailed documentation on all dashboard features.
+    """
+    # You can add any dynamic content here if needed
+    # For example, version information, user-specific tips, etc.
+
+    context = {
+        "dashboard_version": "2.1.0",  # You can make this dynamic
+        "last_updated": "2024-12-19",  # Update when you modify the manual
+        "user_role": "Admin" if request.user.is_staff else "Editor",
+        "quick_stats": {
+            "total_features": 50,  # Update based on your actual feature count
+            "keyboard_shortcuts": 15,
+            "supported_file_types": 8,
+        },
+    }
+
+    return render(request, "dashboard/user_manual.html", context)
+
+
 # Protected AJAX Views
 
 

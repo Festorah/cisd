@@ -13,6 +13,7 @@ from tpsq.models import (
     PretotypeIssue,
     PretotypeIssueStatus,
     PretotypeReaction,
+    PretotypeSession,
     SurveyResponse,
     UserSession,
 )
@@ -510,6 +511,14 @@ class PretotypeIssueAdmin(admin.ModelAdmin):
     list_filter = ["issue_type", "has_image"]
     search_fields = ["issue_type", "issue_details"]
     readonly_fields = ["submitted_at"]
+
+
+@admin.register(PretotypeSession)
+class PretotypeSessionAdmin(admin.ModelAdmin):
+    list_display = ["session_id", "device_type", "completed_funnel"]
+    list_filter = ["device_type", "completed_funnel"]
+    search_fields = ["device_type", "referrer"]
+    readonly_fields = ["started_at"]
 
 
 # Custom admin site configuration

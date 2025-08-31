@@ -17,6 +17,8 @@ urlpatterns = [
     ),
     # Media management
     path("media/", views.media_library_view, name="media_library"),
+    # User Manual
+    path("user-manual/", views.user_manual_view, name="user_manual"),
     # AJAX endpoints for the new article create functionality
     path("ajax/save-article/", views.save_article_view, name="save_article"),
     path("ajax/upload-file/", views.upload_file_view, name="upload_file"),

@@ -10,6 +10,8 @@
     <!-- External CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" href="https://res.cloudinary.com/djxwoilou/image/upload/v1755620594/cisd/images/CISDL1_CLogo-1-2048x1467_1_kkywut.png"
+        type="image/png">
 
     <!-- Dashboard CSS -->
     <link href="{% static 'css/dashboard.css' %}" rel="stylesheet">
@@ -157,7 +159,8 @@
                 <div class="d-flex align-items-center">
                     <div class="sidebar-logo">
                         <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
-                            <span style="font-size: 0.8rem; font-weight: 700;">CISD</span>
+<!--                            <span style="font-size: 0.8rem; font-weight: 700;">CISD</span>-->
+                            <img src="https://res.cloudinary.com/djxwoilou/image/upload/v1755620594/cisd/images/CISDL1_CLogo-1-2048x1467_1_kkywut.png">
                         </div>
                     </div>
                     <div>
@@ -252,6 +255,19 @@
                     </a>
                 </div>
             </div>
+
+            <!-- Help & Documentation Section -->
+            <div class="nav-section">
+                <div class="nav-section-title">Help & Documentation</div>
+                <div class="nav-item">
+                    <a href="{% url 'dashboard:user_manual' %}"
+                        class="nav-link {% if request.resolver_match.url_name == 'user_manual' %}active{% endif %}">
+                        <i class="fas fa-book"></i>
+                        User Manual
+                    </a>
+                </div>
+            </div>
+
         </nav>
     </div>
 
@@ -285,7 +301,16 @@
                         <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
                         <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'admin:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        <li>
+                            <form method="post" action="{% url 'auth:logout' %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item border-0 bg-transparent text-start"
+                                        style="width: 100%; color: inherit;">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                </button>
+                            </form>
+                        </li>
+<!--                        <li><a class="dropdown-item" href="{% url 'auth:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>-->
                     </ul>
                 </div>
             </div>
