@@ -14,8 +14,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.db.models import Avg, Count, Q
 from django.utils import timezone
-
-from ...models import (
+from tpsq.models import (
     DailyStats,
     EarlyAccessSignup,
     FunnelEvent,

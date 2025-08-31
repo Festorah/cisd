@@ -1,6 +1,5 @@
 from django.urls import path
-
-from . import views
+from tpsq import views
 
 urlpatterns = [
     # API Endpoints
@@ -13,9 +12,47 @@ urlpatterns = [
     path("", views.LandingPageView.as_view(), name="landing_page"),
     path("api/csrf-token/", views.csrf_token, name="csrf_token"),
     path("intervention/", views.LandingPageView.as_view(), name="intervention"),
+    path("report/", views.ReportView.as_view(), name="report"),
     path("speakup/", views.LandingPageView.as_view(), name="speakup"),
     path("accountability/", views.LandingPageView.as_view(), name="accountability"),
     # Dashboard
     path("tpsq/dashboard/", views.DashboardView.as_view(), name="dashboard"),
     path("tpsq/analytics/", views.DashboardView.as_view(), name="analytics"),
+    path(
+        "tpsq/dashboard/reports/",
+        views.ReportDashboardView.as_view(),
+        name="reports-dashboard",
+    ),
+    path("api/pretotype-track/", views.pretotype_track_event, name="pretotype_track"),
+    path("api/pretotype-issue/", views.pretotype_submit_issue, name="pretotype_issue"),
+    path(
+        "api/pretotype-contact/",
+        views.pretotype_submit_contact,
+        name="pretotype_contact",
+    ),
+    path(
+        "api/pretotype-upload-image/",
+        views.pretotype_upload_image,
+        name="pretotype_upload_image",
+    ),
+    path(
+        "api/pretotype-analytics/",
+        views.pretotype_analytics_dashboard,
+        name="pretotype_analytics",
+    ),
+    # Pretotype Social Feed
+    path("community/", views.PretotypeFeedView.as_view(), name="pretotype_feed"),
+    # Feed API Endpoints
+    path("api/pretotype-comment/", views.add_comment, name="add_comment"),
+    path("api/pretotype-reaction/", views.add_reaction, name="add_reaction"),
+    path(
+        "api/pretotype-comments/<uuid:issue_id>/",
+        views.get_issue_comments,
+        name="get_issue_comments",
+    ),
+    path(
+        "api/pretotype-comment-upvote/",
+        views.upvote_comment,
+        name="upvote_comment",
+    ),
 ]

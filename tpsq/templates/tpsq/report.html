@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Today's Problems</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            /* CISD Brand Colors */
+            --primary-blue: #2B5CE6;
+            --primary-green: #0EA5E9;
+            --accent-orange: #F97316;
+            --accent-red: #EF4444;
+            --dark-blue: #1E40AF;
+            --light-blue: #DBEAFE;
+            --success-green: #10B981;
+            --success-light: #D1FAE5;
+
+            /* CISD Gradients */
+            --gradient-primary: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-green) 100%);
+            --gradient-secondary: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-red) 100%);
+            --gradient-hero: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 50%, var(--primary-green) 100%);
+            --gradient-success: linear-gradient(135deg, var(--success-green) 0%, #059669 100%);
+
+            /* Typography */
+            --font-heading: 'Space Grotesk', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--gradient-hero);
+            color: #1a1a1a;
+            min-height: 100vh;
+            position: relative;
+            padding: 1rem;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* STEP 1: LANDING PAGE */
+        .landing-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .hero-headline {
+            font-size: clamp(2rem, 8vw, 4rem);
+            font-weight: 900;
+            color: white;
+            line-height: 1.2;
+            margin-bottom: 2rem;
+            font-family: var(--font-heading);
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero-subtext {
+            font-size: clamp(1rem, 3vw, 1.4rem);
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+            margin-bottom: 3rem;
+            max-width: 600px;
+            font-weight: 500;
+        }
+
+        .cta-button {
+            background: var(--gradient-secondary);
+            color: white;
+            border: none;
+            padding: 1.25rem 2.5rem;
+            border-radius: 15px;
+            font-size: clamp(1rem, 3vw, 1.3rem);
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: var(--font-heading);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
+            position: relative;
+            overflow: hidden;
+            min-width: 280px;
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .cta-button:hover::before {
+            left: 100%;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(239, 68, 68, 0.5);
+        }
+
+        /* STEP 2: REPORTING FORM */
+        .reporting-form {
+            display: none;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-top: 2rem;
+            box-shadow: 0 20px 40px rgba(43, 92, 230, 0.15);
+            position: relative;
+            overflow: hidden;
+            animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reporting-form::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--gradient-primary);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .form-title {
+            font-size: clamp(1.5rem, 4vw, 2.2rem);
+            font-weight: 800;
+            color: var(--dark-blue);
+            margin-bottom: 2rem;
+            text-align: center;
+            font-family: var(--font-heading);
+        }
+
+        .form-question {
+            font-size: clamp(1rem, 3vw, 1.3rem);
+            font-weight: 700;
+            color: var(--dark-blue);
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            font-family: inherit;
+            font-weight: 600;
+            color: #374151;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(43, 92, 230, 0.1);
+        }
+
+        .form-select option {
+            padding: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            font-family: inherit;
+            color: #374151;
+            background: white;
+            resize: vertical;
+            min-height: 120px;
+            transition: all 0.3s ease;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(43, 92, 230, 0.1);
+        }
+
+        .form-textarea::placeholder {
+            color: #9CA3AF;
+            font-style: italic;
+        }
+
+        .submit-button {
+            width: 100%;
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            padding: 1.25rem;
+            border-radius: 12px;
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: var(--font-heading);
+            margin-top: 1rem;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(43, 92, 230, 0.4);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* STEP 3: THANK YOU PAGE */
+        .thank-you-page {
+            display: none;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 3rem 2.5rem;
+            margin-top: 2rem;
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.15);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .thank-you-page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--gradient-success);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            background: var(--gradient-success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            animation: successBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .success-icon::before {
+            content: '✓';
+            color: white;
+            font-size: 3rem;
+            font-weight: bold;
+        }
+
+        .thank-you-title {
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            font-weight: 800;
+            color: var(--success-green);
+            margin-bottom: 1.5rem;
+            font-family: var(--font-heading);
+        }
+
+        .thank-you-message {
+            font-size: clamp(1rem, 3vw, 1.3rem);
+            color: #6B7280;
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+
+        .contact-form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .contact-input {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            font-family: inherit;
+            font-weight: 600;
+            color: #374151;
+            background: white;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .contact-input:focus {
+            outline: none;
+            border-color: var(--success-green);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .contact-input::placeholder {
+            color: #9CA3AF;
+            font-weight: 500;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .checkbox-input {
+            width: 20px;
+            height: 20px;
+            margin-right: 0.75rem;
+            margin-top: 0.25rem;
+            cursor: pointer;
+            accent-color: var(--success-green);
+        }
+
+        .checkbox-label {
+            font-size: clamp(0.85rem, 2.5vw, 1rem);
+            color: #6B7280;
+            line-height: 1.4;
+            cursor: pointer;
+        }
+
+        .contact-submit {
+            background: var(--gradient-success);
+            color: white;
+            border: none;
+            padding: 1.25rem 2rem;
+            border-radius: 12px;
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: var(--font-heading);
+            min-width: 200px;
+        }
+
+        .contact-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .contact-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* IMAGE UPLOAD STYLES */
+        .image-upload-section {
+            border: 2px dashed #E5E7EB;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #F9FAFB;
+        }
+
+        .image-upload-section:hover {
+            border-color: var(--primary-blue);
+            background: #F3F4F6;
+        }
+
+        .image-upload-section.has-image {
+            border-color: var(--success-green);
+            background: var(--success-light);
+        }
+
+        .image-upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .image-upload-label:hover {
+            color: var(--primary-blue);
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .upload-text {
+            font-size: clamp(1rem, 3vw, 1.1rem);
+            font-weight: 600;
+            color: var(--dark-blue);
+            margin-bottom: 0.25rem;
+        }
+
+        .image-input {
+            display: none;
+        }
+
+        .upload-hint {
+            font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+            color: #6B7280;
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        .image-preview {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 0.5rem;
+        }
+
+        .image-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+        }
+
+        .image-details {
+            font-size: 0.85rem;
+            color: #6B7280;
+        }
+
+        .remove-image {
+            background: var(--accent-red);
+            color: white;
+            border: none;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .remove-image:hover {
+            background: #DC2626;
+        }
+
+        .upload-progress {
+            width: 100%;
+            height: 4px;
+            background: #E5E7EB;
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+            display: none;
+        }
+
+        .upload-progress-bar {
+            height: 100%;
+            background: var(--primary-blue);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .final-thank-you {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .final-thank-you h2 {
+            color: var(--success-green);
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            margin-bottom: 1rem;
+            font-family: var(--font-heading);
+        }
+
+        .final-thank-you p {
+            color: #6B7280;
+            font-size: clamp(1rem, 3vw, 1.2rem);
+        }
+
+        /* ANIMATIONS */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes successBounce {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 0.5rem;
+            }
+
+            .reporting-form,
+            .thank-you-page {
+                padding: 2rem 1.5rem;
+                margin-top: 1rem;
+            }
+
+            .hero-headline {
+                margin-bottom: 1.5rem;
+            }
+
+            .hero-subtext {
+                margin-bottom: 2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .reporting-form,
+            .thank-you-page {
+                padding: 1.5rem 1rem;
+            }
+
+            .cta-button {
+                min-width: 250px;
+                padding: 1rem 2rem;
+            }
+        }
+
+        /* LOADING STATES */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- STEP 1: LANDING PAGE -->
+        <div id="landingPage" class="landing-page">
+            <h1 class="hero-headline">
+                Report today's problems.<br>
+                Shape tomorrow's future.
+            </h1>
+
+            <p class="hero-subtext">
+                From no light to bad roads, your voice helps show what needs urgent action
+                and what must be part of long-term plans.
+            </p>
+
+            <button id="reportIssueBtn" class="cta-button">
+                Report Issue Now
+            </button>
+        </div>
+
+        <!-- STEP 2: REPORTING FORM -->
+        <div id="reportingForm" class="reporting-form">
+            <h2 class="form-title">Report Your Issue</h2>
+
+            <form id="issueForm">
+                <p class="form-question">What public service issue are you facing right now?</p>
+
+                <div class="form-group">
+                    <select id="issueType" class="form-select" required>
+                        <option value="">Select an issue type...</option>
+                        <option value="light">Light / Electricity</option>
+                        <option value="roads">Roads / Transportation</option>
+                        <option value="waste">Waste / Sanitation</option>
+                        <option value="water">Water Supply</option>
+                        <option value="security">Security</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="education">Education</option>
+                        <option value="others">Others</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <textarea
+                        id="issueDetails"
+                        class="form-textarea"
+                        placeholder="Add details if you like..."
+                        rows="4"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <div class="image-upload-section">
+                        <label class="image-upload-label">
+                            <i class="upload-icon">📸</i>
+                            <span class="upload-text">Add Photo (Optional)</span>
+                            <input
+                                type="file"
+                                id="issueImage"
+                                class="image-input"
+                                accept="image/*"
+                                capture="environment"
+                            />
+                        </label>
+                        <div id="imagePreview" class="image-preview"></div>
+                        <div class="upload-hint">Photos help authorities understand the issue better</div>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitReport" class="submit-button">
+                    Submit Report
+                </button>
+            </form>
+        </div>
+
+        <!-- STEP 3: THANK YOU PAGE -->
+        <div id="thankYouPage" class="thank-you-page">
+            <div class="success-icon"></div>
+
+            <h2 class="thank-you-title">Thank You!</h2>
+
+            <p class="thank-you-message">
+                when we go live, you'd get updates here.
+                Be the first to know when we launch.
+            </p>
+
+            <div class="contact-form">
+                <form id="contactForm">
+                    <input
+                        type="email"
+                        id="contactEmail"
+                        class="contact-input"
+                        placeholder="Your email address"
+                    />
+
+                    <input
+                        type="tel"
+                        id="contactWhatsapp"
+                        class="contact-input"
+                        placeholder="Your WhatsApp number (optional)"
+                    />
+
+                    <div class="checkbox-group">
+                        <input
+                            type="checkbox"
+                            id="optInCheckbox"
+                            class="checkbox-input"
+                            required
+                        />
+                        <label for="optInCheckbox" class="checkbox-label">
+                            I want to receive updates when this app launches.
+                        </label>
+                    </div>
+
+                    <button type="submit" id="keepUpdated" class="contact-submit">
+                        Keep Me Updated
+                    </button>
+                </form>
+            </div>
+
+            <div id="finalThankYou" class="final-thank-you">
+                <h2>You're All Set!</h2>
+                <p>We'll notify you as soon as go live.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Analytics and Tracking System
+        class PretotypeTracker {
+            constructor() {
+                this.sessionId = this.getOrCreateSessionId();
+                this.startTime = Date.now();
+                this.currentStep = 1;
+                this.issueData = {};
+                this.csrfToken = this.getCSRFToken();
+
+                this.init();
+            }
+
+            getOrCreateSessionId() {
+                let sessionId = sessionStorage.getItem('pretotype_session_id');
+                if (!sessionId) {
+                    sessionId = this.generateUUID();
+                    sessionStorage.setItem('pretotype_session_id', sessionId);
+                }
+                return sessionId;
+            }
+
+            generateUUID() {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+
+            getCSRFToken() {
+                const metaToken = document.querySelector('meta[name="csrf-token"]');
+                if (metaToken) {
+                    return metaToken.getAttribute('content');
+                }
+                return '';
+            }
+
+            getDeviceInfo() {
+                const ua = navigator.userAgent;
+                let deviceType = 'desktop';
+
+                if (/tablet|ipad|playbook|silk/i.test(ua)) {
+                    deviceType = 'tablet';
+                } else if (/mobile|iphone|ipod|android|blackberry|opera|mini|windows\sce|palm|smartphone|iemobile/i.test(ua)) {
+                    deviceType = 'mobile';
+                }
+
+                return {
+                    deviceType,
+                    userAgent: ua,
+                    screenSize: `${screen.width}x${screen.height}`,
+                    viewport: `${window.innerWidth}x${window.innerHeight}`
+                };
+            }
+
+            async sendRequest(url, data, retries = 1) {
+                /**
+                 * Enhanced request handler with CSRF token and retry logic
+                 */
+                for (let attempt = 0; attempt <= retries; attempt++) {
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.csrfToken,
+                                // Add these headers for better compatibility
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            credentials: 'same-origin', // Important for CSRF
+                            body: JSON.stringify(data)
+                        });
+
+                        if (response.ok) {
+                            return await response.json();
+                        } else if (response.status === 403 && attempt < retries) {
+                            // CSRF token might be expired, try to refresh it
+                            console.warn('CSRF token may be expired, refreshing...');
+                            await this.refreshCSRFToken();
+                            continue; // Retry with new token
+                        } else {
+                            const errorData = await response.json().catch(() => ({}));
+                            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+                        }
+                    } catch (error) {
+                        if (attempt === retries) {
+                            throw error; // Last attempt failed
+                        }
+                        console.warn(`Request attempt ${attempt + 1} failed:`, error.message);
+                    }
+                }
+            }
+
+            async refreshCSRFToken() {
+                /**
+                 * Refresh CSRF token by making a request to your CSRF endpoint
+                 */
+                try {
+                    const response = await fetch('/api/csrf-token/', {
+                        method: 'GET',
+                        credentials: 'same-origin'
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.csrfToken = data.csrf_token;
+                        console.log('CSRF token refreshed successfully');
+                    }
+                } catch (error) {
+                    console.error('Failed to refresh CSRF token:', error);
+                }
+            }
+
+            async trackEvent(eventType, data = {}) {
+                const event = {
+                    sessionId: this.sessionId,
+                    eventType,
+                    timestamp: new Date().toISOString(),
+                    step: this.currentStep,
+                    timeFromStart: Date.now() - this.startTime,
+                    url: window.location.href,
+                    referrer: document.referrer,
+                    ...this.getDeviceInfo(),
+                    ...data
+                };
+
+                try {
+                    await this.sendRequest('/api/pretotype-track/', event);
+                } catch (error) {
+                    console.warn('Analytics tracking failed:', error);
+                    // Don't throw - tracking failures shouldn't break user experience
+                }
+
+                // Also send to Google Analytics if available
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', eventType, {
+                        event_category: 'pretotype',
+                        event_label: `step_${this.currentStep}`,
+                        value: this.currentStep
+                    });
+                }
+            }
+
+            init() {
+                // Track initial page view
+                this.trackEvent('page_view', {
+                    step: 1,
+                    action: 'landing_page_loaded'
+                });
+
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                // Step 1: CTA Button Click
+                document.getElementById('reportIssueBtn').addEventListener('click', () => {
+                    this.handleCtaClick();
+                });
+
+                // Step 2: Form Submission
+                document.getElementById('issueForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleIssueSubmission();
+                });
+
+                // Step 3: Contact Form Submission
+                document.getElementById('contactForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleContactSubmission();
+                });
+
+                // Track form interactions
+                document.getElementById('issueType').addEventListener('change', (e) => {
+                    this.trackEvent('form_interaction', {
+                        action: 'issue_type_selected',
+                        value: e.target.value
+                    });
+                });
+
+                document.getElementById('issueDetails').addEventListener('focus', () => {
+                    this.trackEvent('form_interaction', {
+                        action: 'details_field_focused'
+                    });
+                });
+
+                // Image upload handling
+                this.setupImageUpload();
+            }
+
+            setupImageUpload() {
+                const imageInput = document.getElementById('issueImage');
+                const imagePreview = document.getElementById('imagePreview');
+                const uploadSection = document.querySelector('.image-upload-section');
+                let selectedImage = null;
+
+                imageInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    // Validate file
+                    if (!this.validateImageFile(file)) {
+                        imageInput.value = '';
+                        return;
+                    }
+
+                    selectedImage = file;
+                    this.showImagePreview(file, imagePreview, uploadSection);
+
+                    // Track image upload
+                    this.trackEvent('image_uploaded', {
+                        action: 'image_selected',
+                        fileSize: file.size,
+                        fileType: file.type,
+                        fileName: file.name
+                    });
+                });
+
+                // Store reference for form submission
+                this.selectedImage = () => selectedImage;
+            }
+
+            validateImageFile(file) {
+                const maxSize = 5 * 1024 * 1024; // 5MB
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+                if (file.size > maxSize) {
+                    alert('Image must be less than 5MB');
+                    return false;
+                }
+
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Please select a JPEG, PNG, or WebP image');
+                    return false;
+                }
+
+                return true;
+            }
+
+            showImagePreview(file, previewContainer, uploadSection) {
+                const reader = new FileReader();
+
+                reader.onload = (e) => {
+                    const imageUrl = e.target.result;
+
+                    previewContainer.innerHTML = `
+                        <img src="${imageUrl}" class="preview-image" alt="Issue photo preview">
+                        <div class="image-info">
+                            <div class="image-details">
+                                ${file.name} (${(file.size / 1024).toFixed(0)} KB)
+                            </div>
+                            <button type="button" class="remove-image" onclick="window.pretotypeTracker.removeImage()">
+                                Remove
+                            </button>
+                        </div>
+                    `;
+
+                    previewContainer.style.display = 'block';
+                    uploadSection.classList.add('has-image');
+
+                    // Update upload text
+                    document.querySelector('.upload-text').textContent = 'Change Photo';
+                    document.querySelector('.upload-icon').textContent = '✓';
+                };
+
+                reader.readAsDataURL(file);
+            }
+
+            removeImage() {
+                const imageInput = document.getElementById('issueImage');
+                const imagePreview = document.getElementById('imagePreview');
+                const uploadSection = document.querySelector('.image-upload-section');
+
+                imageInput.value = '';
+                imagePreview.style.display = 'none';
+                imagePreview.innerHTML = '';
+                uploadSection.classList.remove('has-image');
+
+                // Reset upload text
+                document.querySelector('.upload-text').textContent = 'Add Photo (Optional)';
+                document.querySelector('.upload-icon').textContent = '📸';
+
+                // Track removal
+                this.trackEvent('image_removed', {
+                    action: 'image_removed'
+                });
+            }
+
+            async uploadImage(file) {
+                if (!file) return null;
+
+                const formData = new FormData();
+                formData.append('image', file);
+                formData.append('sessionId', this.sessionId);
+
+                try {
+                    const response = await fetch('/api/pretotype-upload-image/', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': this.csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        credentials: 'same-origin',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 403) {
+                            // Try refreshing CSRF token and retry once
+                            await this.refreshCSRFToken();
+
+                            const retryResponse = await fetch('/api/pretotype-upload-image/', {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRFToken': this.csrfToken,
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                },
+                                credentials: 'same-origin',
+                                body: formData
+                            });
+
+                            if (!retryResponse.ok) {
+                                const errorData = await retryResponse.json().catch(() => ({}));
+                                throw new Error(errorData.error || 'Upload failed after token refresh');
+                            }
+
+                            const result = await retryResponse.json();
+                            if (result.success) {
+                                return result.image_url;
+                            } else {
+                                throw new Error(result.error || 'Upload failed');
+                            }
+                        } else {
+                            const errorData = await response.json().catch(() => ({}));
+                            throw new Error(errorData.error || `Upload failed with status ${response.status}`);
+                        }
+                    }
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        return result.image_url;
+                    } else {
+                        throw new Error(result.error || 'Upload failed');
+                    }
+                } catch (error) {
+                    console.error('Image upload failed:', error);
+                    this.trackEvent('image_upload_error', {
+                        action: 'upload_failed',
+                        error: error.message
+                    });
+                    return null;
+                }
+            }
+
+            handleCtaClick() {
+                this.trackEvent('cta_click', {
+                    action: 'report_issue_now_clicked',
+                    step: 1
+                });
+
+                // Transition to Step 2
+                this.currentStep = 2;
+                this.showReportingForm();
+
+                this.trackEvent('step_transition', {
+                    from: 1,
+                    to: 2,
+                    action: 'form_displayed'
+                });
+            }
+
+            async handleIssueSubmission() {
+                const issueType = document.getElementById('issueType').value;
+                const issueDetails = document.getElementById('issueDetails').value;
+                const selectedImage = this.selectedImage();
+
+                if (!issueType) {
+                    alert('Please select an issue type');
+                    return;
+                }
+
+                // Show loading state
+                const submitBtn = document.getElementById('submitReport');
+                const originalText = submitBtn.textContent;
+                submitBtn.innerHTML = 'Submitting... <span class="spinner"></span>';
+                submitBtn.disabled = true;
+
+                // Track submission
+                this.trackEvent('issue_submitted', {
+                    action: 'report_submitted',
+                    step: 2,
+                    issueType,
+                    hasDetails: !!issueDetails,
+                    detailsLength: issueDetails.length,
+                    hasImage: !!selectedImage,
+                    imageSize: selectedImage ? selectedImage.size : 0
+                });
+
+                try {
+                    let imageUrl = null;
+
+                    // Upload image first if present
+                    if (selectedImage) {
+                        submitBtn.innerHTML = 'Uploading photo... <span class="spinner"></span>';
+                        imageUrl = await this.uploadImage(selectedImage);
+
+                        if (!imageUrl) {
+                            // Image upload failed but continue with submission
+                            const continueWithoutImage = confirm(
+                                'Photo upload failed. Do you want to submit the report without the photo?'
+                            );
+
+                            if (!continueWithoutImage) {
+                                submitBtn.textContent = originalText;
+                                submitBtn.disabled = false;
+                                return;
+                            }
+                        }
+                    }
+
+                    submitBtn.innerHTML = 'Processing... <span class="spinner"></span>';
+
+                    // Send issue data
+                    await this.submitIssueData({
+                        sessionId: this.sessionId,
+                        issueType,
+                        issueDetails,
+                        imageUrl,
+                        timestamp: new Date().toISOString(),
+                        ...this.getDeviceInfo()
+                    });
+
+                    // Simulate processing time
+                    setTimeout(() => {
+                        this.currentStep = 3;
+                        this.showThankYouPage();
+
+                        this.trackEvent('step_transition', {
+                            from: 2,
+                            to: 3,
+                            action: 'thank_you_displayed',
+                            submissionHadImage: !!imageUrl
+                        });
+                    }, 1500);
+
+                } catch (error) {
+                    console.error('Submission failed:', error);
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    alert('Something went wrong. Please try again.');
+
+                    this.trackEvent('form_error', {
+                        action: 'submission_failed',
+                        error: error.message,
+                        hadImage: !!selectedImage
+                    });
+                }
+            }
+
+            async handleContactSubmission() {
+                const email = document.getElementById('contactEmail').value;
+                const whatsapp = document.getElementById('contactWhatsapp').value;
+                const optIn = document.getElementById('optInCheckbox').checked;
+
+                if (!optIn) {
+                    alert('Please check the box to receive updates');
+                    return;
+                }
+
+                if (!email && !whatsapp) {
+                    alert('Please provide either an email or WhatsApp number');
+                    return;
+                }
+
+                // Show loading state
+                const submitBtn = document.getElementById('keepUpdated');
+                const originalText = submitBtn.textContent;
+                submitBtn.innerHTML = 'Saving... <span class="spinner"></span>';
+                submitBtn.disabled = true;
+
+                // Track contact submission
+                this.trackEvent('contact_submitted', {
+                    action: 'contact_details_submitted',
+                    step: 3,
+                    hasEmail: !!email,
+                    hasWhatsapp: !!whatsapp,
+                    optedIn: optIn
+                });
+
+                try {
+                    // Send contact data
+                    await this.submitContactData({
+                        sessionId: this.sessionId,
+                        email,
+                        whatsapp,
+                        optIn,
+                        issueData: this.issueData,
+                        timestamp: new Date().toISOString(),
+                        ...this.getDeviceInfo()
+                    });
+
+                    // Show final thank you
+                    setTimeout(() => {
+                        document.querySelector('.contact-form').style.display = 'none';
+                        document.getElementById('finalThankYou').style.display = 'block';
+
+                        this.trackEvent('funnel_completed', {
+                            action: 'full_funnel_completed',
+                            step: 3,
+                            totalTime: Date.now() - this.startTime
+                        });
+                    }, 1000);
+
+                } catch (error) {
+                    console.error('Contact submission failed:', error);
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    alert('Something went wrong. Please try again.');
+                }
+            }
+
+            async submitIssueData(data) {
+                try {
+                    return await this.sendRequest('/api/pretotype-issue/', data);
+                } catch (error) {
+                    console.error('Issue submission failed:', error);
+                    throw error;
+                }
+            }
+
+            async submitContactData(data) {
+                try {
+                    return await this.sendRequest('/api/pretotype-contact/', data);
+                } catch (error) {
+                    console.error('Contact submission failed:', error);
+                    throw error;
+                }
+            }
+
+            showReportingForm() {
+                document.getElementById('landingPage').style.display = 'none';
+                document.getElementById('reportingForm').style.display = 'block';
+
+                // Scroll to form
+                document.getElementById('reportingForm').scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+
+            showThankYouPage() {
+                document.getElementById('reportingForm').style.display = 'none';
+                document.getElementById('thankYouPage').style.display = 'block';
+
+                // Scroll to thank you page
+                document.getElementById('thankYouPage').scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            window.pretotypeTracker = new PretotypeTracker();
+
+            // Track page exit
+            window.addEventListener('beforeunload', () => {
+                window.pretotypeTracker.trackEvent('page_exit', {
+                    timeOnPage: Date.now() - window.pretotypeTracker.startTime,
+                    finalStep: window.pretotypeTracker.currentStep
+                });
+            });
+        });
+
+        // Google Analytics Integration (if needed)
+        // Add your Google Analytics tracking code here
+
+        // Example Google Analytics setup:
+        /*
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID');
+        */
+    </script>
+
+    <!-- Google Analytics (replace GA_MEASUREMENT_ID with your actual ID) -->
+    <!--
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
+    -->
+</body>
+
+</html>

@@ -1,7 +1,6 @@
 from django.core.validators import EmailValidator
 from rest_framework import serializers
-
-from .models import (
+from tpsq.models import (
     DailyStats,
     EarlyAccessSignup,
     FunnelEvent,
