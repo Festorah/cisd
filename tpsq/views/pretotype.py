@@ -125,6 +125,35 @@ def get_or_create_pretotype_session(session_id, request_data, request):
     return session
 
 
+def detect_media_duration(file_path, media_type):
+    """
+    Detect media duration for video/audio files.
+    Returns duration in seconds or None if unable to detect.
+    """
+    if media_type not in ["video", "audio"]:
+        return None
+
+    try:
+        # You might want to use a library like python-ffmpeg or moviepy
+        # For now, return None - implement based on your needs
+        # Example with moviepy (if installed):
+        # from moviepy.editor import VideoFileClip, AudioFileClip
+        # if media_type == 'video':
+        #     clip = VideoFileClip(file_path)
+        #     duration = clip.duration
+        #     clip.close()
+        #     return duration
+        # elif media_type == 'audio':
+        #     clip = AudioFileClip(file_path)
+        #     duration = clip.duration
+        #     clip.close()
+        #     return duration
+        return None
+    except Exception as e:
+        logger.warning(f"Failed to detect media duration: {e}")
+        return None
+
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def pretotype_track_event(request):
@@ -196,10 +225,17 @@ def pretotype_submit_issue(request):
         data = request.data
         session_id = data.get("sessionId")
         issue_type = data.get("issueType")
+        issue_location = data.get("issueLocation", "").strip()
 
         if not session_id or not issue_type:
             return Response(
                 {"error": "sessionId and issueType are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not issue_location:  # NEW VALIDATION
+            return Response(
+                {"error": "issueLocation is required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -233,20 +269,28 @@ def pretotype_submit_issue(request):
                     (timezone.now() - form_start_event.timestamp).total_seconds()
                 )
 
+            # UPDATED: Handle both old and new media fields for backward compatibility
+            media_url = data.get("mediaUrl", "")  # NEW
+            media_type = data.get("mediaType", "")  # NEW
+
+            # For backward compatibility with old frontend
+            image_url = data.get("imageUrl", "")
+            if image_url and not media_url:
+                media_url = image_url
+                media_type = "image"
+
             # Create issue record
             issue = PretotypeIssue.objects.create(
                 session=session,
                 issue_type=issue_type,
+                issue_location=issue_location,  # NEW
                 issue_details=data.get("issueDetails", "").strip(),
-                image_url=data.get("imageUrl", ""),
+                media_url=media_url,  # NEW
+                media_type=media_type,  # NEW
+                # Keep old fields for backward compatibility
+                image_url=image_url,
                 time_to_submit=time_to_submit,
             )
-
-            # If there's an image URL, extract additional metadata
-            if issue.image_url:
-                # You might want to validate the image URL here
-                # or fetch metadata about the image
-                pass
 
             # Update session
             session.max_step_reached = max(session.max_step_reached, 3)
@@ -261,8 +305,10 @@ def pretotype_submit_issue(request):
                     "success": True,
                     "issue_id": issue.id,
                     "issue_type": issue.get_issue_type_display(),
+                    "issue_location": issue.issue_location,  # NEW
                     "has_details": issue.has_details,
-                    "has_image": issue.has_image,
+                    "has_media": issue.has_media,  # UPDATED
+                    "media_type": issue.media_type,  # NEW
                     "next_step": 3,
                 },
                 status=status.HTTP_201_CREATED,
@@ -363,6 +409,255 @@ def pretotype_submit_contact(request):
         )
 
 
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def pretotype_upload_media(request):
+    """
+    API endpoint: /api/pretotype-upload-media/
+    Handles ALL media uploads for pretotype (photo, video, audio)
+    NEW: Replaces pretotype_upload_image with multi-media support
+    """
+    try:
+        # Get the uploaded file - check multiple field names for flexibility
+        uploaded_file = None
+        for field_name in ["media", "image", "video", "audio", "file"]:
+            if field_name in request.FILES:
+                uploaded_file = request.FILES[field_name]
+                break
+
+        if not uploaded_file:
+            return Response(
+                {"error": "No media file provided"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        session_id = request.data.get("sessionId")
+        media_type = request.data.get("mediaType", "").lower()
+
+        if not session_id:
+            return Response(
+                {"error": "sessionId is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate session exists
+        try:
+            session = PretotypeSession.objects.get(session_id=session_id)
+        except PretotypeSession.DoesNotExist:
+            return Response(
+                {"error": "Invalid session"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Auto-detect media type if not provided
+        if not media_type:
+            content_type = uploaded_file.content_type.lower()
+            if content_type.startswith("image/"):
+                media_type = "image"
+            elif content_type.startswith("video/"):
+                media_type = "video"
+            elif content_type.startswith("audio/"):
+                media_type = "audio"
+            else:
+                return Response(
+                    {"error": "Unable to determine media type"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        # Validate file type and size based on media type
+        validation_result = validate_media_file(uploaded_file, media_type)
+        if not validation_result["valid"]:
+            return Response(
+                {"error": validation_result["error"]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Prepare Cloudinary upload parameters based on media type
+        folder = f"pretotype/{media_type}s"  # pretotype/images, pretotype/videos, etc.
+        tags = ["pretotype", f"{media_type}-upload", session_id]
+
+        # Different transformations for different media types
+        if media_type == "image":
+            transformation = {
+                "quality": "auto:good",
+                "fetch_format": "auto",
+                "width": 1200,
+                "height": 1200,
+                "crop": "limit",
+            }
+        elif media_type == "video":
+            transformation = {
+                "quality": "auto:good",
+                "width": 1280,
+                "height": 720,
+                "crop": "limit",
+                "video_codec": "auto",
+            }
+        else:  # audio
+            transformation = {
+                "quality": "auto:good",
+                "audio_codec": "auto",
+            }
+
+        # Upload to Cloudinary
+        upload_result = CloudinaryManager.upload_file(
+            file_obj=uploaded_file,
+            folder=folder,
+            tags=tags,
+            transformation=transformation,
+            # resource_type="auto",
+            context={
+                "session_id": session_id,
+                "upload_type": f"pretotype_{media_type}",
+                "uploaded_at": timezone.now().isoformat(),
+            },
+        )
+
+        if not upload_result["success"]:
+            logger.error(
+                f"[PRETOTYPE-UPLOAD-ERROR] Cloudinary upload failed: {upload_result['error']}"
+            )
+            return Response(
+                {"error": f"Upload failed: {upload_result['error']}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # Detect duration for video/audio files
+        duration = None
+        if media_type in ["video", "audio"] and "duration" in upload_result:
+            duration = upload_result.get("duration")
+
+        # Track the upload event
+        try:
+            PretotypeEvent.objects.create(
+                session=session,
+                event_type="media_uploaded",
+                step=2,  # Media upload happens in step 2 (form step)
+                timestamp=timezone.now(),
+                time_from_start=int(
+                    (timezone.now() - session.started_at).total_seconds() * 1000
+                ),
+                page_url=request.META.get("HTTP_REFERER", ""),
+                metadata={
+                    "file_name": uploaded_file.name,
+                    "file_size": uploaded_file.size,
+                    "file_type": uploaded_file.content_type,
+                    "media_type": media_type,
+                    "cloudinary_public_id": upload_result["public_id"],
+                    "upload_duration_ms": upload_result.get("upload_duration"),
+                    "media_duration_seconds": duration,
+                },
+            )
+        except Exception as event_error:
+            # Don't fail the upload if event tracking fails
+            logger.warning(
+                f"[PRETOTYPE-UPLOAD] Failed to track upload event: {event_error}"
+            )
+
+        logger.info(
+            f"[PRETOTYPE-UPLOAD] {media_type.title()} uploaded successfully: "
+            f"{upload_result['public_id']} for session {session_id}, "
+            f"size: {uploaded_file.size} bytes"
+        )
+
+        # Prepare response data
+        response_data = {
+            "success": True,
+            "media_url": upload_result["url"],
+            "public_id": upload_result["public_id"],
+            "media_type": media_type,
+            "file_info": {
+                "original_name": uploaded_file.name,
+                "size": upload_result["bytes"],
+                "format": upload_result["format"],
+            },
+        }
+
+        # Add dimensions for images/videos
+        if "width" in upload_result and "height" in upload_result:
+            response_data["file_info"].update(
+                {
+                    "width": upload_result["width"],
+                    "height": upload_result["height"],
+                }
+            )
+
+        # Add duration for video/audio
+        if duration:
+            response_data["file_info"]["duration"] = duration
+
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
+    except ValidationError as ve:
+        return Response({"error": str(ve)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(
+            f"[PRETOTYPE-UPLOAD-ERROR] Unexpected error: {str(e)}", exc_info=True
+        )
+        return Response(
+            {"error": "Internal server error"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+def validate_media_file(file, media_type):
+    """
+    Validate uploaded media file based on type
+    Returns dict with 'valid' boolean and 'error' message if invalid
+    """
+    # Size limits (in bytes)
+    max_sizes = {
+        "image": 5 * 1024 * 1024,  # 5MB
+        "video": 50 * 1024 * 1024,  # 50MB
+        "audio": 10 * 1024 * 1024,  # 10MB
+    }
+
+    # Allowed content types
+    allowed_types = {
+        "image": [
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/webp",
+            "image/gif",
+            "image/bmp",
+        ],
+        "video": [
+            "video/mp4",
+            "video/webm",
+            "video/ogg",
+            "video/mov",
+            "video/avi",
+            "video/wmv",
+            "video/flv",
+            "video/mkv",
+        ],
+        "audio": [
+            "audio/mp3",
+            "audio/wav",
+            "audio/ogg",
+            "audio/aac",
+            "audio/m4a",
+            "audio/flac",
+            "audio/wma",
+        ],
+    }
+
+    # Check file size
+    if file.size > max_sizes.get(media_type, 5 * 1024 * 1024):
+        max_mb = max_sizes[media_type] / (1024 * 1024)
+        return {
+            "valid": False,
+            "error": f"{media_type.title()} must be less than {max_mb:.0f}MB",
+        }
+
+    # Check content type
+    if file.content_type not in allowed_types.get(media_type, []):
+        return {
+            "valid": False,
+            "error": f"Invalid {media_type} file type. Please select a valid {media_type} file.",
+        }
+
+    return {"valid": True, "error": None}
+
+
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def pretotype_analytics_dashboard(request):
@@ -394,6 +689,27 @@ def pretotype_analytics_dashboard(request):
         issue_types = {}
         for issue in issues:
             issue_types[issue.issue_type] = issue_types.get(issue.issue_type, 0) + 1
+
+        media_breakdown = {
+            "photo": issues.filter(
+                Q(media_type="image") | Q(issue_image__isnull=False)
+            ).count(),
+            "video": issues.filter(media_type="video").count(),
+            "audio": issues.filter(media_type="audio").count(),
+            "none": issues.filter(
+                Q(media_type="") | Q(media_type__isnull=True),
+                Q(issue_image__isnull=True) | Q(issue_image=""),
+                Q(media_url="") | Q(media_url__isnull=True),
+                Q(image_url="") | Q(image_url__isnull=True),
+            ).count(),
+        }
+
+        # NEW: Top locations
+        location_breakdown = (
+            issues.values("issue_location")
+            .annotate(count=Count("id"))
+            .order_by("-count")[:10]
+        )
 
         # Contact analysis
         contacts = PretotypeContact.objects.filter(
@@ -457,6 +773,11 @@ def pretotype_analytics_dashboard(request):
                 "completed": completed_sessions,
             },
             "issue_breakdown": issue_types,
+            "media_breakdown": media_breakdown,
+            "location_breakdown": [
+                {"location": item["issue_location"], "count": item["count"]}
+                for item in location_breakdown
+            ],
             "contact_quality": {
                 "with_email": contacts.exclude(email="").count(),
                 "with_whatsapp": contacts.exclude(whatsapp="").count(),
@@ -466,6 +787,14 @@ def pretotype_analytics_dashboard(request):
                 "mobile": sessions.filter(device_type="mobile").count(),
                 "desktop": sessions.filter(device_type="desktop").count(),
                 "tablet": sessions.filter(device_type="tablet").count(),
+            },
+            "quality_metrics": {  # NEW
+                "issues_with_details": issues.filter(has_details=True).count(),
+                "issues_with_media": issues.filter(has_media=True).count(),
+                "avg_details_length": issues.aggregate(
+                    avg_length=models.Avg("details_word_count")
+                )["avg_length"]
+                or 0,
             },
             "daily_trends": daily_data,
             "date_range": {
@@ -490,131 +819,24 @@ def pretotype_analytics_dashboard(request):
 def pretotype_upload_image(request):
     """
     API endpoint: /api/pretotype-upload-image/
-    Handles image uploads for pretotype issue reporting
+    DEPRECATED: Use pretotype_upload_media instead
+    Maintained for backward compatibility
     """
-    try:
-        # Get the uploaded file
-        if "image" not in request.FILES:
-            return Response(
-                {"error": "No image file provided"}, status=status.HTTP_400_BAD_REQUEST
-            )
+    logger.warning(
+        "[PRETOTYPE] pretotype_upload_image endpoint is deprecated. Use pretotype_upload_media instead."
+    )
 
-        file_obj = request.FILES["image"]
-        session_id = request.data.get("sessionId")
+    # Redirect to the new media upload endpoint
+    # Modify request data to indicate it's an image
+    mutable_data = request.data.copy()
+    mutable_data["mediaType"] = "image"
 
-        if not session_id:
-            return Response(
-                {"error": "sessionId is required"}, status=status.HTTP_400_BAD_REQUEST
-            )
+    # If 'image' field exists, copy to 'media' field for new endpoint
+    if "image" in request.FILES:
+        request.FILES["media"] = request.FILES["image"]
 
-        # Validate session exists
-        try:
-            session = PretotypeSession.objects.get(session_id=session_id)
-        except PretotypeSession.DoesNotExist:
-            return Response(
-                {"error": "Invalid session"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Additional file validation for pretotype
-        max_size = 5 * 1024 * 1024  # 5MB limit for pretotype
-        if file_obj.size > max_size:
-            return Response(
-                {"error": "Image must be smaller than 5MB"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Check file type
-        allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
-        if file_obj.content_type not in allowed_types:
-            return Response(
-                {"error": "Only JPEG, PNG, and WebP images are allowed"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Upload to Cloudinary using the existing utility
-        upload_result = CloudinaryManager.upload_file(
-            file_obj=file_obj,
-            folder="pretotype/issues",  # Organize pretotype uploads in specific folder
-            tags=["pretotype", "issue-report", session_id],  # Tag for organization
-            transformation={
-                "quality": "auto:good",  # Optimize quality
-                "fetch_format": "auto",  # Auto-format optimization
-                "width": 1200,  # Max width for issue photos
-                "height": 1200,  # Max height
-                "crop": "limit",  # Don't upscale smaller images
-            },
-            context={
-                "session_id": session_id,
-                "upload_type": "pretotype_issue",
-                "uploaded_at": timezone.now().isoformat(),
-            },
-        )
-
-        if not upload_result["success"]:
-            logger.error(
-                f"[PRETOTYPE-UPLOAD-ERROR] Cloudinary upload failed: {upload_result['error']}"
-            )
-            return Response(
-                {"error": f"Upload failed: {upload_result['error']}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        # Track the upload event (optional)
-        try:
-            PretotypeEvent.objects.create(
-                session=session,
-                event_type="image_uploaded",
-                step=2,  # Image upload happens in step 2 (form step)
-                timestamp=timezone.now(),
-                time_from_start=int(
-                    (timezone.now() - session.started_at).total_seconds() * 1000
-                ),
-                page_url=request.META.get("HTTP_REFERER", ""),
-                metadata={
-                    "file_name": file_obj.name,
-                    "file_size": file_obj.size,
-                    "file_type": file_obj.content_type,
-                    "cloudinary_public_id": upload_result["public_id"],
-                    "upload_duration_ms": upload_result.get("upload_duration"),
-                },
-            )
-        except Exception as event_error:
-            # Don't fail the upload if event tracking fails
-            logger.warning(
-                f"[PRETOTYPE-UPLOAD] Failed to track upload event: {event_error}"
-            )
-
-        logger.info(
-            f"[PRETOTYPE-UPLOAD] Image uploaded successfully: {upload_result['public_id']} "
-            f"for session {session_id}, size: {file_obj.size} bytes"
-        )
-
-        return Response(
-            {
-                "success": True,
-                "image_url": upload_result["url"],
-                "public_id": upload_result["public_id"],
-                "file_info": {
-                    "original_name": file_obj.name,
-                    "size": upload_result["bytes"],
-                    "format": upload_result["format"],
-                    "width": upload_result.get("width"),
-                    "height": upload_result.get("height"),
-                },
-            },
-            status=status.HTTP_201_CREATED,
-        )
-
-    except ValidationError as ve:
-        return Response({"error": str(ve)}, status=status.HTTP_400_BAD_REQUEST)
-    except Exception as e:
-        logger.error(
-            f"[PRETOTYPE-UPLOAD-ERROR] Unexpected error: {str(e)}", exc_info=True
-        )
-        return Response(
-            {"error": "Internal server error"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+    request._data = mutable_data
+    return pretotype_upload_media(request)
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")

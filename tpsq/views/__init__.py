@@ -24,5 +24,6 @@ from .pretotype import (
     pretotype_submit_issue,
     pretotype_track_event,
     pretotype_upload_image,
+    pretotype_upload_media,
     upvote_comment,
 )

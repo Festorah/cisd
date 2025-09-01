@@ -23,6 +23,7 @@ urlpatterns = [
         views.ReportDashboardView.as_view(),
         name="reports-dashboard",
     ),
+    # Pretotype API Endpoints
     path("api/pretotype-track/", views.pretotype_track_event, name="pretotype_track"),
     path("api/pretotype-issue/", views.pretotype_submit_issue, name="pretotype_issue"),
     path(
@@ -30,11 +31,18 @@ urlpatterns = [
         views.pretotype_submit_contact,
         name="pretotype_contact",
     ),
+    # Media Upload Endpoints
     path(
-        "api/pretotype-upload-image/",
+        "api/pretotype-upload-media/",  # NEW: Multi-media upload endpoint
+        views.pretotype_upload_media,
+        name="pretotype_upload_media",
+    ),
+    path(
+        "api/pretotype-upload-image/",  # DEPRECATED: Kept for backward compatibility
         views.pretotype_upload_image,
         name="pretotype_upload_image",
     ),
+    # Analytics
     path(
         "api/pretotype-analytics/",
         views.pretotype_analytics_dashboard,

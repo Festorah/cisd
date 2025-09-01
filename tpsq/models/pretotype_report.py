@@ -132,9 +132,13 @@ class PretotypeEvent(models.Model):
         ("form_interaction", "Form Field Interaction"),
         ("dropdown_opened", "Issue Type Dropdown Opened"),
         ("issue_type_selected", "Issue Type Selected"),
+        ("location_field_focused", "Location Field Focused"),  # NEW
         ("details_field_focused", "Details Field Focused"),
         ("details_typing", "User Typing in Details"),
         ("form_validation_error", "Form Validation Error"),
+        ("media_uploaded", "Media File Selected"),  # UPDATED
+        ("media_removed", "Media File Removed"),  # NEW
+        ("media_upload_error", "Media Upload Error"),  # NEW
         ("issue_submitted", "Issue Report Submitted"),
         # Step 3 events
         ("thank_you_displayed", "Thank You Page Shown"),
@@ -213,6 +217,12 @@ class PretotypeIssue(models.Model):
         ("others", "Others"),
     ]
 
+    MEDIA_TYPES = [
+        ("image", "Photo/Image"),
+        ("video", "Video"),
+        ("audio", "Audio"),
+    ]
+
     # Relationships
     session = models.OneToOneField(
         PretotypeSession,
@@ -228,6 +238,14 @@ class PretotypeIssue(models.Model):
         db_index=True,
         help_text="Type of public service issue",
     )
+
+    issue_location = models.CharField(
+        max_length=255,
+        default="Location not specified",
+        db_index=True,
+        help_text="Where this issue is happening (e.g., 'Surulere, Lagos')",
+    )
+
     issue_details = models.TextField(
         blank=True, help_text="Optional details provided by user"
     )
@@ -239,6 +257,32 @@ class PretotypeIssue(models.Model):
         null=True,
         help_text="Optional photo of the issue",
     )
+
+    # NEW: Generic media support
+    media_url = models.URLField(
+        blank=True,
+        null=True,
+        help_text="URL to uploaded media file (photo/video/audio)",
+    )
+
+    media_type = models.CharField(
+        max_length=10,
+        choices=MEDIA_TYPES,
+        blank=True,
+        null=True,
+        db_index=True,
+        help_text="Type of media attached",
+    )
+
+    media_size = models.PositiveIntegerField(
+        default=0, help_text="Media file size in bytes"
+    )
+
+    media_duration = models.FloatField(
+        null=True, blank=True, help_text="Duration in seconds (for video/audio)"
+    )
+
+    # DEPRECATED: Keep for backward compatibility
     image_url = models.URLField(
         blank=True,
         null=True,
@@ -249,6 +293,11 @@ class PretotypeIssue(models.Model):
     # Quality metrics
     has_details = models.BooleanField(
         default=False, db_index=True, help_text="Did user provide additional details"
+    )
+    has_media = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Did user provide media (photo/video/audio)",
     )
     has_image = models.BooleanField(
         default=False, db_index=True, help_text="Did user provide a photo"
@@ -277,8 +326,10 @@ class PretotypeIssue(models.Model):
         verbose_name_plural = "Pretotype Issues"
         indexes = [
             models.Index(fields=["issue_type", "submitted_at"]),
+            models.Index(fields=["issue_location", "submitted_at"]),  # NEW
+            models.Index(fields=["media_type", "submitted_at"]),  # NEW
             models.Index(fields=["has_details", "submitted_at"]),
-            models.Index(fields=["has_image", "submitted_at"]),
+            models.Index(fields=["has_media", "submitted_at"]),  # UPDATED
             models.Index(fields=["is_test_data", "submitted_at"]),
         ]
         ordering = ["-submitted_at"]
@@ -292,17 +343,36 @@ class PretotypeIssue(models.Model):
         if self.has_details:
             self.details_word_count = len(self.issue_details.split())
 
-        # Check for image
-        self.has_image = bool(self.issue_image or self.image_url)
+        # Check for media (prioritize new fields, fallback to old)
+        self.has_media = bool(self.media_url or self.issue_image or self.image_url)
+
+        # Backward compatibility for has_image
+        self.has_image = self.has_media and (
+            self.media_type == "image" or self.issue_image or self.image_url
+        )
 
         # Simple test data detection
         test_indicators = ["test", "testing", "sample", "example", "dummy"]
-        issue_text = f"{self.issue_details}".lower()
+        issue_text = f"{self.issue_details} {self.issue_location}".lower()
         self.is_test_data = any(
             indicator in issue_text for indicator in test_indicators
         )
 
         super().save(*args, **kwargs)
+
+    @property
+    def primary_media_url(self):
+        """Get the primary media URL, prioritizing new field over deprecated ones"""
+        return (
+            self.media_url
+            or self.image_url
+            or (self.issue_image.url if self.issue_image else None)
+        )
+
+    @property
+    def primary_media_size(self):
+        """Get the primary media size, prioritizing new field over deprecated ones"""
+        return self.media_size or self.image_size
 
     def get_reaction_counts(self):
         """Get reaction counts grouped by type"""
@@ -343,6 +413,17 @@ class PretotypeIssue(models.Model):
             "rejected": {"color": "red", "icon": "❌", "text": "Not Actionable"},
         }
         return status_map.get(status, status_map["reported"])
+
+    def get_media_type_display_with_icon(self):
+        """Get media type with appropriate icon"""
+        if not self.has_media:
+            return None
+
+        media_type = (
+            self.media_type or "image"
+        )  # Default to image for backward compatibility
+        icons = {"image": "📷 Photo", "video": "🎥 Video", "audio": "🎙️ Audio"}
+        return icons.get(media_type, f"📎 {media_type.title()}")
 
 
 class PretotypeContact(models.Model):
@@ -443,8 +524,15 @@ class PretotypeAnalytics(models.Model):
     issues_education = models.PositiveIntegerField(default=0)
     issues_others = models.PositiveIntegerField(default=0)
 
+    # NEW: Media breakdown
+    issues_with_photo = models.PositiveIntegerField(default=0)
+    issues_with_video = models.PositiveIntegerField(default=0)
+    issues_with_audio = models.PositiveIntegerField(default=0)
+    issues_without_media = models.PositiveIntegerField(default=0)
+
     # Quality metrics
     issues_with_details = models.PositiveIntegerField(default=0)
+    issues_with_location = models.PositiveIntegerField(default=0)
     avg_time_to_submit = models.FloatField(null=True, blank=True)
     contacts_with_email = models.PositiveIntegerField(default=0)
     contacts_with_whatsapp = models.PositiveIntegerField(default=0)

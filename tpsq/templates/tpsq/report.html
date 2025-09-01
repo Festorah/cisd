@@ -183,7 +183,7 @@
             margin-bottom: 1.5rem;
         }
 
-        .form-select {
+        .form-select, .form-input {
             width: 100%;
             padding: 1rem 1.25rem;
             border: 2px solid #E5E7EB;
@@ -193,11 +193,14 @@
             font-weight: 600;
             color: #374151;
             background: white;
-            cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        .form-select:focus {
+        .form-select {
+            cursor: pointer;
+        }
+
+        .form-select:focus, .form-input:focus {
             outline: none;
             border-color: var(--primary-blue);
             box-shadow: 0 0 0 3px rgba(43, 92, 230, 0.1);
@@ -206,6 +209,12 @@
         .form-select option {
             padding: 0.5rem;
             font-weight: 600;
+        }
+
+        .form-input::placeholder {
+            color: #9CA3AF;
+            font-weight: 500;
+            font-style: italic;
         }
 
         .form-textarea {
@@ -401,8 +410,8 @@
             transform: none;
         }
 
-        /* IMAGE UPLOAD STYLES */
-        .image-upload-section {
+        /* MEDIA UPLOAD STYLES */
+        .media-upload-section {
             border: 2px dashed #E5E7EB;
             border-radius: 12px;
             padding: 1.5rem;
@@ -411,42 +420,63 @@
             background: #F9FAFB;
         }
 
-        .image-upload-section:hover {
+        .media-upload-section:hover {
             border-color: var(--primary-blue);
             background: #F3F4F6;
         }
 
-        .image-upload-section.has-image {
+        .media-upload-section.has-media {
             border-color: var(--success-green);
             background: var(--success-light);
         }
 
-        .image-upload-label {
+        .media-upload-options {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .media-option {
             display: flex;
             flex-direction: column;
             align-items: center;
+            padding: 1rem;
+            border-radius: 10px;
+            background: white;
+            border: 2px solid #E5E7EB;
             cursor: pointer;
             transition: all 0.3s ease;
+            min-width: 100px;
+            text-decoration: none;
+            color: inherit;
         }
 
-        .image-upload-label:hover {
-            color: var(--primary-blue);
+        .media-option:hover {
+            border-color: var(--primary-blue);
+            background: #F0F7FF;
+            transform: translateY(-2px);
         }
 
-        .upload-icon {
-            font-size: 2.5rem;
+        .media-option.active {
+            border-color: var(--success-green);
+            background: var(--success-light);
+        }
+
+        .media-option-icon {
+            font-size: 2rem;
             margin-bottom: 0.5rem;
             display: block;
         }
 
-        .upload-text {
-            font-size: clamp(1rem, 3vw, 1.1rem);
+        .media-option-text {
+            font-size: 0.9rem;
             font-weight: 600;
             color: var(--dark-blue);
-            margin-bottom: 0.25rem;
         }
 
-        .image-input {
+        .media-input {
             display: none;
         }
 
@@ -457,12 +487,46 @@
             font-style: italic;
         }
 
-        .image-preview {
+        .skip-media-button {
+            background: transparent !important;
+            border: 1px solid #9CA3AF !important;
+            color: #6B7280 !important;
+            padding: 0.5rem 1rem !important;
+            border-radius: 6px !important;
+            font-size: 0.9rem !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            font-family: inherit !important;
+        }
+
+        .skip-media-button:hover {
+            background: #F3F4F6 !important;
+            border-color: #6B7280 !important;
+            color: #374151 !important;
+            transform: none !important;
+        }
+
+        .skip-media-confirmation {
+            animation: slideUp 0.4s ease;
+        }
+
+        .media-optional-badge {
+            display: inline-block;
+            background: #E0F2FE;
+            color: #0369A1;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .media-preview {
             margin-top: 1rem;
             display: none;
         }
 
-        .preview-image {
+        .preview-media {
             max-width: 100%;
             max-height: 200px;
             border-radius: 8px;
@@ -470,7 +534,7 @@
             margin-bottom: 0.5rem;
         }
 
-        .image-info {
+        .media-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -480,12 +544,12 @@
             margin-top: 0.5rem;
         }
 
-        .image-details {
+        .media-details {
             font-size: 0.85rem;
             color: #6B7280;
         }
 
-        .remove-image {
+        .remove-media {
             background: var(--accent-red);
             color: white;
             border: none;
@@ -496,7 +560,7 @@
             transition: all 0.3s ease;
         }
 
-        .remove-image:hover {
+        .remove-media:hover {
             background: #DC2626;
         }
 
@@ -579,6 +643,23 @@
 
             .hero-subtext {
                 margin-bottom: 2rem;
+            }
+
+            .media-upload-options {
+                gap: 0.5rem;
+            }
+
+            .media-option {
+                min-width: 80px;
+                padding: 0.75rem;
+            }
+
+            .media-option-icon {
+                font-size: 1.5rem;
+            }
+
+            .media-option-text {
+                font-size: 0.8rem;
             }
         }
 
@@ -664,29 +745,80 @@
                 </div>
 
                 <div class="form-group">
+                    <input
+                        type="text"
+                        id="issueLocation"
+                        class="form-input"
+                        placeholder="Where is this happening? e.g Surulere, Lagos"
+                        required
+                    />
+                </div>
+
+                <div class="form-group">
                     <textarea
                         id="issueDetails"
                         class="form-textarea"
-                        placeholder="Add details if you like..."
+                        placeholder="Add more details..."
                         rows="4"
                     ></textarea>
                 </div>
 
                 <div class="form-group">
-                    <div class="image-upload-section">
-                        <label class="image-upload-label">
-                            <i class="upload-icon">📸</i>
-                            <span class="upload-text">Add Photo (Optional)</span>
-                            <input
-                                type="file"
-                                id="issueImage"
-                                class="image-input"
-                                accept="image/*"
-                                capture="environment"
-                            />
-                        </label>
-                        <div id="imagePreview" class="image-preview"></div>
-                        <div class="upload-hint">Photos help authorities understand the issue better</div>
+                    <p class="form-question" style="margin-bottom: 1rem; font-size: 1.1rem;">
+                        <span style="color: var(--dark-blue);">Add Media</span>
+                        <span style="color: #6B7280; font-weight: 500; font-size: 0.9rem;">(Optional - but helpful)</span>
+                    </p>
+
+                    <div class="media-upload-section">
+                        <div class="media-upload-options">
+                            <label class="media-option" for="photoInput">
+                                <span class="media-option-icon">📷</span>
+                                <span class="media-option-text">Photo</span>
+                                <input
+                                    type="file"
+                                    id="photoInput"
+                                    class="media-input"
+                                    accept="image/*"
+                                    capture="environment"
+                                />
+                            </label>
+
+                            <label class="media-option" for="videoInput">
+                                <span class="media-option-icon">🎥</span>
+                                <span class="media-option-text">Video</span>
+                                <input
+                                    type="file"
+                                    id="videoInput"
+                                    class="media-input"
+                                    accept="video/*"
+                                    capture="environment"
+                                />
+                            </label>
+
+                            <label class="media-option" for="audioInput">
+                                <span class="media-option-icon">🎙️</span>
+                                <span class="media-option-text">Audio</span>
+                                <input
+                                    type="file"
+                                    id="audioInput"
+                                    class="media-input"
+                                    accept="audio/*"
+                                    capture="microphone"
+                                />
+                            </label>
+                        </div>
+
+                        <div id="mediaPreview" class="media-preview"></div>
+                        <div class="upload-hint">
+                            <strong>Optional:</strong> Photos, videos, and audio help authorities understand the issue better, but you can submit your report without media.
+                        </div>
+
+<!--                        <div class="skip-media-option" style="text-align: center; margin-top: 1rem;">-->
+<!--                            <button type="button" id="skipMediaBtn" class="skip-media-button"-->
+<!--                                    style="background: transparent; border: 1px solid #9CA3AF; color: #6B7280; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease;">-->
+<!--                                Skip Media - Submit Text Only-->
+<!--                            </button>-->
+<!--                        </div>-->
                     </div>
                 </div>
 
@@ -743,7 +875,7 @@
 
             <div id="finalThankYou" class="final-thank-you">
                 <h2>You're All Set!</h2>
-                <p>We'll notify you as soon as go live.</p>
+                <p>We'll notify you as soon as we go live.</p>
             </div>
         </div>
     </div>
@@ -757,6 +889,8 @@
                 this.currentStep = 1;
                 this.issueData = {};
                 this.csrfToken = this.getCSRFToken();
+                this.selectedMedia = null;
+                this.mediaType = null;
 
                 this.init();
             }
@@ -805,9 +939,6 @@
             }
 
             async sendRequest(url, data, retries = 1) {
-                /**
-                 * Enhanced request handler with CSRF token and retry logic
-                 */
                 for (let attempt = 0; attempt <= retries; attempt++) {
                     try {
                         const response = await fetch(url, {
@@ -815,27 +946,25 @@
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-CSRFToken': this.csrfToken,
-                                // Add these headers for better compatibility
                                 'X-Requested-With': 'XMLHttpRequest',
                             },
-                            credentials: 'same-origin', // Important for CSRF
+                            credentials: 'same-origin',
                             body: JSON.stringify(data)
                         });
 
                         if (response.ok) {
                             return await response.json();
                         } else if (response.status === 403 && attempt < retries) {
-                            // CSRF token might be expired, try to refresh it
                             console.warn('CSRF token may be expired, refreshing...');
                             await this.refreshCSRFToken();
-                            continue; // Retry with new token
+                            continue;
                         } else {
                             const errorData = await response.json().catch(() => ({}));
                             throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
                         }
                     } catch (error) {
                         if (attempt === retries) {
-                            throw error; // Last attempt failed
+                            throw error;
                         }
                         console.warn(`Request attempt ${attempt + 1} failed:`, error.message);
                     }
@@ -843,9 +972,6 @@
             }
 
             async refreshCSRFToken() {
-                /**
-                 * Refresh CSRF token by making a request to your CSRF endpoint
-                 */
                 try {
                     const response = await fetch('/api/csrf-token/', {
                         method: 'GET',
@@ -879,10 +1005,8 @@
                     await this.sendRequest('/api/pretotype-track/', event);
                 } catch (error) {
                     console.warn('Analytics tracking failed:', error);
-                    // Don't throw - tracking failures shouldn't break user experience
                 }
 
-                // Also send to Google Analytics if available
                 if (typeof gtag !== 'undefined') {
                     gtag('event', eventType, {
                         event_category: 'pretotype',
@@ -893,7 +1017,6 @@
             }
 
             init() {
-                // Track initial page view
                 this.trackEvent('page_view', {
                     step: 1,
                     action: 'landing_page_loaded'
@@ -928,123 +1051,217 @@
                     });
                 });
 
+                document.getElementById('issueLocation').addEventListener('focus', () => {
+                    this.trackEvent('form_interaction', {
+                        action: 'location_field_focused'
+                    });
+                });
+
                 document.getElementById('issueDetails').addEventListener('focus', () => {
                     this.trackEvent('form_interaction', {
                         action: 'details_field_focused'
                     });
                 });
 
-                // Image upload handling
-                this.setupImageUpload();
+                // Media upload handling
+                this.setupMediaUpload();
             }
 
-            setupImageUpload() {
-                const imageInput = document.getElementById('issueImage');
-                const imagePreview = document.getElementById('imagePreview');
-                const uploadSection = document.querySelector('.image-upload-section');
-                let selectedImage = null;
+            setupMediaUpload() {
+                const photoInput = document.getElementById('photoInput');
+                const videoInput = document.getElementById('videoInput');
+                const audioInput = document.getElementById('audioInput');
+                const mediaPreview = document.getElementById('mediaPreview');
+                const uploadSection = document.querySelector('.media-upload-section');
 
-                imageInput.addEventListener('change', (e) => {
+                // Photo upload
+                photoInput.addEventListener('change', (e) => {
                     const file = e.target.files[0];
                     if (!file) return;
 
-                    // Validate file
-                    if (!this.validateImageFile(file)) {
-                        imageInput.value = '';
-                        return;
+                    // Clear other inputs
+                    videoInput.value = '';
+                    audioInput.value = '';
+
+                    if (this.validateMediaFile(file, 'image')) {
+                        this.selectedMedia = file;
+                        this.mediaType = 'image';
+                        this.showMediaPreview(file, 'image', mediaPreview, uploadSection);
+                        this.updateActiveMediaOption('photoInput');
+                        this.trackEvent('media_uploaded', {
+                            action: 'photo_selected',
+                            fileSize: file.size,
+                            fileType: file.type
+                        });
+                    } else {
+                        photoInput.value = '';
                     }
-
-                    selectedImage = file;
-                    this.showImagePreview(file, imagePreview, uploadSection);
-
-                    // Track image upload
-                    this.trackEvent('image_uploaded', {
-                        action: 'image_selected',
-                        fileSize: file.size,
-                        fileType: file.type,
-                        fileName: file.name
-                    });
                 });
 
-                // Store reference for form submission
-                this.selectedImage = () => selectedImage;
+                // Video upload
+                videoInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    // Clear other inputs
+                    photoInput.value = '';
+                    audioInput.value = '';
+
+                    if (this.validateMediaFile(file, 'video')) {
+                        this.selectedMedia = file;
+                        this.mediaType = 'video';
+                        this.showMediaPreview(file, 'video', mediaPreview, uploadSection);
+                        this.updateActiveMediaOption('videoInput');
+                        this.trackEvent('media_uploaded', {
+                            action: 'video_selected',
+                            fileSize: file.size,
+                            fileType: file.type
+                        });
+                    } else {
+                        videoInput.value = '';
+                    }
+                });
+
+                // Audio upload
+                audioInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    // Clear other inputs
+                    photoInput.value = '';
+                    videoInput.value = '';
+
+                    if (this.validateMediaFile(file, 'audio')) {
+                        this.selectedMedia = file;
+                        this.mediaType = 'audio';
+                        this.showMediaPreview(file, 'audio', mediaPreview, uploadSection);
+                        this.updateActiveMediaOption('audioInput');
+                        this.trackEvent('media_uploaded', {
+                            action: 'audio_selected',
+                            fileSize: file.size,
+                            fileType: file.type
+                        });
+                    } else {
+                        audioInput.value = '';
+                    }
+                });
             }
 
-            validateImageFile(file) {
-                const maxSize = 5 * 1024 * 1024; // 5MB
-                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            validateMediaFile(file, type) {
+                const maxSizes = {
+                    image: 5 * 1024 * 1024,   // 5MB
+                    video: 50 * 1024 * 1024,  // 50MB
+                    audio: 10 * 1024 * 1024   // 10MB
+                };
 
-                if (file.size > maxSize) {
-                    alert('Image must be less than 5MB');
+                const allowedTypes = {
+                    image: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
+                    video: ['video/mp4', 'video/webm', 'video/ogg', 'video/mov', 'video/avi'],
+                    audio: ['audio/mp3', 'audio/wav', 'audio/ogg', 'audio/aac', 'audio/m4a']
+                };
+
+                if (file.size > maxSizes[type]) {
+                    alert(`${type.charAt(0).toUpperCase() + type.slice(1)} must be less than ${Math.round(maxSizes[type] / (1024 * 1024))}MB`);
                     return false;
                 }
 
-                if (!allowedTypes.includes(file.type)) {
-                    alert('Please select a JPEG, PNG, or WebP image');
+                if (!allowedTypes[type].includes(file.type)) {
+                    alert(`Please select a valid ${type} file`);
                     return false;
                 }
 
                 return true;
             }
 
-            showImagePreview(file, previewContainer, uploadSection) {
+            updateActiveMediaOption(activeInputId) {
+                // Remove active class from all options
+                document.querySelectorAll('.media-option').forEach(option => {
+                    option.classList.remove('active');
+                });
+
+                // Add active class to selected option
+                document.querySelector(`label[for="${activeInputId}"]`).classList.add('active');
+            }
+
+            showMediaPreview(file, type, previewContainer, uploadSection) {
                 const reader = new FileReader();
 
                 reader.onload = (e) => {
-                    const imageUrl = e.target.result;
+                    let mediaElement = '';
+                    const mediaUrl = e.target.result;
+
+                    switch(type) {
+                        case 'image':
+                            mediaElement = `<img src="${mediaUrl}" class="preview-media" alt="Issue photo preview">`;
+                            break;
+                        case 'video':
+                            mediaElement = `<video src="${mediaUrl}" class="preview-media" controls></video>`;
+                            break;
+                        case 'audio':
+                            mediaElement = `<audio src="${mediaUrl}" class="preview-media" controls style="width: 100%;"></audio>`;
+                            break;
+                    }
 
                     previewContainer.innerHTML = `
-                        <img src="${imageUrl}" class="preview-image" alt="Issue photo preview">
-                        <div class="image-info">
-                            <div class="image-details">
-                                ${file.name} (${(file.size / 1024).toFixed(0)} KB)
+                        ${mediaElement}
+                        <div class="media-info">
+                            <div class="media-details">
+                                ${file.name} (${(file.size / 1024).toFixed(0)} KB) - ${type.toUpperCase()}
                             </div>
-                            <button type="button" class="remove-image" onclick="window.pretotypeTracker.removeImage()">
+                            <button type="button" class="remove-media" onclick="window.pretotypeTracker.removeMedia()">
                                 Remove
                             </button>
                         </div>
                     `;
 
                     previewContainer.style.display = 'block';
-                    uploadSection.classList.add('has-image');
-
-                    // Update upload text
-                    document.querySelector('.upload-text').textContent = 'Change Photo';
-                    document.querySelector('.upload-icon').textContent = '✓';
+                    uploadSection.classList.add('has-media');
                 };
 
                 reader.readAsDataURL(file);
             }
 
-            removeImage() {
-                const imageInput = document.getElementById('issueImage');
-                const imagePreview = document.getElementById('imagePreview');
-                const uploadSection = document.querySelector('.image-upload-section');
+            removeMedia() {
+                const photoInput = document.getElementById('photoInput');
+                const videoInput = document.getElementById('videoInput');
+                const audioInput = document.getElementById('audioInput');
+                const mediaPreview = document.getElementById('mediaPreview');
+                const uploadSection = document.querySelector('.media-upload-section');
 
-                imageInput.value = '';
-                imagePreview.style.display = 'none';
-                imagePreview.innerHTML = '';
-                uploadSection.classList.remove('has-image');
+                // Clear all inputs
+                photoInput.value = '';
+                videoInput.value = '';
+                audioInput.value = '';
 
-                // Reset upload text
-                document.querySelector('.upload-text').textContent = 'Add Photo (Optional)';
-                document.querySelector('.upload-icon').textContent = '📸';
+                // Clear preview
+                mediaPreview.style.display = 'none';
+                mediaPreview.innerHTML = '';
+                uploadSection.classList.remove('has-media');
 
-                // Track removal
-                this.trackEvent('image_removed', {
-                    action: 'image_removed'
+                // Remove active states
+                document.querySelectorAll('.media-option').forEach(option => {
+                    option.classList.remove('active');
+                });
+
+                // Reset variables
+                this.selectedMedia = null;
+                this.mediaType = null;
+
+                this.trackEvent('media_removed', {
+                    action: 'media_removed'
                 });
             }
 
-            async uploadImage(file) {
+            async uploadMedia(file) {
                 if (!file) return null;
 
                 const formData = new FormData();
-                formData.append('image', file);
+                formData.append('media', file);
                 formData.append('sessionId', this.sessionId);
+                formData.append('mediaType', this.mediaType);
 
                 try {
-                    const response = await fetch('/api/pretotype-upload-image/', {
+                    const response = await fetch('/api/pretotype-upload-media/', {
                         method: 'POST',
                         headers: {
                             'X-CSRFToken': this.csrfToken,
@@ -1056,10 +1273,9 @@
 
                     if (!response.ok) {
                         if (response.status === 403) {
-                            // Try refreshing CSRF token and retry once
                             await this.refreshCSRFToken();
 
-                            const retryResponse = await fetch('/api/pretotype-upload-image/', {
+                            const retryResponse = await fetch('/api/pretotype-upload-media/', {
                                 method: 'POST',
                                 headers: {
                                     'X-CSRFToken': this.csrfToken,
@@ -1076,7 +1292,7 @@
 
                             const result = await retryResponse.json();
                             if (result.success) {
-                                return result.image_url;
+                                return result.media_url;
                             } else {
                                 throw new Error(result.error || 'Upload failed');
                             }
@@ -1089,15 +1305,16 @@
                     const result = await response.json();
 
                     if (result.success) {
-                        return result.image_url;
+                        return result.media_url;
                     } else {
                         throw new Error(result.error || 'Upload failed');
                     }
                 } catch (error) {
-                    console.error('Image upload failed:', error);
-                    this.trackEvent('image_upload_error', {
+                    console.error('Media upload failed:', error);
+                    this.trackEvent('media_upload_error', {
                         action: 'upload_failed',
-                        error: error.message
+                        error: error.message,
+                        mediaType: this.mediaType
                     });
                     return null;
                 }
@@ -1109,7 +1326,6 @@
                     step: 1
                 });
 
-                // Transition to Step 2
                 this.currentStep = 2;
                 this.showReportingForm();
 
@@ -1122,46 +1338,49 @@
 
             async handleIssueSubmission() {
                 const issueType = document.getElementById('issueType').value;
+                const issueLocation = document.getElementById('issueLocation').value.trim();
                 const issueDetails = document.getElementById('issueDetails').value;
-                const selectedImage = this.selectedImage();
 
                 if (!issueType) {
                     alert('Please select an issue type');
                     return;
                 }
 
-                // Show loading state
+                if (!issueLocation) {
+                    alert('Please specify where this is happening');
+                    return;
+                }
+
                 const submitBtn = document.getElementById('submitReport');
                 const originalText = submitBtn.textContent;
                 submitBtn.innerHTML = 'Submitting... <span class="spinner"></span>';
                 submitBtn.disabled = true;
 
-                // Track submission
                 this.trackEvent('issue_submitted', {
                     action: 'report_submitted',
                     step: 2,
                     issueType,
+                    hasLocation: !!issueLocation,
                     hasDetails: !!issueDetails,
                     detailsLength: issueDetails.length,
-                    hasImage: !!selectedImage,
-                    imageSize: selectedImage ? selectedImage.size : 0
+                    hasMedia: !!this.selectedMedia,
+                    mediaType: this.mediaType,
+                    mediaSize: this.selectedMedia ? this.selectedMedia.size : 0
                 });
 
                 try {
-                    let imageUrl = null;
+                    let mediaUrl = null;
 
-                    // Upload image first if present
-                    if (selectedImage) {
-                        submitBtn.innerHTML = 'Uploading photo... <span class="spinner"></span>';
-                        imageUrl = await this.uploadImage(selectedImage);
+                    if (this.selectedMedia) {
+                        submitBtn.innerHTML = `Uploading ${this.mediaType}... <span class="spinner"></span>`;
+                        mediaUrl = await this.uploadMedia(this.selectedMedia);
 
-                        if (!imageUrl) {
-                            // Image upload failed but continue with submission
-                            const continueWithoutImage = confirm(
-                                'Photo upload failed. Do you want to submit the report without the photo?'
+                        if (!mediaUrl) {
+                            const continueWithoutMedia = confirm(
+                                `${this.mediaType.charAt(0).toUpperCase() + this.mediaType.slice(1)} upload failed. Do you want to submit the report without the ${this.mediaType}?`
                             );
 
-                            if (!continueWithoutImage) {
+                            if (!continueWithoutMedia) {
                                 submitBtn.textContent = originalText;
                                 submitBtn.disabled = false;
                                 return;
@@ -1171,17 +1390,17 @@
 
                     submitBtn.innerHTML = 'Processing... <span class="spinner"></span>';
 
-                    // Send issue data
                     await this.submitIssueData({
                         sessionId: this.sessionId,
                         issueType,
+                        issueLocation,
                         issueDetails,
-                        imageUrl,
+                        mediaUrl,
+                        mediaType: this.mediaType,
                         timestamp: new Date().toISOString(),
                         ...this.getDeviceInfo()
                     });
 
-                    // Simulate processing time
                     setTimeout(() => {
                         this.currentStep = 3;
                         this.showThankYouPage();
@@ -1190,7 +1409,8 @@
                             from: 2,
                             to: 3,
                             action: 'thank_you_displayed',
-                            submissionHadImage: !!imageUrl
+                            submissionHadMedia: !!mediaUrl,
+                            mediaType: this.mediaType
                         });
                     }, 1500);
 
@@ -1203,7 +1423,8 @@
                     this.trackEvent('form_error', {
                         action: 'submission_failed',
                         error: error.message,
-                        hadImage: !!selectedImage
+                        hadMedia: !!this.selectedMedia,
+                        mediaType: this.mediaType
                     });
                 }
             }
@@ -1223,13 +1444,11 @@
                     return;
                 }
 
-                // Show loading state
                 const submitBtn = document.getElementById('keepUpdated');
                 const originalText = submitBtn.textContent;
                 submitBtn.innerHTML = 'Saving... <span class="spinner"></span>';
                 submitBtn.disabled = true;
 
-                // Track contact submission
                 this.trackEvent('contact_submitted', {
                     action: 'contact_details_submitted',
                     step: 3,
@@ -1239,7 +1458,6 @@
                 });
 
                 try {
-                    // Send contact data
                     await this.submitContactData({
                         sessionId: this.sessionId,
                         email,
@@ -1250,7 +1468,6 @@
                         ...this.getDeviceInfo()
                     });
 
-                    // Show final thank you
                     setTimeout(() => {
                         document.querySelector('.contact-form').style.display = 'none';
                         document.getElementById('finalThankYou').style.display = 'block';
@@ -1292,7 +1509,6 @@
                 document.getElementById('landingPage').style.display = 'none';
                 document.getElementById('reportingForm').style.display = 'block';
 
-                // Scroll to form
                 document.getElementById('reportingForm').scrollIntoView({
                     behavior: 'smooth'
                 });
@@ -1302,7 +1518,6 @@
                 document.getElementById('reportingForm').style.display = 'none';
                 document.getElementById('thankYouPage').style.display = 'block';
 
-                // Scroll to thank you page
                 document.getElementById('thankYouPage').scrollIntoView({
                     behavior: 'smooth'
                 });
@@ -1313,7 +1528,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             window.pretotypeTracker = new PretotypeTracker();
 
-            // Track page exit
             window.addEventListener('beforeunload', () => {
                 window.pretotypeTracker.trackEvent('page_exit', {
                     timeOnPage: Date.now() - window.pretotypeTracker.startTime,
@@ -1321,29 +1535,7 @@
                 });
             });
         });
-
-        // Google Analytics Integration (if needed)
-        // Add your Google Analytics tracking code here
-
-        // Example Google Analytics setup:
-        /*
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'GA_MEASUREMENT_ID');
-        */
     </script>
-
-    <!-- Google Analytics (replace GA_MEASUREMENT_ID with your actual ID) -->
-    <!--
-    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'GA_MEASUREMENT_ID');
-    </script>
-    -->
 </body>
 
 </html>

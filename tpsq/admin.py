@@ -10,6 +10,7 @@ from tpsq.models import (
     EarlyAccessSignup,
     FunnelEvent,
     PretotypeComment,
+    PretotypeContact,
     PretotypeIssue,
     PretotypeIssueStatus,
     PretotypeReaction,
@@ -519,6 +520,14 @@ class PretotypeSessionAdmin(admin.ModelAdmin):
     list_filter = ["device_type", "completed_funnel"]
     search_fields = ["device_type", "referrer"]
     readonly_fields = ["started_at"]
+
+
+@admin.register(PretotypeContact)
+class PretotypeContactAdmin(admin.ModelAdmin):
+    list_display = ["email", "whatsapp", "submitted_at"]
+    list_filter = ["email", "whatsapp"]
+    search_fields = ["email"]
+    readonly_fields = ["submitted_at"]
 
 
 # Custom admin site configuration
