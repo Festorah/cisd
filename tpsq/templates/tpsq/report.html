@@ -487,6 +487,16 @@
             font-style: italic;
         }
 
+        .upload-choices-hint {
+            font-size: clamp(0.75rem, 2vw, 0.85rem);
+            color: #059669;
+            margin-top: 0.25rem;
+            font-weight: 600;
+            background: rgba(5, 150, 105, 0.1);
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+
         .skip-media-button {
             background: transparent !important;
             border: 1px solid #9CA3AF !important;
@@ -779,7 +789,6 @@
                                     id="photoInput"
                                     class="media-input"
                                     accept="image/*"
-                                    capture="environment"
                                 />
                             </label>
 
@@ -791,7 +800,6 @@
                                     id="videoInput"
                                     class="media-input"
                                     accept="video/*"
-                                    capture="environment"
                                 />
                             </label>
 
@@ -803,21 +811,18 @@
                                     id="audioInput"
                                     class="media-input"
                                     accept="audio/*"
-                                    capture="microphone"
                                 />
                             </label>
                         </div>
 
                         <div id="mediaPreview" class="media-preview"></div>
+
                         <div class="upload-hint">
                             <strong>Optional:</strong> Photos, videos, and audio help authorities understand the issue better, but you can submit your report without media.
                         </div>
 
-<!--                        <div class="skip-media-option" style="text-align: center; margin-top: 1rem;">-->
-<!--                            <button type="button" id="skipMediaBtn" class="skip-media-button"-->
-<!--                                    style="background: transparent; border: 1px solid #9CA3AF; color: #6B7280; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease;">-->
-<!--                                Skip Media - Submit Text Only-->
-<!--                            </button>-->
+<!--                        <div class="upload-choices-hint">-->
+<!--                            💡 <strong>On mobile:</strong> Tap any option above to choose between taking new media or selecting from your gallery/files-->
 <!--                        </div>-->
                     </div>
                 </div>
