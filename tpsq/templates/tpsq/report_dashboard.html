@@ -386,6 +386,27 @@
             color: var(--text-primary);
         }
 
+        .export-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .export-select {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        .export-select:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+        }
+
         .data-export {
             padding: 0.5rem 1rem;
             background: var(--bg-accent);
@@ -402,6 +423,11 @@
 
         .data-export:hover {
             background: var(--border-color);
+        }
+
+        .data-export:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .data-table {
@@ -525,6 +551,12 @@
             .hypothesis-status {
                 text-align: left;
             }
+
+            .export-controls {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: stretch;
+            }
         }
 
         .chart-error {
@@ -555,6 +587,7 @@
                         <button class="date-btn" data-days="7">7 Days</button>
                         <button class="date-btn active" data-days="14">14 Days</button>
                         <button class="date-btn" data-days="30">30 Days</button>
+                        <button class="date-btn" data-days="all">All</button>
                     </div>
 
                     <button class="refresh-btn" id="refreshData">
@@ -693,10 +726,17 @@
             <section class="data-section">
                 <div class="data-header">
                     <h3 class="data-title">Recent Issues Reported</h3>
-                    <button class="data-export" onclick="exportData()">
-                        <i class="fas fa-download"></i>
-                        Export CSV
-                    </button>
+                    <div class="export-controls">
+                        <select id="exportType" class="export-select">
+                            <option value="issues">Issues Data</option>
+                            <option value="sessions">Sessions Data</option>
+                            <option value="summary">Daily Summary</option>
+                        </select>
+                        <button class="data-export" onclick="exportData()">
+                            <i class="fas fa-download"></i>
+                            Export CSV
+                        </button>
+                    </div>
                 </div>
                 <div class="data-table">
                     <div class="table-container">
@@ -795,12 +835,12 @@
             }
 
             setupEventListeners() {
-                // Date range selector
+                // Date range selector - handle 'all' as string
                 document.querySelectorAll('.date-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         document.querySelector('.date-btn.active').classList.remove('active');
                         e.target.classList.add('active');
-                        this.dateRange = parseInt(e.target.dataset.days);
+                        this.dateRange = e.target.dataset.days; // Keep as string to handle 'all'
                         this.loadDashboardData();
                     });
                 });
@@ -906,11 +946,19 @@
                 const overallConversion = data.summary.overall_conversion;
                 document.getElementById('conversionRate').textContent = `${overallConversion.toFixed(1)}%`;
 
-                // Update experiment period
+                // Update experiment period - handle 'all' option
                 const startDate = new Date(data.date_range.start);
                 const endDate = new Date(data.date_range.end);
                 const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-                document.getElementById('experimentPeriod').textContent = `Running for ${daysDiff} days`;
+
+                let periodText;
+                if (this.dateRange === 'all') {
+                    periodText = `Running for ${daysDiff} days total`;
+                } else {
+                    periodText = `Running for ${daysDiff} days`;
+                }
+
+                document.getElementById('experimentPeriod').textContent = periodText;
             }
 
             updateCharts(data) {
@@ -1185,10 +1233,72 @@
             }
         }
 
-        // Export function
-        function exportData() {
-            // Trigger CSV export
-            window.open(`/api/pretotype-export/?format=csv&days=${dashboard.dateRange}`, '_blank');
+        // Enhanced Export function with proper error handling
+        async function exportData() {
+            const exportType = document.getElementById('exportType').value;
+            const dateRange = window.dashboard.dateRange;
+
+            // Show loading state on export button
+            const exportBtn = document.querySelector('.data-export');
+            const originalHTML = exportBtn.innerHTML;
+            exportBtn.innerHTML = '<div class="spinner"></div> Exporting...';
+            exportBtn.disabled = true;
+
+            try {
+                // Build the URL
+                const url = `/api/pretotype-export/?format=csv&type=${exportType}&days=${dateRange}`;
+
+                // First, check if the endpoint exists and file is ready
+                const response = await fetch(url, {
+                    method: 'GET', // Just check if endpoint exists
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-CSRFToken': window.dashboard.csrfToken || '',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+                }
+
+                // If endpoint exists, trigger download
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `pretotype_${exportType}_${dateRange}_days.csv`; // Proper filename
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                console.log(`Export successful: ${exportType} data for ${dateRange} days`);
+
+                // Show success state briefly
+                exportBtn.innerHTML = '<i class="fas fa-check"></i> Exported!';
+                setTimeout(() => {
+                    exportBtn.innerHTML = originalHTML;
+                    exportBtn.disabled = false;
+                }, 2000);
+
+            } catch (error) {
+                console.error('Export error:', error);
+
+                // Show error state
+                exportBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Export Failed';
+                exportBtn.style.background = 'var(--accent-red)';
+                exportBtn.style.color = 'white';
+
+                // Show user-friendly error message
+                alert(`Export failed: ${error.message}\n\nPlease check that the server is running and try again.`);
+
+                // Reset button after longer delay for errors
+                setTimeout(() => {
+                    exportBtn.innerHTML = originalHTML;
+                    exportBtn.disabled = false;
+                    exportBtn.style.background = '';
+                    exportBtn.style.color = '';
+                }, 3000);
+            }
         }
 
         // Cleanup on page unload

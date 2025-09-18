@@ -1,3 +1,4 @@
+import csv
 import json
 import logging
 from datetime import datetime, timedelta
@@ -7,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import models, transaction
 from django.db.models import Count, F, Prefetch, Q
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.middleware.csrf import get_token
 from django.shortcuts import render
 from django.utils import timezone
@@ -666,10 +667,28 @@ def pretotype_analytics_dashboard(request):
     Returns comprehensive funnel metrics
     """
     try:
-        # Date range (default: last 7 days)
-        days = int(request.GET.get("days", 7))
+        # Date range handling - support 'all' parameter
+        days_param = request.GET.get("days", "7")
         end_date = timezone.now().date()
-        start_date = end_date - timedelta(days=days)
+
+        if days_param.lower() == "all":
+            # Get data from the beginning (first session) to now
+            first_session = PretotypeSession.objects.order_by("started_at").first()
+            if first_session:
+                start_date = first_session.started_at.date()
+                # Calculate actual days for display purposes
+                days = (end_date - start_date).days + 1
+            else:
+                # No sessions exist yet
+                start_date = end_date
+                days = 1
+        else:
+            try:
+                days = int(days_param)
+                start_date = end_date - timedelta(days=days)
+            except ValueError:
+                days = 7  # Default fallback
+                start_date = end_date - timedelta(days=days)
 
         # Session-based metrics
         sessions = PretotypeSession.objects.filter(
@@ -690,6 +709,7 @@ def pretotype_analytics_dashboard(request):
         for issue in issues:
             issue_types[issue.issue_type] = issue_types.get(issue.issue_type, 0) + 1
 
+        # Media breakdown with backward compatibility
         media_breakdown = {
             "photo": issues.filter(
                 Q(media_type="image") | Q(issue_image__isnull=False)
@@ -704,7 +724,7 @@ def pretotype_analytics_dashboard(request):
             ).count(),
         }
 
-        # NEW: Top locations
+        # Top locations
         location_breakdown = (
             issues.values("issue_location")
             .annotate(count=Count("id"))
@@ -716,10 +736,18 @@ def pretotype_analytics_dashboard(request):
             submitted_at__date__range=[start_date, end_date]
         )
 
-        # Daily trends
+        # Daily trends - limit to reasonable number of days for chart display
+        max_days_for_chart = min(
+            days if days_param != "all" else 30, 90
+        )  # Cap at 90 days for performance
+        chart_start_date = end_date - timedelta(days=max_days_for_chart)
+
         daily_data = []
-        for i in range(days):
+        for i in range(max_days_for_chart):
             date = end_date - timedelta(days=i)
+            if date < start_date:
+                continue
+
             day_sessions = sessions.filter(started_at__date=date).count()
             day_issues = issues.filter(submitted_at__date=date).count()
             day_contacts = contacts.filter(submitted_at__date=date).count()
@@ -788,7 +816,7 @@ def pretotype_analytics_dashboard(request):
                 "desktop": sessions.filter(device_type="desktop").count(),
                 "tablet": sessions.filter(device_type="tablet").count(),
             },
-            "quality_metrics": {  # NEW
+            "quality_metrics": {
                 "issues_with_details": issues.filter(has_details=True).count(),
                 "issues_with_media": issues.filter(has_media=True).count(),
                 "avg_details_length": issues.aggregate(
@@ -800,7 +828,8 @@ def pretotype_analytics_dashboard(request):
             "date_range": {
                 "start": start_date.isoformat(),
                 "end": end_date.isoformat(),
-                "days": days,
+                "days": days if days_param != "all" else f"all ({days} days total)",
+                "is_all": days_param.lower() == "all",
             },
         }
 
@@ -812,6 +841,330 @@ def pretotype_analytics_dashboard(request):
             {"error": "Unable to retrieve analytics"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+from django.views.decorators.http import require_http_methods
+
+
+@require_http_methods(["GET", "HEAD"])
+@permission_classes([AllowAny])
+def pretotype_export_data(request):
+    """
+    API endpoint for exporting pretotype data as CSV
+    Supports different export types and date filtering
+    """
+    try:
+        print("here")
+        # Get parameters
+        export_format = request.GET.get("format", "csv").lower()
+        export_type = request.GET.get(
+            "type", "issues"
+        ).lower()  # issues, sessions, summary
+        days_param = request.GET.get("days", "30")
+
+        # Handle date filtering
+        end_date = timezone.now().date()
+        if days_param.lower() == "all":
+            # Get data from the beginning of time (or first session)
+            first_session = PretotypeSession.objects.first()
+            start_date = first_session.started_at.date() if first_session else end_date
+        else:
+            try:
+                days = int(days_param)
+                start_date = end_date - timedelta(days=days)
+            except ValueError:
+                return Response(
+                    {"error": "Invalid days parameter"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        if export_format != "csv":
+            return Response(
+                {"error": "Only CSV format supported currently"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Generate the appropriate export
+        if export_type == "issues":
+            return export_issues_csv(start_date, end_date)
+        elif export_type == "sessions":
+            return export_sessions_csv(start_date, end_date)
+        elif export_type == "summary":
+            return export_summary_csv(start_date, end_date)
+        else:
+            return export_issues_csv(start_date, end_date)  # Default to issues
+
+    except Exception as e:
+        logger.error(f"[PRETOTYPE-EXPORT-ERROR] {str(e)}", exc_info=True)
+        return Response(
+            {"error": "Export failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+def export_issues_csv(start_date, end_date):
+    """Export detailed issues data as CSV"""
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = (
+        f'attachment; filename="pretotype_issues_{start_date}_to_{end_date}.csv"'
+    )
+
+    writer = csv.writer(response)
+
+    # CSV Headers
+    writer.writerow(
+        [
+            "Issue ID",
+            "Session ID",
+            "Submitted Date",
+            "Issue Type",
+            "Issue Location",
+            "Has Details",
+            "Details Word Count",
+            "Has Media",
+            "Media Type",
+            "Time to Submit (seconds)",
+            "Device Type",
+            "Session Started",
+            "Session Completed Funnel",
+            "Session Max Step",
+            "UTM Source",
+            "UTM Campaign",
+            "Country",
+            "City",
+            "Referrer Domain",
+            "Issue Details Preview",  # First 100 chars for analysis
+        ]
+    )
+
+    # Get issues with related session data
+    issues = (
+        PretotypeIssue.objects.filter(submitted_at__date__range=[start_date, end_date])
+        .select_related("session")
+        .order_by("-submitted_at")
+    )
+
+    for issue in issues:
+        # Extract referrer domain
+        referrer_domain = ""
+        if issue.session.referrer:
+            try:
+                from urllib.parse import urlparse
+
+                parsed = urlparse(issue.session.referrer)
+                referrer_domain = parsed.netloc
+            except:
+                referrer_domain = issue.session.referrer[:50]
+
+        # Issue details preview (first 100 characters, cleaned)
+        details_preview = (
+            issue.issue_details[:100].replace("\n", " ").replace("\r", " ")
+            if issue.issue_details
+            else ""
+        )
+
+        writer.writerow(
+            [
+                issue.id,
+                str(issue.session.session_id),
+                issue.submitted_at.strftime("%Y-%m-%d %H:%M:%S"),
+                issue.get_issue_type_display(),
+                issue.issue_location,
+                "Yes" if issue.has_details else "No",
+                issue.details_word_count,
+                "Yes" if issue.has_media else "No",
+                issue.media_type or "None",
+                issue.time_to_submit,
+                issue.session.get_device_type_display(),
+                issue.session.started_at.strftime("%Y-%m-%d %H:%M:%S"),
+                "Yes" if issue.session.completed_funnel else "No",
+                issue.session.max_step_reached,
+                issue.session.utm_source,
+                issue.session.utm_campaign,
+                issue.session.country,
+                issue.session.city,
+                referrer_domain,
+                details_preview,
+            ]
+        )
+
+    return response
+
+
+def export_sessions_csv(start_date, end_date):
+    """Export session funnel data as CSV"""
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = (
+        f'attachment; filename="pretotype_sessions_{start_date}_to_{end_date}.csv"'
+    )
+
+    writer = csv.writer(response)
+
+    # CSV Headers
+    writer.writerow(
+        [
+            "Session ID",
+            "Started Date",
+            "Device Type",
+            "Max Step Reached",
+            "Completed Funnel",
+            "Has Issue",
+            "Has Contact",
+            "Issue Type",
+            "Issue Location",
+            "UTM Source",
+            "UTM Medium",
+            "UTM Campaign",
+            "Country",
+            "City",
+            "Referrer",
+            "Total Time on Site (seconds)",
+            "Step 1 Time (seconds)",
+            "Step 2 Time (seconds)",
+            "Step 3 Time (seconds)",
+        ]
+    )
+
+    # Get sessions with related data
+    sessions = (
+        PretotypeSession.objects.filter(started_at__date__range=[start_date, end_date])
+        .prefetch_related("issue", "contact")
+        .order_by("-started_at")
+    )
+
+    for session in sessions:
+        writer.writerow(
+            [
+                str(session.session_id),
+                session.started_at.strftime("%Y-%m-%d %H:%M:%S"),
+                session.get_device_type_display(),
+                session.max_step_reached,
+                "Yes" if session.completed_funnel else "No",
+                "Yes" if hasattr(session, "issue") else "No",
+                "Yes" if hasattr(session, "contact") else "No",
+                (
+                    session.issue.get_issue_type_display()
+                    if hasattr(session, "issue")
+                    else ""
+                ),
+                session.issue.issue_location if hasattr(session, "issue") else "",
+                session.utm_source,
+                session.utm_medium,
+                session.utm_campaign,
+                session.country,
+                session.city,
+                session.referrer,
+                session.total_time_on_site,
+                session.step_1_time,
+                session.step_2_time,
+                session.step_3_time,
+            ]
+        )
+
+    return response
+
+
+def export_summary_csv(start_date, end_date):
+    """Export daily summary statistics as CSV"""
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = (
+        f'attachment; filename="pretotype_summary_{start_date}_to_{end_date}.csv"'
+    )
+
+    writer = csv.writer(response)
+
+    # CSV Headers
+    writer.writerow(
+        [
+            "Date",
+            "Total Sessions",
+            "CTA Clicks",
+            "Issues Submitted",
+            "Contacts Collected",
+            "CTA Click Rate (%)",
+            "Issue Submit Rate (%)",
+            "Contact Rate (%)",
+            "Overall Conversion (%)",
+            "Mobile Sessions",
+            "Desktop Sessions",
+            "Tablet Sessions",
+            "Issues with Details",
+            "Issues with Media",
+            "Issues with Photo",
+            "Issues with Video",
+            "Issues with Audio",
+        ]
+    )
+
+    # Generate daily summaries
+    current_date = start_date
+    while current_date <= end_date:
+        # Get sessions for this date
+        day_sessions = PretotypeSession.objects.filter(started_at__date=current_date)
+        total_sessions = day_sessions.count()
+
+        if total_sessions == 0:
+            current_date += timedelta(days=1)
+            continue
+
+        step_2_sessions = day_sessions.filter(max_step_reached__gte=2).count()
+        step_3_sessions = day_sessions.filter(max_step_reached__gte=3).count()
+        completed_sessions = day_sessions.filter(completed_funnel=True).count()
+
+        # Calculate rates
+        cta_click_rate = (
+            (step_2_sessions / total_sessions * 100) if total_sessions > 0 else 0
+        )
+        issue_submit_rate = (
+            (step_3_sessions / step_2_sessions * 100) if step_2_sessions > 0 else 0
+        )
+        contact_rate = (
+            (completed_sessions / step_3_sessions * 100) if step_3_sessions > 0 else 0
+        )
+        overall_conversion = (
+            (completed_sessions / total_sessions * 100) if total_sessions > 0 else 0
+        )
+
+        # Device breakdown
+        mobile_sessions = day_sessions.filter(device_type="mobile").count()
+        desktop_sessions = day_sessions.filter(device_type="desktop").count()
+        tablet_sessions = day_sessions.filter(device_type="tablet").count()
+
+        # Issue quality metrics for this date
+        day_issues = PretotypeIssue.objects.filter(submitted_at__date=current_date)
+        issues_with_details = day_issues.filter(has_details=True).count()
+        issues_with_media = day_issues.filter(has_media=True).count()
+        issues_with_photo = day_issues.filter(media_type="image").count()
+        issues_with_video = day_issues.filter(media_type="video").count()
+        issues_with_audio = day_issues.filter(media_type="audio").count()
+
+        writer.writerow(
+            [
+                current_date.strftime("%Y-%m-%d"),
+                total_sessions,
+                step_2_sessions,
+                step_3_sessions,
+                completed_sessions,
+                f"{cta_click_rate:.1f}",
+                f"{issue_submit_rate:.1f}",
+                f"{contact_rate:.1f}",
+                f"{overall_conversion:.1f}",
+                mobile_sessions,
+                desktop_sessions,
+                tablet_sessions,
+                issues_with_details,
+                issues_with_media,
+                issues_with_photo,
+                issues_with_video,
+                issues_with_audio,
+            ]
+        )
+
+        current_date += timedelta(days=1)
+
+    return response
 
 
 @api_view(["POST"])
