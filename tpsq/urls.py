@@ -42,6 +42,12 @@ urlpatterns = [
         views.pretotype_upload_image,
         name="pretotype_upload_image",
     ),
+    # Exports Reports Data
+    path(
+        "api/pretotype-export/",
+        views.pretotype_export_data,
+        name="pretotype_export_data",
+    ),
     # Analytics
     path(
         "api/pretotype-analytics/",
