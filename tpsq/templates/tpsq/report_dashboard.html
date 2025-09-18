@@ -590,6 +590,18 @@
                         <button class="date-btn" data-days="all">All</button>
                     </div>
 
+                    <div class="export-controls">
+                        <select id="exportType" class="export-select">
+                            <option value="issues">Issues Data</option>
+                            <option value="sessions">Sessions Data</option>
+                            <option value="summary">Daily Summary</option>
+                        </select>
+                        <button class="data-export" onclick="exportData()">
+                            <i class="fas fa-download"></i>
+                            Export CSV
+                        </button>
+                    </div>
+
                     <button class="refresh-btn" id="refreshData">
                         <i class="fas fa-sync-alt"></i>
                         Refresh
@@ -726,17 +738,6 @@
             <section class="data-section">
                 <div class="data-header">
                     <h3 class="data-title">Recent Issues Reported</h3>
-                    <div class="export-controls">
-                        <select id="exportType" class="export-select">
-                            <option value="issues">Issues Data</option>
-                            <option value="sessions">Sessions Data</option>
-                            <option value="summary">Daily Summary</option>
-                        </select>
-                        <button class="data-export" onclick="exportData()">
-                            <i class="fas fa-download"></i>
-                            Export CSV
-                        </button>
-                    </div>
                 </div>
                 <div class="data-table">
                     <div class="table-container">
@@ -777,7 +778,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Verify Chart.js loaded properly
             if (typeof Chart === 'undefined') {
-                console.error('Chart.js failed to load');
+<!--                console.error('Chart.js failed to load');-->
                 showChartError('Charts unavailable - Chart.js failed to load');
                 return;
             }
@@ -820,7 +821,7 @@
                         this.csrfToken = data.csrf_token;
                     }
                 } catch (error) {
-                    console.warn('Could not get CSRF token:', error);
+<!--                    console.warn('Could not get CSRF token:', error);-->
                     // Try to get from cookie as fallback
                     this.csrfToken = this.getCSRFFromCookie();
                 }
@@ -896,7 +897,7 @@
                     this.hideLoadingState();
 
                 } catch (error) {
-                    console.error('Failed to load dashboard data:', error);
+<!--                    console.error('Failed to load dashboard data:', error);-->
                     this.showError(`Failed to load analytics data: ${error.message}`);
                     this.hideLoadingState();
                 }
@@ -967,7 +968,7 @@
                     this.createIssueTypesChart(data.issue_breakdown);
                     this.createTrendsChart(data.daily_trends);
                 } catch (error) {
-                    console.error('Error creating charts:', error);
+<!--                    console.error('Error creating charts:', error);-->
                     showChartError('Error loading charts');
                 }
             }
@@ -1233,10 +1234,12 @@
             }
         }
 
-        // Enhanced Export function with proper error handling
-        async function exportData() {
+        // Enhanced Export function with better error handling
+        function exportData() {
             const exportType = document.getElementById('exportType').value;
-            const dateRange = window.dashboard.dateRange;
+            const dateRange = window.dashboard ? window.dashboard.dateRange : '14';
+
+<!--            console.log(`[EXPORT] Initiating export: type=${exportType}, range=${dateRange}`);-->
 
             // Show loading state on export button
             const exportBtn = document.querySelector('.data-export');
@@ -1245,60 +1248,42 @@
             exportBtn.disabled = true;
 
             try {
-                // Build the URL
+                // Build export URL with debug parameters
                 const url = `/api/pretotype-export/?format=csv&type=${exportType}&days=${dateRange}`;
+<!--                console.log(`[EXPORT] URL: ${url}`);-->
 
-                // First, check if the endpoint exists and file is ready
-                const response = await fetch(url, {
-                    method: 'GET', // Just check if endpoint exists
-                    credentials: 'same-origin',
-                    headers: {
-                        'X-CSRFToken': window.dashboard.csrfToken || '',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Export failed: ${response.status} ${response.statusText}`);
-                }
-
-                // If endpoint exists, trigger download
+                // Create and trigger download
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = `pretotype_${exportType}_${dateRange}_days.csv`; // Proper filename
+                link.download = '';
                 link.style.display = 'none';
+
+                // Add error handling for the download
+                link.onerror = function() {
+<!--                    console.error('[EXPORT] Download failed');-->
+                    alert('Export download failed. Check console for details.');
+                };
+
                 document.body.appendChild(link);
                 link.click();
-                document.body.removeChild(link);
 
-                console.log(`Export successful: ${exportType} data for ${dateRange} days`);
-
-                // Show success state briefly
-                exportBtn.innerHTML = '<i class="fas fa-check"></i> Exported!';
+                // Clean up
                 setTimeout(() => {
-                    exportBtn.innerHTML = originalHTML;
-                    exportBtn.disabled = false;
-                }, 2000);
+                    document.body.removeChild(link);
+                }, 1000);
+
+<!--                console.log(`[EXPORT] Download initiated successfully`);-->
 
             } catch (error) {
-                console.error('Export error:', error);
-
-                // Show error state
-                exportBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Export Failed';
-                exportBtn.style.background = 'var(--accent-red)';
-                exportBtn.style.color = 'white';
-
-                // Show user-friendly error message
-                alert(`Export failed: ${error.message}\n\nPlease check that the server is running and try again.`);
-
-                // Reset button after longer delay for errors
-                setTimeout(() => {
-                    exportBtn.innerHTML = originalHTML;
-                    exportBtn.disabled = false;
-                    exportBtn.style.background = '';
-                    exportBtn.style.color = '';
-                }, 3000);
+<!--                console.error('[EXPORT] Export error:', error);-->
+                alert('Export failed. Please check the console for details and try again.');
             }
+
+            // Reset button state
+            setTimeout(() => {
+                exportBtn.innerHTML = originalHTML;
+                exportBtn.disabled = false;
+            }, 3000);
         }
 
         // Cleanup on page unload

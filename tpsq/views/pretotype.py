@@ -2,6 +2,7 @@ import csv
 import json
 import logging
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 
 from core.utils.cloudinary_utils import CloudinaryManager
 from django.core.exceptions import ValidationError
@@ -843,9 +844,6 @@ def pretotype_analytics_dashboard(request):
         )
 
 
-from django.views.decorators.http import require_http_methods
-
-
 @require_http_methods(["GET", "HEAD"])
 @permission_classes([AllowAny])
 def pretotype_export_data(request):
@@ -854,7 +852,6 @@ def pretotype_export_data(request):
     Supports different export types and date filtering
     """
     try:
-        print("here")
         # Get parameters
         export_format = request.GET.get("format", "csv").lower()
         export_type = request.GET.get(
@@ -862,17 +859,30 @@ def pretotype_export_data(request):
         ).lower()  # issues, sessions, summary
         days_param = request.GET.get("days", "30")
 
+        logger.info(
+            f"[EXPORT] Starting export: format={export_format}, type={export_type}, days={days_param}"
+        )
+
         # Handle date filtering
         end_date = timezone.now().date()
         if days_param.lower() == "all":
             # Get data from the beginning of time (or first session)
-            first_session = PretotypeSession.objects.first()
-            start_date = first_session.started_at.date() if first_session else end_date
+            first_session = PretotypeSession.objects.order_by("started_at").first()
+            if first_session:
+                start_date = first_session.started_at.date()
+                logger.info(f"[EXPORT] Using 'all' - from {start_date} to {end_date}")
+            else:
+                start_date = end_date
+                logger.warning("[EXPORT] No sessions found - using current date")
         else:
             try:
                 days = int(days_param)
                 start_date = end_date - timedelta(days=days)
+                logger.info(
+                    f"[EXPORT] Using {days} days - from {start_date} to {end_date}"
+                )
             except ValueError:
+                logger.error(f"[EXPORT] Invalid days parameter: {days_param}")
                 return Response(
                     {"error": "Invalid days parameter"},
                     status=status.HTTP_400_BAD_REQUEST,
@@ -892,17 +902,22 @@ def pretotype_export_data(request):
         elif export_type == "summary":
             return export_summary_csv(start_date, end_date)
         else:
+            logger.warning(
+                f"[EXPORT] Unknown export type: {export_type}, defaulting to issues"
+            )
             return export_issues_csv(start_date, end_date)  # Default to issues
 
     except Exception as e:
         logger.error(f"[PRETOTYPE-EXPORT-ERROR] {str(e)}", exc_info=True)
         return Response(
-            {"error": "Export failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            {"error": f"Export failed: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
 
 def export_issues_csv(start_date, end_date):
     """Export detailed issues data as CSV"""
+    logger.info(f"[EXPORT-ISSUES] Starting export from {start_date} to {end_date}")
 
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = (
@@ -944,55 +959,74 @@ def export_issues_csv(start_date, end_date):
         .order_by("-submitted_at")
     )
 
+    total_issues = issues.count()
+    logger.info(f"[EXPORT-ISSUES] Found {total_issues} issues to export")
+
+    if total_issues == 0:
+        logger.warning("[EXPORT-ISSUES] No issues found in date range")
+        # Add a row indicating no data
+        writer.writerow(["No issues found in the selected date range"] + [""] * 19)
+        return response
+
+    exported_count = 0
     for issue in issues:
-        # Extract referrer domain
-        referrer_domain = ""
-        if issue.session.referrer:
-            try:
-                from urllib.parse import urlparse
+        try:
+            # Extract referrer domain safely
+            referrer_domain = ""
+            if issue.session.referrer:
+                try:
+                    parsed = urlparse(issue.session.referrer)
+                    referrer_domain = parsed.netloc
+                except:
+                    referrer_domain = issue.session.referrer[:50]
 
-                parsed = urlparse(issue.session.referrer)
-                referrer_domain = parsed.netloc
-            except:
-                referrer_domain = issue.session.referrer[:50]
+            # Issue details preview (first 100 characters, cleaned)
+            details_preview = ""
+            if issue.issue_details:
+                details_preview = (
+                    issue.issue_details[:100]
+                    .replace("\n", " ")
+                    .replace("\r", " ")
+                    .strip()
+                )
 
-        # Issue details preview (first 100 characters, cleaned)
-        details_preview = (
-            issue.issue_details[:100].replace("\n", " ").replace("\r", " ")
-            if issue.issue_details
-            else ""
-        )
+            writer.writerow(
+                [
+                    issue.id,
+                    str(issue.session.session_id),
+                    issue.submitted_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    issue.get_issue_type_display(),
+                    issue.issue_location or "Not specified",
+                    "Yes" if issue.has_details else "No",
+                    issue.details_word_count,
+                    "Yes" if issue.has_media else "No",
+                    issue.media_type or "None",
+                    issue.time_to_submit,
+                    issue.session.get_device_type_display(),
+                    issue.session.started_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Yes" if issue.session.completed_funnel else "No",
+                    issue.session.max_step_reached,
+                    issue.session.utm_source or "",
+                    issue.session.utm_campaign or "",
+                    issue.session.country or "",
+                    issue.session.city or "",
+                    referrer_domain,
+                    details_preview,
+                ]
+            )
+            exported_count += 1
 
-        writer.writerow(
-            [
-                issue.id,
-                str(issue.session.session_id),
-                issue.submitted_at.strftime("%Y-%m-%d %H:%M:%S"),
-                issue.get_issue_type_display(),
-                issue.issue_location,
-                "Yes" if issue.has_details else "No",
-                issue.details_word_count,
-                "Yes" if issue.has_media else "No",
-                issue.media_type or "None",
-                issue.time_to_submit,
-                issue.session.get_device_type_display(),
-                issue.session.started_at.strftime("%Y-%m-%d %H:%M:%S"),
-                "Yes" if issue.session.completed_funnel else "No",
-                issue.session.max_step_reached,
-                issue.session.utm_source,
-                issue.session.utm_campaign,
-                issue.session.country,
-                issue.session.city,
-                referrer_domain,
-                details_preview,
-            ]
-        )
+        except Exception as e:
+            logger.error(f"[EXPORT-ISSUES] Error processing issue {issue.id}: {str(e)}")
+            continue
 
+    logger.info(f"[EXPORT-ISSUES] Successfully exported {exported_count} issues")
     return response
 
 
 def export_sessions_csv(start_date, end_date):
     """Export session funnel data as CSV"""
+    logger.info(f"[EXPORT-SESSIONS] Starting export from {start_date} to {end_date}")
 
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = (
@@ -1033,40 +1067,59 @@ def export_sessions_csv(start_date, end_date):
         .order_by("-started_at")
     )
 
-    for session in sessions:
-        writer.writerow(
-            [
-                str(session.session_id),
-                session.started_at.strftime("%Y-%m-%d %H:%M:%S"),
-                session.get_device_type_display(),
-                session.max_step_reached,
-                "Yes" if session.completed_funnel else "No",
-                "Yes" if hasattr(session, "issue") else "No",
-                "Yes" if hasattr(session, "contact") else "No",
-                (
-                    session.issue.get_issue_type_display()
-                    if hasattr(session, "issue")
-                    else ""
-                ),
-                session.issue.issue_location if hasattr(session, "issue") else "",
-                session.utm_source,
-                session.utm_medium,
-                session.utm_campaign,
-                session.country,
-                session.city,
-                session.referrer,
-                session.total_time_on_site,
-                session.step_1_time,
-                session.step_2_time,
-                session.step_3_time,
-            ]
-        )
+    total_sessions = sessions.count()
+    logger.info(f"[EXPORT-SESSIONS] Found {total_sessions} sessions to export")
 
+    if total_sessions == 0:
+        logger.warning("[EXPORT-SESSIONS] No sessions found in date range")
+        writer.writerow(["No sessions found in the selected date range"] + [""] * 18)
+        return response
+
+    exported_count = 0
+    for session in sessions:
+        try:
+            writer.writerow(
+                [
+                    str(session.session_id),
+                    session.started_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    session.get_device_type_display(),
+                    session.max_step_reached,
+                    "Yes" if session.completed_funnel else "No",
+                    "Yes" if hasattr(session, "issue") else "No",
+                    "Yes" if hasattr(session, "contact") else "No",
+                    (
+                        session.issue.get_issue_type_display()
+                        if hasattr(session, "issue")
+                        else ""
+                    ),
+                    session.issue.issue_location if hasattr(session, "issue") else "",
+                    session.utm_source or "",
+                    session.utm_medium or "",
+                    session.utm_campaign or "",
+                    session.country or "",
+                    session.city or "",
+                    session.referrer or "",
+                    session.total_time_on_site,
+                    session.step_1_time,
+                    session.step_2_time,
+                    session.step_3_time,
+                ]
+            )
+            exported_count += 1
+
+        except Exception as e:
+            logger.error(
+                f"[EXPORT-SESSIONS] Error processing session {session.session_id}: {str(e)}"
+            )
+            continue
+
+    logger.info(f"[EXPORT-SESSIONS] Successfully exported {exported_count} sessions")
     return response
 
 
 def export_summary_csv(start_date, end_date):
     """Export daily summary statistics as CSV"""
+    logger.info(f"[EXPORT-SUMMARY] Starting export from {start_date} to {end_date}")
 
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = (
@@ -1100,70 +1153,95 @@ def export_summary_csv(start_date, end_date):
 
     # Generate daily summaries
     current_date = start_date
+    days_processed = 0
+    days_with_data = 0
+
     while current_date <= end_date:
-        # Get sessions for this date
-        day_sessions = PretotypeSession.objects.filter(started_at__date=current_date)
-        total_sessions = day_sessions.count()
+        try:
+            # Get sessions for this date
+            day_sessions = PretotypeSession.objects.filter(
+                started_at__date=current_date
+            )
+            total_sessions = day_sessions.count()
 
-        if total_sessions == 0:
-            current_date += timedelta(days=1)
-            continue
+            if total_sessions == 0:
+                current_date += timedelta(days=1)
+                days_processed += 1
+                continue
 
-        step_2_sessions = day_sessions.filter(max_step_reached__gte=2).count()
-        step_3_sessions = day_sessions.filter(max_step_reached__gte=3).count()
-        completed_sessions = day_sessions.filter(completed_funnel=True).count()
+            step_2_sessions = day_sessions.filter(max_step_reached__gte=2).count()
+            step_3_sessions = day_sessions.filter(max_step_reached__gte=3).count()
+            completed_sessions = day_sessions.filter(completed_funnel=True).count()
 
-        # Calculate rates
-        cta_click_rate = (
-            (step_2_sessions / total_sessions * 100) if total_sessions > 0 else 0
-        )
-        issue_submit_rate = (
-            (step_3_sessions / step_2_sessions * 100) if step_2_sessions > 0 else 0
-        )
-        contact_rate = (
-            (completed_sessions / step_3_sessions * 100) if step_3_sessions > 0 else 0
-        )
-        overall_conversion = (
-            (completed_sessions / total_sessions * 100) if total_sessions > 0 else 0
-        )
+            # Calculate rates
+            cta_click_rate = (
+                (step_2_sessions / total_sessions * 100) if total_sessions > 0 else 0
+            )
+            issue_submit_rate = (
+                (step_3_sessions / step_2_sessions * 100) if step_2_sessions > 0 else 0
+            )
+            contact_rate = (
+                (completed_sessions / step_3_sessions * 100)
+                if step_3_sessions > 0
+                else 0
+            )
+            overall_conversion = (
+                (completed_sessions / total_sessions * 100) if total_sessions > 0 else 0
+            )
 
-        # Device breakdown
-        mobile_sessions = day_sessions.filter(device_type="mobile").count()
-        desktop_sessions = day_sessions.filter(device_type="desktop").count()
-        tablet_sessions = day_sessions.filter(device_type="tablet").count()
+            # Device breakdown
+            mobile_sessions = day_sessions.filter(device_type="mobile").count()
+            desktop_sessions = day_sessions.filter(device_type="desktop").count()
+            tablet_sessions = day_sessions.filter(device_type="tablet").count()
 
-        # Issue quality metrics for this date
-        day_issues = PretotypeIssue.objects.filter(submitted_at__date=current_date)
-        issues_with_details = day_issues.filter(has_details=True).count()
-        issues_with_media = day_issues.filter(has_media=True).count()
-        issues_with_photo = day_issues.filter(media_type="image").count()
-        issues_with_video = day_issues.filter(media_type="video").count()
-        issues_with_audio = day_issues.filter(media_type="audio").count()
+            # Issue quality metrics for this date
+            day_issues = PretotypeIssue.objects.filter(submitted_at__date=current_date)
+            issues_with_details = day_issues.filter(has_details=True).count()
+            issues_with_media = day_issues.filter(has_media=True).count()
+            issues_with_photo = day_issues.filter(
+                models.Q(media_type="image") | models.Q(issue_image__isnull=False)
+            ).count()
+            issues_with_video = day_issues.filter(media_type="video").count()
+            issues_with_audio = day_issues.filter(media_type="audio").count()
 
-        writer.writerow(
-            [
-                current_date.strftime("%Y-%m-%d"),
-                total_sessions,
-                step_2_sessions,
-                step_3_sessions,
-                completed_sessions,
-                f"{cta_click_rate:.1f}",
-                f"{issue_submit_rate:.1f}",
-                f"{contact_rate:.1f}",
-                f"{overall_conversion:.1f}",
-                mobile_sessions,
-                desktop_sessions,
-                tablet_sessions,
-                issues_with_details,
-                issues_with_media,
-                issues_with_photo,
-                issues_with_video,
-                issues_with_audio,
-            ]
-        )
+            writer.writerow(
+                [
+                    current_date.strftime("%Y-%m-%d"),
+                    total_sessions,
+                    step_2_sessions,
+                    step_3_sessions,
+                    completed_sessions,
+                    f"{cta_click_rate:.1f}",
+                    f"{issue_submit_rate:.1f}",
+                    f"{contact_rate:.1f}",
+                    f"{overall_conversion:.1f}",
+                    mobile_sessions,
+                    desktop_sessions,
+                    tablet_sessions,
+                    issues_with_details,
+                    issues_with_media,
+                    issues_with_photo,
+                    issues_with_video,
+                    issues_with_audio,
+                ]
+            )
+            days_with_data += 1
+
+        except Exception as e:
+            logger.error(
+                f"[EXPORT-SUMMARY] Error processing date {current_date}: {str(e)}"
+            )
 
         current_date += timedelta(days=1)
+        days_processed += 1
 
+    if days_with_data == 0:
+        logger.warning("[EXPORT-SUMMARY] No data found for any date in range")
+        writer.writerow(["No data found in the selected date range"] + [""] * 16)
+
+    logger.info(
+        f"[EXPORT-SUMMARY] Successfully exported {days_with_data} days of data out of {days_processed} days processed"
+    )
     return response
 
 
